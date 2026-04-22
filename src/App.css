@@ -982,16 +982,36 @@ body {
   background: rgba(255,255,255,0.15);
 }
 
+.notes-panel-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
 .notes-panel-filter-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 8px;
   padding: 6px 14px;
   background: rgba(253, 232, 213, 0.5);
   border-bottom: 1px solid var(--today-line);
   font-size: 11px;
   color: var(--text-primary);
   flex-shrink: 0;
+}
+
+.notes-panel-filter-bar label {
+  font-weight: 600;
+}
+
+.notes-panel-filter-bar select {
+  flex: 1;
+  font-size: 11px;
+  padding: 2px 4px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg-primary, #fff);
+  cursor: pointer;
 }
 
 .notes-panel-filter-bar button {

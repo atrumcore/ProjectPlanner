@@ -13,9 +13,10 @@ interface Props {
   onZoomOut?: () => void;
   onZoomReset?: () => void;
   onExportPNG?: () => void;
+  onEmailNotes?: () => void;
 }
 
-export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomReset, onExportPNG }: Props) {
+export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomReset, onExportPNG, onEmailNotes }: Props) {
   const [openMenu, setOpenMenu] = useState<MenuId | null>(null);
   const [menuAnchor, setMenuAnchor] = useState<DOMRect | null>(null);
   const [showAddSwimlane, setShowAddSwimlane] = useState(false);
@@ -93,7 +94,7 @@ export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomRe
       </div>
 
       {openMenu === 'file' && menuAnchor && (
-        <FileMenu anchor={menuAnchor} onClose={closeMenu} onExportPNG={onExportPNG} />
+        <FileMenu anchor={menuAnchor} onClose={closeMenu} onExportPNG={onExportPNG} onEmailNotes={onEmailNotes} />
       )}
       {openMenu === 'insert' && menuAnchor && (
         <InsertMenu anchor={menuAnchor} onClose={closeMenu} onAddSwimlane={() => { setShowAddSwimlane(true); closeMenu(); }} />

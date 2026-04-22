@@ -83,6 +83,7 @@ interface GanttActions {
   toggleNotesPanel: () => void;
   openNotesPanelForSwimlane: (swimlaneId: string) => void;
   openNotesPanelFiltered: (swimlaneId: string) => void;
+  setNotesPanelFilter: (id: string | null) => void;
   clearNotesPanelFilter: () => void;
 
   // UI preferences
@@ -542,6 +543,8 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
     notesPanelFilterId: swimlaneId,
     notesPanelSwimlaneId: swimlaneId,
   }),
+
+  setNotesPanelFilter: (id) => set({ notesPanelFilterId: id }),
 
   clearNotesPanelFilter: () => set({ notesPanelFilterId: null }),
 

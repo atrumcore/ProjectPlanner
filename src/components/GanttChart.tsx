@@ -8,6 +8,7 @@ import Toolbar from './Toolbar';
 import NotesPanel from './NotesPanel';
 import { useGanttStore } from '../store/useGanttStore';
 import { getTodayWeekOffset } from '../utils/dateUtils';
+import { buildNotesEmail } from '../utils/notesEmail';
 
 const LEFT_DEFAULT = 304;
 const LEFT_MIN = 80;
@@ -57,6 +58,10 @@ export default function GanttChart() {
   const newFile = useGanttStore(s => s.newFile);
   const notesPanelOpen = useGanttStore(s => s.notesPanelOpen);
   const toggleNotesPanel = useGanttStore(s => s.toggleNotesPanel);
+  const actionItems = useGanttStore(s => s.actionItems);
+  const swimlanes = useGanttStore(s => s.swimlanes);
+  const sections = useGanttStore(s => s.sections);
+  const currentFileName = useGanttStore(s => s.currentFileName);
 
   // Panel collapse toggles
   const toggleLeftCollapse = useCallback(() => {
@@ -284,6 +289,11 @@ export default function GanttChart() {
     }
   }, []);
 
+  const emailNotes = useCallback(() => {
+    const { subject, body } = buildNotesEmail(swimlanes, sections, actionItems, currentFileName);
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  }, [swimlanes, sections, actionItems, currentFileName]);
+
   const scrollToToday = useCallback(() => {
     if (!timelineBodyRef.current) return;
     const todayOffset = getTodayWeekOffset(timeline.startMonth, timeline.startYear);
@@ -295,7 +305,7 @@ export default function GanttChart() {
 
   return (
     <>
-    <Toolbar onScrollToToday={scrollToToday} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} onExportPNG={exportPNG} />
+    <Toolbar onScrollToToday={scrollToToday} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} onExportPNG={exportPNG} onEmailNotes={emailNotes} />
     <div className="gantt-container" ref={ganttRef}>
       {/* Left panel */}
       {!leftCollapsed && (

@@ -2,6 +2,9 @@ import { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useGanttStore } from '../store/useGanttStore';
 import type { ActionItem } from '../types/gantt';
+import { buildNotesEmail } from '../utils/notesEmail';
+
+const GENERAL_FILTER_ID = '__general__';
 
 function ActionItemRow({ item }: { item: ActionItem }) {
   const updateActionItem = useGanttStore(s => s.updateActionItem);
@@ -125,12 +128,14 @@ function ActionItemRow({ item }: { item: ActionItem }) {
 export default function NotesPanel() {
   const actionItems = useGanttStore(s => s.actionItems);
   const swimlanes = useGanttStore(s => s.swimlanes);
+  const sections = useGanttStore(s => s.sections);
+  const currentFileName = useGanttStore(s => s.currentFileName);
   const addActionItem = useGanttStore(s => s.addActionItem);
   const clearDoneActionItems = useGanttStore(s => s.clearDoneActionItems);
   const toggleNotesPanel = useGanttStore(s => s.toggleNotesPanel);
   const notesPanelSwimlaneId = useGanttStore(s => s.notesPanelSwimlaneId);
   const notesPanelFilterId = useGanttStore(s => s.notesPanelFilterId);
-  const clearNotesPanelFilter = useGanttStore(s => s.clearNotesPanelFilter);
+  const setNotesPanelFilter = useGanttStore(s => s.setNotesPanelFilter);
 
   const [newText, setNewText] = useState('');
   const [selectedSwimlane, setSelectedSwimlane] = useState<string | null>(null);
@@ -172,15 +177,13 @@ export default function NotesPanel() {
     return () => clearTimeout(t);
   }, [confirmClear]);
 
-  const filtered = useMemo(
-    () => notesPanelFilterId ? actionItems.filter(i => i.swimlaneId === notesPanelFilterId) : actionItems,
-    [actionItems, notesPanelFilterId]
-  );
-
-  const filterLaneName = useMemo(
-    () => notesPanelFilterId ? swimlanes.find(s => s.id === notesPanelFilterId)?.projectName ?? null : null,
-    [notesPanelFilterId, swimlanes]
-  );
+  const filtered = useMemo(() => {
+    if (notesPanelFilterId === null) return actionItems;
+    if (notesPanelFilterId === GENERAL_FILTER_ID) {
+      return actionItems.filter(i => !i.swimlaneId);
+    }
+    return actionItems.filter(i => i.swimlaneId === notesPanelFilterId);
+  }, [actionItems, notesPanelFilterId]);
 
   const openItems = useMemo(
     () => filtered.filter(i => !i.done).sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
@@ -206,6 +209,12 @@ export default function NotesPanel() {
 
   const handleClose = useCallback(() => setClosing(true), []);
 
+  const handleEmail = useCallback(() => {
+    const { subject, body } = buildNotesEmail(swimlanes, sections, actionItems, currentFileName);
+    const href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = href;
+  }, [swimlanes, sections, actionItems, currentFileName]);
+
   return createPortal(
     <div
       className={`notes-panel${closing ? ' notes-panel--closing' : ''}`}
@@ -222,15 +231,26 @@ export default function NotesPanel() {
       />
       <div className="notes-panel-header">
         <span>Notes & Action Items</span>
-        <button onClick={handleClose} title="Close (Ctrl+Shift+N)">&times;</button>
+        <div className="notes-panel-header-actions">
+          <button onClick={handleEmail} title="Email notes" aria-label="Email notes">&#x2709;</button>
+          <button onClick={handleClose} title="Close (Ctrl+Shift+N)" aria-label="Close">&times;</button>
+        </div>
       </div>
 
-      {filterLaneName && (
-        <div className="notes-panel-filter-bar">
-          <span>Showing: <strong>{filterLaneName}</strong></span>
-          <button onClick={clearNotesPanelFilter} title="Show all items">&times;</button>
-        </div>
-      )}
+      <div className="notes-panel-filter-bar">
+        <label htmlFor="notes-filter-select">Show:</label>
+        <select
+          id="notes-filter-select"
+          value={notesPanelFilterId ?? ''}
+          onChange={e => setNotesPanelFilter(e.target.value || null)}
+        >
+          <option value="">All</option>
+          <option value={GENERAL_FILTER_ID}>General</option>
+          {swimlanes.map(s => (
+            <option key={s.id} value={s.id}>{s.projectName}</option>
+          ))}
+        </select>
+      </div>
 
       <div className="notes-panel-add-row">
         <input
@@ -263,7 +283,7 @@ export default function NotesPanel() {
         ))}
         {filtered.length === 0 && (
           <div style={{ padding: '20px 14px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: 12 }}>
-            {notesPanelFilterId ? 'No items for this deliverable.' : 'No action items yet. Add one above.'}
+            {notesPanelFilterId ? 'No items matching this filter.' : 'No action items yet. Add one above.'}
           </div>
         )}
       </div>
