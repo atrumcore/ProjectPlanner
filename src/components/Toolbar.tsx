@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useGanttStore } from '../store/useGanttStore';
+import { getContentions } from '../utils/contention';
 import FileMenu from './FileMenu';
 import InsertMenu from './InsertMenu';
 import ViewMenu from './ViewMenu';
@@ -13,10 +14,11 @@ interface Props {
   onZoomOut?: () => void;
   onZoomReset?: () => void;
   onExportPNG?: () => void;
+  onExportPDF?: () => void;
   onEmailNotes?: () => void;
 }
 
-export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomReset, onExportPNG, onEmailNotes }: Props) {
+export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomReset, onExportPNG, onExportPDF, onEmailNotes }: Props) {
   const [openMenu, setOpenMenu] = useState<MenuId | null>(null);
   const [menuAnchor, setMenuAnchor] = useState<DOMRect | null>(null);
   const [showAddSwimlane, setShowAddSwimlane] = useState(false);
@@ -31,6 +33,17 @@ export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomRe
   const toggleNotesPanel = useGanttStore(s => s.toggleNotesPanel);
   const actionItems = useGanttStore(s => s.actionItems);
   const openCount = actionItems.filter(i => !i.done).length;
+
+  const environments = useGanttStore(s => s.environments);
+  const swimlanes = useGanttStore(s => s.swimlanes);
+  const phaseBars = useGanttStore(s => s.phaseBars);
+  const showContention = useGanttStore(s => s.showContention);
+  const environmentsPanelOpen = useGanttStore(s => s.environmentsPanelOpen);
+  const toggleEnvironmentsPanel = useGanttStore(s => s.toggleEnvironmentsPanel);
+  const contentionCount = useMemo(
+    () => showContention ? getContentions({ environments, swimlanes, phaseBars }).length : 0,
+    [environments, swimlanes, phaseBars, showContention]
+  );
 
   const toggleMenu = (id: MenuId, e: React.MouseEvent<HTMLButtonElement>) => {
     if (openMenu === id) {
@@ -81,6 +94,14 @@ export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomRe
           Notes{openCount > 0 && <span className="toolbar-notes-badge">{openCount}</span>}
         </button>
 
+        <button
+          onClick={toggleEnvironmentsPanel}
+          title="Environments & Contention (Ctrl+Shift+E)"
+          style={environmentsPanelOpen ? { background: '#3d3930', color: '#ede9e1' } : undefined}
+        >
+          Environments{contentionCount > 0 && <span className="toolbar-env-badge">{contentionCount}</span>}
+        </button>
+
         <div className="toolbar-spacer" />
 
         {onZoomOut && <button onClick={onZoomOut} title="Zoom out (Ctrl+Scroll)">-</button>}
@@ -94,7 +115,7 @@ export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomRe
       </div>
 
       {openMenu === 'file' && menuAnchor && (
-        <FileMenu anchor={menuAnchor} onClose={closeMenu} onExportPNG={onExportPNG} onEmailNotes={onEmailNotes} />
+        <FileMenu anchor={menuAnchor} onClose={closeMenu} onExportPNG={onExportPNG} onExportPDF={onExportPDF} onEmailNotes={onEmailNotes} />
       )}
       {openMenu === 'insert' && menuAnchor && (
         <InsertMenu anchor={menuAnchor} onClose={closeMenu} onAddSwimlane={() => { setShowAddSwimlane(true); closeMenu(); }} />

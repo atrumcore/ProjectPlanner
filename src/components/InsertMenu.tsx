@@ -9,6 +9,7 @@ interface Props {
 
 export default function InsertMenu({ anchor, onClose, onAddSwimlane }: Props) {
   const addSection = useGanttStore(s => s.addSection);
+  const togglePhaseTypesModal = useGanttStore(s => s.togglePhaseTypesModal);
 
   return (
     <DropdownMenu anchor={anchor} onClose={onClose}>
@@ -23,6 +24,12 @@ export default function InsertMenu({ anchor, onClose, onAddSwimlane }: Props) {
         onClick={() => { addSection('New Section'); onClose(); }}
       >
         Section
+      </div>
+      <div
+        className="menu-item-action"
+        onClick={() => { togglePhaseTypesModal(); onClose(); }}
+      >
+        Phase Type…
       </div>
     </DropdownMenu>
   );

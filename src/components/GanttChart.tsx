@@ -1,11 +1,14 @@
 import { useRef, useCallback, useEffect, useState } from 'react';
 import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import LeftPanel from './LeftPanel';
 import RightPanel from './RightPanel';
 import TimelineHeader from './TimelineHeader';
 import TimelineContent from './TimelineContent';
 import Toolbar from './Toolbar';
 import NotesPanel from './NotesPanel';
+import EnvironmentsPanel from './EnvironmentsPanel';
+import ManagePhaseTypesModal from './ManagePhaseTypesModal';
 import { useGanttStore } from '../store/useGanttStore';
 import { getTodayWeekOffset } from '../utils/dateUtils';
 import { buildNotesEmail } from '../utils/notesEmail';
@@ -58,6 +61,11 @@ export default function GanttChart() {
   const newFile = useGanttStore(s => s.newFile);
   const notesPanelOpen = useGanttStore(s => s.notesPanelOpen);
   const toggleNotesPanel = useGanttStore(s => s.toggleNotesPanel);
+  const environmentsPanelOpen = useGanttStore(s => s.environmentsPanelOpen);
+  const toggleEnvironmentsPanel = useGanttStore(s => s.toggleEnvironmentsPanel);
+  const environmentFocusId = useGanttStore(s => s.environmentFocusId);
+  const setEnvironmentFocus = useGanttStore(s => s.setEnvironmentFocus);
+  const phaseTypesModalOpen = useGanttStore(s => s.phaseTypesModalOpen);
   const actionItems = useGanttStore(s => s.actionItems);
   const swimlanes = useGanttStore(s => s.swimlanes);
   const sections = useGanttStore(s => s.sections);
@@ -221,6 +229,11 @@ export default function GanttChart() {
         toggleNotesPanel();
         return;
       }
+      if (mod && e.shiftKey && key === 'e') {
+        e.preventDefault();
+        toggleEnvironmentsPanel();
+        return;
+      }
       if (mod && key === 'n') {
         // Browsers typically intercept Ctrl+N before JS sees it, so this
         // may not fire — the toolbar button is the reliable path.
@@ -247,12 +260,16 @@ export default function GanttChart() {
           removePhaseBar(selectedBarId);
         }
       } else if (e.key === 'Escape') {
-        selectBar(null);
+        if (environmentFocusId) {
+          setEnvironmentFocus(null);
+        } else {
+          selectBar(null);
+        }
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [undo, redo, selectedBarId, removePhaseBar, selectBar, saveFile, saveFileAs, openFile, newFile, toggleNotesPanel]);
+  }, [undo, redo, selectedBarId, removePhaseBar, selectBar, saveFile, saveFileAs, openFile, newFile, toggleNotesPanel, toggleEnvironmentsPanel, environmentFocusId, setEnvironmentFocus]);
 
   const handleSpacePanStart = useCallback((e: React.PointerEvent) => {
     if (spaceHeld.current && e.button === 0) {
@@ -270,16 +287,21 @@ export default function GanttChart() {
     handleSpacePanStart(e);
   }, [handlePanStart, handleSpacePanStart]);
 
+  const captureCanvas = useCallback(async () => {
+    if (!ganttRef.current) return null;
+    // Blur any focused rich-text editor so the cursor/selection isn't
+    // captured into the export. Also flushes any pending onBlur save.
+    (document.activeElement as HTMLElement | null)?.blur();
+    return html2canvas(ganttRef.current, {
+      backgroundColor: '#e8e4dd',
+      scale: 2,
+    });
+  }, []);
+
   const exportPNG = useCallback(async () => {
-    if (!ganttRef.current) return;
     try {
-      // Blur any focused rich-text editor so the cursor/selection isn't
-      // captured into the PNG. Also flushes any pending onBlur save.
-      (document.activeElement as HTMLElement | null)?.blur();
-      const canvas = await html2canvas(ganttRef.current, {
-        backgroundColor: '#e8e4dd',
-        scale: 2,
-      });
+      const canvas = await captureCanvas();
+      if (!canvas) return;
       const link = document.createElement('a');
       link.download = 'dha-gantt-chart.png';
       link.href = canvas.toDataURL('image/png');
@@ -287,7 +309,28 @@ export default function GanttChart() {
     } catch (err) {
       console.error('PNG export failed:', err);
     }
-  }, []);
+  }, [captureCanvas]);
+
+  const exportPDF = useCallback(async () => {
+    try {
+      const canvas = await captureCanvas();
+      if (!canvas) return;
+      // Size the PDF page to the canvas aspect ratio so the chart fills the
+      // page without letterboxing. `pt` is jsPDF's default unit; the divisor
+      // brings the captured 2x-scaled canvas back to roughly screen size.
+      const w = canvas.width / 2;
+      const h = canvas.height / 2;
+      const pdf = new jsPDF({
+        orientation: w >= h ? 'landscape' : 'portrait',
+        unit: 'pt',
+        format: [w, h],
+      });
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, w, h);
+      pdf.save('dha-gantt-chart.pdf');
+    } catch (err) {
+      console.error('PDF export failed:', err);
+    }
+  }, [captureCanvas]);
 
   const emailNotes = useCallback(() => {
     const { subject, body } = buildNotesEmail(swimlanes, sections, actionItems, currentFileName);
@@ -305,7 +348,7 @@ export default function GanttChart() {
 
   return (
     <>
-    <Toolbar onScrollToToday={scrollToToday} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} onExportPNG={exportPNG} onEmailNotes={emailNotes} />
+    <Toolbar onScrollToToday={scrollToToday} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} onExportPNG={exportPNG} onExportPDF={exportPDF} onEmailNotes={emailNotes} />
     <div className="gantt-container" ref={ganttRef}>
       {/* Left panel */}
       {!leftCollapsed && (
@@ -382,6 +425,8 @@ export default function GanttChart() {
       )}
     </div>
     {notesPanelOpen && <NotesPanel />}
+    {environmentsPanelOpen && <EnvironmentsPanel />}
+    {phaseTypesModalOpen && <ManagePhaseTypesModal />}
     </>
   );
 }

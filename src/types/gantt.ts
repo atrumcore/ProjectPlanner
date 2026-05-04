@@ -1,17 +1,24 @@
-export type PhaseType =
-  | 'analysis'
-  | 'development'
-  | 'sit'
-  | 'uat'
-  | 'live'
-  | 'concept'
-  | 'custom';
+/** PhaseType is now a string id referring to a user-defined PhaseTypeDef.
+ * The 7 built-ins ('analysis', 'development', 'sit', 'uat', 'live', 'concept',
+ * 'custom') are seeded on first run with stable ids so legacy data loads
+ * unchanged. New user-created types get UUIDs. */
+export type PhaseType = string;
 
 export interface PhaseColorScheme {
   fill: string;
   stroke: string;
   text: string;
   label: string;
+}
+
+export interface PhaseTypeDef {
+  id: string;
+  name: string;       // Display name in pickers, e.g. "Analysis & Design"
+  label: string;      // Uppercase label rendered on the bar, e.g. "ANALYSIS & DESIGN"
+  fill: string;
+  stroke: string;
+  text: string;
+  order: number;
 }
 
 export interface PhaseBar {
@@ -22,6 +29,10 @@ export interface PhaseBar {
   startWeek: number;
   durationWeeks: number;
   colorOverride?: PhaseColorScheme;
+  /** Environment slot this bar reserves. Two bars on different swimlanes
+   * sharing the same Exclusive env that overlap in time are flagged as
+   * contention. null = unassigned, contributes nothing to contention. */
+  environmentId: string | null;
 }
 
 export interface Milestone {
@@ -67,6 +78,17 @@ export interface Swimlane {
   order: number;
 }
 
+export interface Environment {
+  id: string;
+  name: string;
+  color: string;
+  order: number;
+  /** When true, two bars whose phase type maps to this env on different
+   * swimlanes overlapping in time are flagged as contention. When false,
+   * the env is treated as a shared resource and never produces contention. */
+  exclusive: boolean;
+}
+
 export interface TimelineConfig {
   startMonth: number;
   startYear: number;
@@ -81,6 +103,8 @@ export interface GanttState {
   milestones: Milestone[];
   dependencies: Dependency[];
   actionItems: ActionItem[];
+  environments: Environment[];
+  phaseTypes: PhaseTypeDef[];
   timeline: TimelineConfig;
   selectedBarId: string | null;
   dragIndicatorWeek: number | null;
@@ -90,6 +114,9 @@ export interface GanttState {
   showWeekends: boolean;
   showHolidays: boolean;
   showMilestones: boolean;
+  showEnvIndicators: boolean;
+  showEnvMarquees: boolean;
+  showContention: boolean;
   // Ephemeral (not persisted/snapshotted)
   lastUsedPhaseType: PhaseType;
   creatingBarId: string | null;
@@ -97,12 +124,30 @@ export interface GanttState {
   notesPanelOpen: boolean;
   notesPanelSwimlaneId: string | null;
   notesPanelFilterId: string | null;
+  environmentsPanelOpen: boolean;
+  environmentFocusId: string | null;
+  hoveredBarId: string | null;
+  phaseTypesModalOpen: boolean;
   // File session state (not persisted — handles are session-scoped and
   // localStorage is a crash-recovery backstop, not the source of truth)
   currentFileName: string | null;
   currentFileHandle: FileSystemFileHandle | null;
   isDirty: boolean;
 }
+
+// Environment palette — 8 hues spaced ~45° apart on the colour wheel with
+// strong saturation differences, picked so the dashed marquee stroke and
+// 10px env-dot remain clearly distinguishable side-by-side.
+export const ENV_COLOR_PRESETS = [
+  '#e53935', // vivid red
+  '#f57c00', // bright orange
+  '#fbc02d', // amber/yellow
+  '#43a047', // vivid green
+  '#00acc1', // bright cyan
+  '#1e88e5', // bright blue
+  '#8e24aa', // vivid purple
+  '#455a64', // slate charcoal
+] as const;
 
 // Layout constants matching draw.io diagram
 export const ROW_HEIGHT = 48;

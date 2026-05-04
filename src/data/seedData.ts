@@ -9,8 +9,10 @@ const ul = (items: string[]): string =>
     ? ''
     : '<ul>' + items.map(s => `<li>${s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</li>`).join('') + '</ul>';
 
+type SeedSwimlane = Omit<Swimlane, 'environmentId'>;
+
 // Delivered section swimlanes
-const deliveredSwimlanes: Swimlane[] = [
+const deliveredSwimlanes: SeedSwimlane[] = [
   {
     id: uid(),
     projectName: 'Bank Expansion Project',
@@ -46,7 +48,7 @@ const deliveredSwimlanes: Swimlane[] = [
 ];
 
 // In-progress section swimlanes
-const inProgressSwimlanes: Swimlane[] = [
+const inProgressSwimlanes: SeedSwimlane[] = [
   {
     id: uid(),
     projectName: 'ETA/eMCS2.0 R1',
@@ -193,11 +195,13 @@ const inProgressSwimlanes: Swimlane[] = [
   },
 ];
 
-export const seedSwimlanes: Swimlane[] = [...deliveredSwimlanes, ...inProgressSwimlanes];
+export const seedSwimlanes: Swimlane[] = [...deliveredSwimlanes, ...inProgressSwimlanes].map(s => ({ ...s, environmentId: null }));
 
 // Phase bars — week positions taken directly from draw.io (week index from Jan 1 2026).
 // Delivered section bars
-const deliveredBars: PhaseBar[] = [
+type SeedBar = Omit<PhaseBar, 'environmentId'>;
+
+const deliveredBars: SeedBar[] = [
   // Bank Expansion Project (seed-1)
   { id: uid(), swimlaneId: 'seed-1', phaseType: 'development', label: 'CIT', startWeek: 0, durationWeeks: 3 },
   { id: uid(), swimlaneId: 'seed-1', phaseType: 'sit', label: 'SIT', startWeek: 3, durationWeeks: 2 },
@@ -217,7 +221,7 @@ const deliveredBars: PhaseBar[] = [
 ];
 
 // In-progress section bars
-const inProgressBars: PhaseBar[] = [
+const inProgressBars: SeedBar[] = [
   // ETA/eMCS2.0 R1 (seed-5)
   { id: uid(), swimlaneId: 'seed-5', phaseType: 'analysis', label: 'ANALYSIS & DESIGN', startWeek: 1, durationWeeks: 4 },
   { id: uid(), swimlaneId: 'seed-5', phaseType: 'development', label: 'DEVELOPMENT', startWeek: 5, durationWeeks: 3 },
@@ -277,7 +281,7 @@ const inProgressBars: PhaseBar[] = [
   { id: uid(), swimlaneId: 'seed-19', phaseType: 'analysis', label: 'ANALYSIS & DESIGN', startWeek: 4, durationWeeks: 8 },
 ];
 
-export const seedPhaseBars: PhaseBar[] = [...deliveredBars, ...inProgressBars];
+export const seedPhaseBars: PhaseBar[] = [...deliveredBars, ...inProgressBars].map(b => ({ ...b, environmentId: null }));
 
 export const seedMilestones: Milestone[] = [
   // Delivered

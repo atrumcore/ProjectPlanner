@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useGanttStore } from '../store/useGanttStore';
 import type { PhaseType } from '../types/gantt';
-import { PHASE_PRESETS, PHASE_TYPE_OPTIONS } from '../data/phasePresets';
+import { getPhaseDef } from '../data/phasePresets';
 
 interface Props {
   onClose: () => void;
@@ -10,17 +10,21 @@ interface Props {
 export default function AddPhaseBarModal({ onClose }: Props) {
   const swimlanes = useGanttStore(s => s.swimlanes);
   const addPhaseBar = useGanttStore(s => s.addPhaseBar);
+  const phaseTypes = useGanttStore(s => s.phaseTypes);
 
+  const initialType = phaseTypes[0]?.id ?? 'custom';
+  const initialDef = getPhaseDef(initialType, phaseTypes);
   const [swimlaneId, setSwimlaneId] = useState(swimlanes[0]?.id || '');
-  const [phaseType, setPhaseType] = useState<PhaseType>('analysis');
-  const [label, setLabel] = useState(PHASE_PRESETS.analysis.label);
+  const [phaseType, setPhaseType] = useState<PhaseType>(initialType);
+  const [label, setLabel] = useState(initialDef.label);
   const [startWeek, setStartWeek] = useState(0);
   const [durationWeeks, setDurationWeeks] = useState(4);
 
   const handleTypeChange = (type: PhaseType) => {
     setPhaseType(type);
-    setLabel(PHASE_PRESETS[type].label);
+    setLabel(getPhaseDef(type, phaseTypes).label);
   };
+  const previewDef = getPhaseDef(phaseType, phaseTypes);
 
   const handleAdd = () => {
     if (!swimlaneId || !label.trim()) return;
@@ -30,6 +34,7 @@ export default function AddPhaseBarModal({ onClose }: Props) {
       label: label.trim(),
       startWeek,
       durationWeeks: Math.max(1, durationWeeks),
+      environmentId: null,
     });
     onClose();
   };
@@ -48,8 +53,8 @@ export default function AddPhaseBarModal({ onClose }: Props) {
 
         <label>Phase Type</label>
         <select value={phaseType} onChange={e => handleTypeChange(e.target.value as PhaseType)}>
-          {PHASE_TYPE_OPTIONS.map(o => (
-            <option key={o.value} value={o.value}>{o.label}</option>
+          {phaseTypes.map(t => (
+            <option key={t.id} value={t.id}>{t.name}</option>
           ))}
         </select>
 
@@ -84,9 +89,9 @@ export default function AddPhaseBarModal({ onClose }: Props) {
               display: 'inline-block',
               padding: '3px 12px',
               borderRadius: 8,
-              background: PHASE_PRESETS[phaseType].fill,
-              border: `1px solid ${PHASE_PRESETS[phaseType].stroke}`,
-              color: PHASE_PRESETS[phaseType].text,
+              background: previewDef.fill,
+              border: `1px solid ${previewDef.stroke}`,
+              color: previewDef.text,
               fontSize: 8,
               fontWeight: 700,
             }}

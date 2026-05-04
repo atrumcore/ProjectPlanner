@@ -1,9 +1,10 @@
-import { useMemo, useRef, useState, useCallback } from 'react';
+import { useMemo, useRef, useState, useCallback, useEffect } from 'react';
 import { useGanttStore } from '../store/useGanttStore';
 import { ROW_HEIGHT, BAR_HEIGHT, BAR_RADIUS, SECTION_HEADER_HEIGHT } from '../types/gantt';
 import { getTodayWeekOffset, getMonthsFromWeeks, getHolidayWeekOffsets, getWeekendDayRanges, getCalendarWeekBoundaries } from '../utils/dateUtils';
-import { PHASE_PRESETS } from '../data/phasePresets';
+import { getPhaseDef } from '../data/phasePresets';
 import { useSectionedLanes } from '../hooks/useSectionedLanes';
+import { getContentions } from '../utils/contention';
 import TimelineGrid from './TimelineGrid';
 import PhaseBar from './PhaseBar';
 import TodayMarker from './TodayMarker';
@@ -30,8 +31,14 @@ export default function TimelineContent() {
   const showWeekends = useGanttStore(s => s.showWeekends);
   const showHolidays = useGanttStore(s => s.showHolidays);
   const showMilestones = useGanttStore(s => s.showMilestones);
+  const showEnvMarquees = useGanttStore(s => s.showEnvMarquees);
+  const showContention = useGanttStore(s => s.showContention);
 
   const sections = useGanttStore(s => s.sections);
+  const environments = useGanttStore(s => s.environments);
+  const phaseTypes = useGanttStore(s => s.phaseTypes);
+  const environmentFocusId = useGanttStore(s => s.environmentFocusId);
+  const hoveredBarId = useGanttStore(s => s.hoveredBarId);
 
   const svgRef = useRef<SVGSVGElement>(null);
   const [drawingBar, setDrawingBar] = useState<DrawingBar | null>(null);
@@ -176,15 +183,43 @@ export default function TimelineContent() {
     const maxW = Math.max(drawingBar.startWeek, drawingBar.currentWeek);
     const rowY = swimlaneYMap.get(drawingBar.swimlaneId);
     if (rowY === undefined) return null;
-    const colors = PHASE_PRESETS[lastUsedPhaseType];
+    const def = getPhaseDef(lastUsedPhaseType, phaseTypes);
     return {
       x: minW * weekWidth,
       y: rowY + (ROW_HEIGHT - BAR_HEIGHT) / 2,
       width: (maxW - minW + 1) * weekWidth,
-      fill: colors.fill,
-      stroke: colors.stroke,
+      fill: def.fill,
+      stroke: def.stroke,
     };
-  }, [drawingBar, swimlaneYMap, weekWidth, lastUsedPhaseType]);
+  }, [drawingBar, swimlaneYMap, weekWidth, lastUsedPhaseType, phaseTypes]);
+
+  // === Contention computation ===
+  const contentions = useMemo(
+    () => getContentions({ environments, swimlanes, phaseBars }),
+    [environments, swimlanes, phaseBars]
+  );
+
+  const envById = useMemo(() => new Map(environments.map(e => [e.id, e])), [environments]);
+  const barById = useMemo(() => new Map(phaseBars.map(b => [b.id, b])), [phaseBars]);
+
+  // Listen for the env panel's "scroll-to-bar" custom event so clicks in the
+  // contention list bring the bar into view.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const id = (e as CustomEvent<{ barId: string }>).detail?.barId;
+      if (!id) return;
+      const bar = phaseBars.find(b => b.id === id);
+      const rowY = bar ? swimlaneYMap.get(bar.swimlaneId) : undefined;
+      if (!bar || rowY === undefined) return;
+      const wrapper = svgRef.current?.parentElement;
+      if (!wrapper) return;
+      const targetX = bar.startWeek * weekWidth;
+      wrapper.scrollLeft = Math.max(0, targetX - wrapper.clientWidth / 2);
+      wrapper.scrollTop = Math.max(0, rowY - wrapper.clientHeight / 2);
+    };
+    window.addEventListener('gantt:scroll-to-bar', handler);
+    return () => window.removeEventListener('gantt:scroll-to-bar', handler);
+  }, [phaseBars, swimlaneYMap, weekWidth]);
 
   // Find creating bar position for PhaseTypePicker
   const creatingBar = creatingBarId ? phaseBars.find(b => b.id === creatingBarId) : null;
@@ -254,11 +289,128 @@ export default function TimelineContent() {
         <TodayMarker weekOffset={todayOffset} height={contentHeight} yStart={0} />
       )}
 
-      {/* Phase bars */}
+      {/* Env marquees — one dashed bounding box per run of adjacent
+          same-env bars within a swimlane. Rendered before bars so the
+          dashed border frames them without sitting on top of fills. */}
+      {showEnvMarquees && (() => {
+        const groups = new Map<string, { swimlaneId: string; envId: string; bars: typeof phaseBars }>();
+        for (const bar of phaseBars) {
+          if (!bar.environmentId) continue;
+          const key = `${bar.swimlaneId}::${bar.environmentId}`;
+          let g = groups.get(key);
+          if (!g) {
+            g = { swimlaneId: bar.swimlaneId, envId: bar.environmentId, bars: [] };
+            groups.set(key, g);
+          }
+          g.bars.push(bar);
+        }
+
+        const segments: React.ReactElement[] = [];
+        const adjacencyTolerance = 0.01; // ~1 hour in week units
+        for (const [, g] of groups) {
+          const env = envById.get(g.envId);
+          const rowY = swimlaneYMap.get(g.swimlaneId);
+          if (!env || rowY === undefined) continue;
+
+          const sorted = [...g.bars].sort((a, b) => a.startWeek - b.startWeek);
+          const runs: Array<{ start: number; end: number }> = [];
+          let cur = {
+            start: sorted[0].startWeek,
+            end: sorted[0].startWeek + sorted[0].durationWeeks,
+          };
+          for (let i = 1; i < sorted.length; i++) {
+            const next = sorted[i];
+            const nextEnd = next.startWeek + next.durationWeeks;
+            if (next.startWeek <= cur.end + adjacencyTolerance) {
+              if (nextEnd > cur.end) cur.end = nextEnd;
+            } else {
+              runs.push(cur);
+              cur = { start: next.startWeek, end: nextEnd };
+            }
+          }
+          runs.push(cur);
+
+          const y = rowY + (ROW_HEIGHT - BAR_HEIGHT) / 2 - 3;
+          const h = BAR_HEIGHT + 6;
+          runs.forEach((run, idx) => {
+            const x = run.start * weekWidth - 3;
+            const w = (run.end - run.start) * weekWidth + 6;
+            segments.push(
+              <rect
+                key={`env-marquee-${g.swimlaneId}-${g.envId}-${idx}`}
+                x={x}
+                y={y}
+                width={w}
+                height={h}
+                rx={BAR_RADIUS + 2}
+                ry={BAR_RADIUS + 2}
+                fill="none"
+                stroke={env.color}
+                strokeWidth={1.75}
+                strokeDasharray="5 3"
+                style={{ pointerEvents: 'none' }}
+              />
+            );
+          });
+        }
+        return segments;
+      })()}
+
+      {/* Phase bars (wrapped with focus-mode opacity when an env is in focus) */}
       {phaseBars.map(bar => {
         const rowY = swimlaneYMap.get(bar.swimlaneId);
         if (rowY === undefined) return null;
-        return <PhaseBar key={bar.id} bar={bar} rowY={rowY} />;
+        const dim = environmentFocusId !== null && bar.environmentId !== environmentFocusId;
+        return (
+          <g
+            key={bar.id}
+            style={dim ? { opacity: 0.3, filter: 'saturate(0.6)' } : undefined}
+          >
+            <PhaseBar bar={bar} rowY={rowY} />
+          </g>
+        );
+      })}
+
+
+      {/* Hover highlight — translucent vertical band over the contended
+          time range, spanning the rows of both contending bars. Drawn when
+          a contending bar is hovered, or for every contention in focus mode. */}
+      {showContention && contentions.map((c, i) => {
+        if (environmentFocusId === null) {
+          if (hoveredBarId !== c.barAId && hoveredBarId !== c.barBId) return null;
+        } else if (environmentFocusId !== c.envId) {
+          return null;
+        }
+        const env = envById.get(c.envId);
+        if (!env) return null;
+        const barA = barById.get(c.barAId);
+        const barB = barById.get(c.barBId);
+        const rowYA = barA ? swimlaneYMap.get(barA.swimlaneId) : undefined;
+        const rowYB = barB ? swimlaneYMap.get(barB.swimlaneId) : undefined;
+        if (rowYA === undefined || rowYB === undefined) return null;
+
+        const startDay = Math.floor(c.weekRange[0] * 7);
+        const endDay = Math.ceil(c.weekRange[1] * 7);
+        const x = (startDay / 7) * weekWidth;
+        const w = Math.max(4, ((endDay - startDay) / 7) * weekWidth);
+        const yTop = Math.min(rowYA, rowYB);
+        const yBot = Math.max(rowYA, rowYB) + ROW_HEIGHT;
+        return (
+          <rect
+            key={`hover-band-${i}`}
+            x={x}
+            y={yTop}
+            width={w}
+            height={yBot - yTop}
+            fill={env.color}
+            opacity={0.22}
+            stroke={env.color}
+            strokeOpacity={0.8}
+            strokeWidth={1}
+            strokeDasharray="3 3"
+            style={{ pointerEvents: 'none' }}
+          />
+        );
       })}
 
       {/* Empty state hint */}
@@ -280,6 +432,76 @@ export default function TimelineContent() {
         if (rowY === undefined) return null;
         return <MilestoneMarker key={m.id} id={m.id} week={m.week} rowY={rowY} />;
       })}
+
+      {/* Contention ribbons. One unified strip per bar, made of the union
+          of every contention range that bar is involved in. Rendered after
+          milestones so nothing else covers them. */}
+      {showContention && (() => {
+        const byBar = new Map<string, { envId: string; ranges: Array<[number, number]> }>();
+        for (const c of contentions) {
+          if (environmentFocusId !== null && environmentFocusId !== c.envId) continue;
+          for (const barId of [c.barAId, c.barBId]) {
+            let entry = byBar.get(barId);
+            if (!entry) { entry = { envId: c.envId, ranges: [] }; byBar.set(barId, entry); }
+            entry.ranges.push([c.weekRange[0], c.weekRange[1]]);
+          }
+        }
+
+        const unionRanges = (ranges: Array<[number, number]>): Array<[number, number]> => {
+          if (ranges.length === 0) return [];
+          const sorted = [...ranges].sort((a, b) => a[0] - b[0]);
+          const out: Array<[number, number]> = [[sorted[0][0], sorted[0][1]]];
+          for (let i = 1; i < sorted.length; i++) {
+            const cur = out[out.length - 1];
+            const [s, e] = sorted[i];
+            if (s <= cur[1]) {
+              if (e > cur[1]) cur[1] = e;
+            } else {
+              out.push([s, e]);
+            }
+          }
+          return out;
+        };
+
+        const ribbonH = 5;
+        const segments: React.ReactElement[] = [];
+        for (const [barId, info] of byBar) {
+          const env = envById.get(info.envId);
+          if (!env) continue;
+          const bar = barById.get(barId);
+          const rowY = bar ? swimlaneYMap.get(bar.swimlaneId) : undefined;
+          if (!bar || rowY === undefined) continue;
+          const yRibbon = rowY + (ROW_HEIGHT - BAR_HEIGHT) / 2 + BAR_HEIGHT + 1;
+          const merged = unionRanges(info.ranges);
+          merged.forEach(([rs, re], idx) => {
+            // Snap the strip out to whole-day boundaries (floor start, ceil
+            // end) so it aligns with the day-rounded dates the user reads
+            // off the bar. Without this a 4.7-day overlap could render as
+            // 4-and-a-bit days, looking shorter than the visible overlap.
+            const startDay = Math.floor(rs * 7);
+            const endDay = Math.ceil(re * 7);
+            const x = (startDay / 7) * weekWidth;
+            const trueW = ((endDay - startDay) / 7) * weekWidth;
+            const w = Math.max(4, trueW);
+            segments.push(
+              <g key={`ribbon-${barId}-${idx}`} style={{ pointerEvents: 'none' }}>
+                <rect
+                  x={x}
+                  y={yRibbon}
+                  width={w}
+                  height={ribbonH}
+                  fill={env.color}
+                  stroke="rgba(0,0,0,0.35)"
+                  strokeWidth={0.75}
+                  rx={1.5}
+                  ry={1.5}
+                />
+              </g>
+            );
+          });
+        }
+        return segments;
+      })()}
 
       {/* Ghost bar during drag-to-create */}
       {ghostBar && (

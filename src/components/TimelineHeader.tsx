@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { HEADER_HEIGHT, WEEK_LABEL_HEIGHT } from '../types/gantt';
 import { useGanttStore } from '../store/useGanttStore';
 import {
@@ -20,9 +21,23 @@ export default function TimelineHeader({ totalWeeks, startMonth, startYear, scro
   const gridWidth = totalWeeks * weekWidth;
   const months = getMonthsFromWeeks(startMonth, startYear, totalWeeks);
   const totalHeaderHeight = HEADER_HEIGHT + WEEK_LABEL_HEIGHT;
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  // Use native scrollLeft on the wrapper to mirror the timeline body's shift
+  // mechanism. Previously the SVG itself was offset via `transform: translateX`
+  // (and later `marginLeft`), but html2canvas v1.4.1 rasterises SVGs through a
+  // path that ignores those CSS-level shifts, so the exported header rendered
+  // at week 0 while the body honoured its real scroll position. Native scroll
+  // on a div wrapper is handled correctly by html2canvas.
+  useEffect(() => {
+    if (wrapperRef.current) {
+      wrapperRef.current.scrollLeft = scrollLeft;
+    }
+  }, [scrollLeft]);
 
   return (
     <div
+      ref={wrapperRef}
       style={{
         width: '100%',
         height: totalHeaderHeight,
@@ -36,7 +51,6 @@ export default function TimelineHeader({ totalWeeks, startMonth, startYear, scro
         height={totalHeaderHeight}
         style={{
           display: 'block',
-          transform: `translateX(-${scrollLeft}px)`,
         }}
       >
         {/* Header background */}

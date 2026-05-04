@@ -6,10 +6,11 @@ interface Props {
   anchor: DOMRect;
   onClose: () => void;
   onExportPNG?: () => void;
+  onExportPDF?: () => void;
   onEmailNotes?: () => void;
 }
 
-export default function FileMenu({ anchor, onClose, onExportPNG, onEmailNotes }: Props) {
+export default function FileMenu({ anchor, onClose, onExportPNG, onExportPDF, onEmailNotes }: Props) {
   const newFile = useGanttStore(s => s.newFile);
   const openFile = useGanttStore(s => s.openFile);
   const saveFile = useGanttStore(s => s.saveFile);
@@ -33,8 +34,9 @@ export default function FileMenu({ anchor, onClose, onExportPNG, onEmailNotes }:
       {item('Open', openFile, 'Ctrl+O', !supported)}
       {item('Save', saveFile, 'Ctrl+S', !supported)}
       {item('Save As', saveFileAs, 'Ctrl+Shift+S', !supported)}
-      {(onExportPNG || onEmailNotes) && <div className="view-menu-divider" />}
+      {(onExportPNG || onExportPDF || onEmailNotes) && <div className="view-menu-divider" />}
       {onExportPNG && item('Export PNG', onExportPNG)}
+      {onExportPDF && item('Export PDF', onExportPDF)}
       {onEmailNotes && item('Email Notes…', onEmailNotes)}
     </DropdownMenu>
   );

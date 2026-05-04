@@ -1,19 +1,27 @@
 import { useEffect, useRef, useState } from 'react';
 import type { PhaseType } from '../types/gantt';
-import { PHASE_PRESETS, PHASE_TYPE_OPTIONS } from '../data/phasePresets';
+import { useGanttStore } from '../store/useGanttStore';
 
 interface Props {
   x: number;
   y: number;
+  barId: string;
+  currentEnvId: string | null;
   onChangePhase: (phaseType: PhaseType) => void;
   onEditLabel: () => void;
   onDelete: () => void;
   onClose: () => void;
 }
 
-export default function ContextMenu({ x, y, onChangePhase, onEditLabel, onDelete, onClose }: Props) {
+export default function ContextMenu({ x, y, barId, currentEnvId, onChangePhase, onEditLabel, onDelete, onClose }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ left: x, top: y });
+  const phaseTypes = useGanttStore(s => s.phaseTypes);
+  const environments = useGanttStore(s => s.environments);
+  const togglePhaseTypesModal = useGanttStore(s => s.togglePhaseTypesModal);
+  const toggleEnvironmentsPanel = useGanttStore(s => s.toggleEnvironmentsPanel);
+  const environmentsPanelOpen = useGanttStore(s => s.environmentsPanelOpen);
+  const setBarEnvironment = useGanttStore(s => s.setBarEnvironment);
 
   // Clamp to viewport after first render
   useEffect(() => {
@@ -44,19 +52,63 @@ export default function ContextMenu({ x, y, onChangePhase, onEditLabel, onDelete
         Edit Label
       </div>
       <div className="context-menu-divider" />
-      {PHASE_TYPE_OPTIONS.map(opt => (
+      {phaseTypes.map(t => (
         <div
-          key={opt.value}
+          key={t.id}
           className="context-menu-item"
-          onClick={() => onChangePhase(opt.value)}
+          onClick={() => onChangePhase(t.id)}
         >
           <span
             className="color-swatch"
-            style={{ background: PHASE_PRESETS[opt.value].fill, borderColor: PHASE_PRESETS[opt.value].stroke }}
+            style={{ background: t.fill, borderColor: t.stroke }}
           />
-          {opt.label}
+          {t.name}
         </div>
       ))}
+      <div
+        className="context-menu-item"
+        style={{ color: '#7a7264', fontStyle: 'italic' }}
+        onClick={() => { onClose(); togglePhaseTypesModal(); }}
+      >
+        + Manage phase types…
+      </div>
+      <div className="context-menu-divider" />
+      <div className="context-menu-label">Environment</div>
+      <div
+        className="context-menu-item"
+        onClick={() => {
+          setBarEnvironment(barId, null);
+          onClose();
+        }}
+      >
+        {currentEnvId === null ? '✓ ' : ''}<span style={{ opacity: 0.6 }}>(none)</span>
+      </div>
+      {environments.map(env => (
+        <div
+          key={env.id}
+          className="context-menu-item"
+          onClick={() => {
+            setBarEnvironment(barId, env.id);
+            onClose();
+          }}
+        >
+          <span
+            className="context-menu-color-dot"
+            style={{ background: env.color }}
+          />
+          {currentEnvId === env.id ? '✓ ' : ''}{env.name}
+        </div>
+      ))}
+      <div
+        className="context-menu-item"
+        style={{ color: '#7a7264', fontStyle: 'italic' }}
+        onClick={() => {
+          onClose();
+          if (!environmentsPanelOpen) toggleEnvironmentsPanel();
+        }}
+      >
+        + Manage environments…
+      </div>
       <div className="context-menu-divider" />
       <div className="context-menu-item" style={{ color: '#b52222' }} onClick={onDelete}>
         Delete

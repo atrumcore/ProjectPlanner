@@ -1,8 +1,6 @@
 import { useEffect, useRef, useCallback, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import type { PhaseType } from '../types/gantt';
-import { PHASE_PRESETS } from '../data/phasePresets';
-import { PHASE_TYPE_OPTIONS } from '../data/phasePresets';
 import { useGanttStore } from '../store/useGanttStore';
 
 interface Props {
@@ -16,16 +14,34 @@ interface Props {
 export default function PhaseTypePicker({ barId, svgRef, barX, barY, barWidth }: Props) {
   const updatePhaseBar = useGanttStore(s => s.updatePhaseBar);
   const clearCreatingBar = useGanttStore(s => s.clearCreatingBar);
+  const phaseTypes = useGanttStore(s => s.phaseTypes);
+  const environments = useGanttStore(s => s.environments);
+  const phaseBars = useGanttStore(s => s.phaseBars);
+  const togglePhaseTypesModal = useGanttStore(s => s.togglePhaseTypesModal);
+  const toggleEnvironmentsPanel = useGanttStore(s => s.toggleEnvironmentsPanel);
+  const environmentsPanelOpen = useGanttStore(s => s.environmentsPanelOpen);
+  const setBarEnvironment = useGanttStore(s => s.setBarEnvironment);
   const pickerRef = useRef<HTMLDivElement>(null);
 
-  const handleSelect = useCallback((phaseType: PhaseType) => {
+  // Track the bar's current env so the active swatch reflects state changes.
+  const currentEnvId = phaseBars.find(b => b.id === barId)?.environmentId ?? null;
+
+  const handleSelectPhase = useCallback((phaseType: PhaseType) => {
+    const def = phaseTypes.find(t => t.id === phaseType);
     updatePhaseBar(barId, {
       phaseType,
-      label: PHASE_PRESETS[phaseType].label,
+      label: def?.label ?? phaseType.toUpperCase(),
       colorOverride: undefined,
     });
+    // Phase type is the primary action — pick it last and we dismiss.
     clearCreatingBar();
-  }, [barId, updatePhaseBar, clearCreatingBar]);
+  }, [barId, updatePhaseBar, clearCreatingBar, phaseTypes]);
+
+  const handleSelectEnv = useCallback((envId: string | null) => {
+    // Env clicks update without dismissing so the user can still pick a
+    // phase type (or click outside) afterwards.
+    setBarEnvironment(barId, envId);
+  }, [barId, setBarEnvironment]);
 
   // Dismiss on click outside or Escape
   useEffect(() => {
@@ -64,18 +80,65 @@ export default function PhaseTypePicker({ barId, svgRef, barX, barY, barWidth }:
       className="phase-type-picker"
       style={{ left: screenX, top: screenY }}
     >
-      {PHASE_TYPE_OPTIONS.map(opt => (
+      <div className="phase-type-picker-row">
+        {phaseTypes.map(t => (
+          <button
+            key={t.id}
+            className="phase-type-circle"
+            title={t.name}
+            style={{ background: t.fill, borderColor: t.stroke }}
+            onClick={() => handleSelectPhase(t.id)}
+          />
+        ))}
         <button
-          key={opt.value}
-          className="phase-type-circle"
-          title={opt.label}
-          style={{
-            background: PHASE_PRESETS[opt.value].fill,
-            borderColor: PHASE_PRESETS[opt.value].stroke,
+          className="phase-type-edit-btn"
+          title="Edit phase types..."
+          onClick={() => {
+            clearCreatingBar();
+            togglePhaseTypesModal();
           }}
-          onClick={() => handleSelect(opt.value)}
-        />
-      ))}
+        >
+          +
+        </button>
+      </div>
+
+      {environments.length > 0 && (
+        <div className="phase-type-picker-row phase-type-picker-env-row">
+          <button
+            className={`env-pill-pick env-pill-pick-none${currentEnvId === null ? ' active' : ''}`}
+            title="No environment"
+            onClick={() => handleSelectEnv(null)}
+          >
+            none
+          </button>
+          {environments.map(env => (
+            <button
+              key={env.id}
+              className={`env-pill-pick${currentEnvId === env.id ? ' active' : ''}`}
+              title={env.name}
+              style={{ background: env.color }}
+              onClick={() => handleSelectEnv(env.id)}
+            >
+              <span>{env.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {environments.length === 0 && (
+        <div className="phase-type-picker-row">
+          <button
+            className="phase-type-edit-btn phase-type-edit-btn-wide"
+            title="Create environments..."
+            onClick={() => {
+              clearCreatingBar();
+              if (!environmentsPanelOpen) toggleEnvironmentsPanel();
+            }}
+          >
+            + add environments
+          </button>
+        </div>
+      )}
     </div>,
     document.body
   );

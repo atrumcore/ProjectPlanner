@@ -7,9 +7,13 @@ import type {
   TimelineConfig,
   SwimlaneSection,
   Section,
+  Environment,
+  PhaseTypeDef,
 } from '../types/gantt';
-import { DEFAULT_SECTIONS } from '../types/gantt';
-import { PHASE_PRESETS } from '../data/phasePresets';
+// PhaseBar imported above; alias for the migration helper signature.
+import { DEFAULT_SECTIONS, ENV_COLOR_PRESETS } from '../types/gantt';
+import { pickNextEnvColor } from '../utils/contention';
+import { BUILTIN_PHASE_TYPES, getPhaseDef, deriveColorScheme } from '../data/phasePresets';
 import { getWeeksForMonth, getDaysInMonth } from '../utils/dateUtils';
 import { featuresArrayToHtml } from '../utils/htmlSanitize';
 import {
@@ -86,12 +90,34 @@ interface GanttActions {
   setNotesPanelFilter: (id: string | null) => void;
   clearNotesPanelFilter: () => void;
 
+  // Environments
+  addEnvironment: (name: string, color?: string) => string;
+  updateEnvironment: (id: string, updates: Partial<Omit<Environment, 'id'>>) => void;
+  removeEnvironment: (id: string) => void;
+  reorderEnvironments: (orderedIds: string[]) => void;
+  setEnvironmentExclusive: (envId: string, exclusive: boolean) => void;
+  setBarEnvironment: (barId: string, envId: string | null) => void;
+  toggleEnvironmentsPanel: () => void;
+  setEnvironmentFocus: (envId: string | null) => void;
+  setHoveredBar: (id: string | null) => void;
+
+  // Phase types
+  addPhaseType: (name?: string, baseColor?: string) => string;
+  updatePhaseType: (id: string, updates: Partial<Omit<PhaseTypeDef, 'id'>>) => void;
+  removePhaseType: (id: string) => void;
+  reorderPhaseTypes: (orderedIds: string[]) => void;
+  togglePhaseTypesModal: () => void;
+  resetPhaseTypesToBuiltins: () => void;
+
   // UI preferences
   toggleMonthDates: () => void;
   toggleBarDates: () => void;
   toggleWeekends: () => void;
   toggleHolidays: () => void;
   toggleMilestones: () => void;
+  toggleEnvIndicators: () => void;
+  toggleEnvMarquees: () => void;
+  toggleContention: () => void;
 
   // Persistence
   saveToStorage: () => void;
@@ -121,6 +147,8 @@ const defaultState: GanttState = {
   milestones: [],
   dependencies: [],
   actionItems: [],
+  environments: [],
+  phaseTypes: BUILTIN_PHASE_TYPES,
   timeline: {
     startMonth: 0, // January
     startYear: 2026,
@@ -134,12 +162,19 @@ const defaultState: GanttState = {
   showWeekends: true,
   showHolidays: true,
   showMilestones: true,
+  showEnvIndicators: true,
+  showEnvMarquees: true,
+  showContention: true,
   lastUsedPhaseType: 'development',
   creatingBarId: null,
   isSpaceHeld: false,
   notesPanelOpen: false,
   notesPanelSwimlaneId: null,
   notesPanelFilterId: null,
+  environmentsPanelOpen: false,
+  environmentFocusId: null,
+  hoveredBarId: null,
+  phaseTypesModalOpen: false,
   currentFileName: null,
   currentFileHandle: null,
   isDirty: false,
@@ -157,6 +192,8 @@ function snapshot(state: GanttState): GanttState {
     milestones: state.milestones,
     dependencies: state.dependencies,
     actionItems: state.actionItems,
+    environments: state.environments,
+    phaseTypes: state.phaseTypes,
     timeline: state.timeline,
     selectedBarId: state.selectedBarId,
   }));
@@ -168,16 +205,73 @@ function pushUndo(state: GanttState) {
   redoStack = [];
 }
 
-/** Migrate legacy keyFeatures: string[] → HTML string. Idempotent on strings. */
+/** Migrate legacy keyFeatures: string[] → HTML string. Strips the deprecated
+ * environmentId field (v4 → v5). Idempotent. */
 function migrateSwimlanes(swimlanes: unknown): Swimlane[] {
   if (!Array.isArray(swimlanes)) return [];
   return swimlanes.map(raw => {
-    const s = raw as Swimlane & { keyFeatures: string | string[] };
-    if (Array.isArray(s.keyFeatures)) {
-      return { ...s, keyFeatures: featuresArrayToHtml(s.keyFeatures) };
-    }
-    return s as Swimlane;
+    const s = raw as Swimlane & { keyFeatures: string | string[]; environmentId?: unknown };
+    const features = Array.isArray(s.keyFeatures)
+      ? featuresArrayToHtml(s.keyFeatures)
+      : s.keyFeatures;
+    return {
+      id: s.id,
+      projectName: s.projectName,
+      keyFeatures: features,
+      keyDependencies: s.keyDependencies,
+      section: s.section,
+      order: s.order,
+    };
   });
+}
+
+/** v4 → v5 migration: convert env.overlapAllowedPhaseTypes to env.exclusive,
+ * and ensure phase types carry defaultEnvironmentId. Idempotent. */
+function migrateEnvironments(envs: unknown): Environment[] {
+  if (!Array.isArray(envs)) return [];
+  return envs.map(raw => {
+    const e = raw as Environment & { overlapAllowedPhaseTypes?: unknown };
+    const exclusive = typeof (e as { exclusive?: unknown }).exclusive === 'boolean'
+      ? (e as { exclusive: boolean }).exclusive
+      : Array.isArray(e.overlapAllowedPhaseTypes)
+        ? e.overlapAllowedPhaseTypes.length === 0
+        : true;
+    return {
+      id: e.id,
+      name: e.name,
+      color: e.color,
+      order: e.order,
+      exclusive,
+    };
+  });
+}
+
+function migratePhaseTypes(types: unknown): PhaseTypeDef[] {
+  const list = Array.isArray(types) && types.length > 0 ? types : BUILTIN_PHASE_TYPES;
+  return list.map((raw: any) => ({
+    id: raw.id,
+    name: raw.name,
+    label: raw.label,
+    fill: raw.fill,
+    stroke: raw.stroke,
+    text: raw.text,
+    order: raw.order,
+  }));
+}
+
+/** v5 → v6: ensure every bar carries `environmentId` (null when missing). */
+function migratePhaseBars(bars: unknown): PhaseBar[] {
+  if (!Array.isArray(bars)) return [];
+  return bars.map((raw: any) => ({
+    id: raw.id,
+    swimlaneId: raw.swimlaneId,
+    phaseType: raw.phaseType,
+    label: raw.label,
+    startWeek: raw.startWeek,
+    durationWeeks: raw.durationWeeks,
+    colorOverride: raw.colorOverride,
+    environmentId: raw.environmentId ?? null,
+  }));
 }
 
 function ensureTodayVisible(
@@ -290,7 +384,10 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
   addPhaseBar: (bar) => {
     pushUndo(get());
     set(state => ({
-      phaseBars: [...state.phaseBars, { ...bar, id: uid() }],
+      phaseBars: [
+        ...state.phaseBars,
+        { ...bar, id: uid(), environmentId: bar.environmentId ?? null },
+      ],
     }));
     get().saveToStorage();
   },
@@ -459,16 +556,18 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
   quickAddPhaseBar: (swimlaneId, startWeek, durationWeeks) => {
     pushUndo(get());
     const newId = uid();
-    const phaseType = get().lastUsedPhaseType;
-    const label = PHASE_PRESETS[phaseType].label;
-    set(state => ({
-      phaseBars: [...state.phaseBars, {
+    const state = get();
+    const phaseType = state.lastUsedPhaseType;
+    const def = getPhaseDef(phaseType, state.phaseTypes);
+    set(s => ({
+      phaseBars: [...s.phaseBars, {
         id: newId,
         swimlaneId,
         phaseType,
-        label,
+        label: def.label,
         startWeek: Math.max(0, startWeek),
         durationWeeks: Math.max(1 / 7, durationWeeks),
+        environmentId: null,
       }],
       selectedBarId: newId,
       creatingBarId: newId,
@@ -548,6 +647,156 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
 
   clearNotesPanelFilter: () => set({ notesPanelFilterId: null }),
 
+  // === Environments ===
+  addEnvironment: (name, color) => {
+    pushUndo(get());
+    const id = uid();
+    const env: Environment = {
+      id,
+      name: name.trim() || `ENV${get().environments.length + 1}`,
+      color: color ?? pickNextEnvColor(get().environments, ENV_COLOR_PRESETS),
+      order: get().environments.length,
+      exclusive: true,
+    };
+    set(state => ({ environments: [...state.environments, env] }));
+    get().saveToStorage();
+    return id;
+  },
+
+  updateEnvironment: (id, updates) => {
+    pushUndo(get());
+    set(state => ({
+      environments: state.environments.map(e => (e.id === id ? { ...e, ...updates } : e)),
+    }));
+    get().saveToStorage();
+  },
+
+  removeEnvironment: (id) => {
+    pushUndo(get());
+    set(state => ({
+      environments: state.environments
+        .filter(e => e.id !== id)
+        .map((e, i) => ({ ...e, order: i })),
+      // Unassign any bars that pointed at this env so they stop registering contention.
+      phaseBars: state.phaseBars.map(b =>
+        b.environmentId === id ? { ...b, environmentId: null } : b
+      ),
+      environmentFocusId: state.environmentFocusId === id ? null : state.environmentFocusId,
+    }));
+    get().saveToStorage();
+  },
+
+  reorderEnvironments: (orderedIds) => {
+    pushUndo(get());
+    const byId = new Map(get().environments.map(e => [e.id, e]));
+    const next: Environment[] = [];
+    orderedIds.forEach((id, i) => {
+      const e = byId.get(id);
+      if (e) next.push({ ...e, order: i });
+    });
+    set({ environments: next });
+    get().saveToStorage();
+  },
+
+  setEnvironmentExclusive: (envId, exclusive) => {
+    pushUndo(get());
+    set(state => ({
+      environments: state.environments.map(e =>
+        e.id === envId ? { ...e, exclusive } : e
+      ),
+    }));
+    get().saveToStorage();
+  },
+
+  setBarEnvironment: (barId, envId) => {
+    pushUndo(get());
+    const knownIds = new Set(get().environments.map(e => e.id));
+    const safeEnvId = envId && knownIds.has(envId) ? envId : null;
+    set(state => ({
+      phaseBars: state.phaseBars.map(b =>
+        b.id === barId ? { ...b, environmentId: safeEnvId } : b
+      ),
+    }));
+    get().saveToStorage();
+  },
+
+  toggleEnvironmentsPanel: () => set(state => ({
+    environmentsPanelOpen: !state.environmentsPanelOpen,
+  })),
+
+  setEnvironmentFocus: (envId) => set({ environmentFocusId: envId }),
+
+  setHoveredBar: (id) => set({ hoveredBarId: id }),
+
+  // === Phase types ===
+  addPhaseType: (name, baseColor) => {
+    pushUndo(get());
+    const id = uid();
+    const fill = baseColor ?? '#cccccc';
+    const scheme = deriveColorScheme(fill);
+    const displayName = (name?.trim() || `Type ${get().phaseTypes.length + 1}`);
+    const def: PhaseTypeDef = {
+      id,
+      name: displayName,
+      label: displayName.toUpperCase(),
+      fill: scheme.fill,
+      stroke: scheme.stroke,
+      text: scheme.text,
+      order: get().phaseTypes.length,
+    };
+    set(state => ({ phaseTypes: [...state.phaseTypes, def] }));
+    get().saveToStorage();
+    return id;
+  },
+
+  updatePhaseType: (id, updates) => {
+    pushUndo(get());
+    set(state => ({
+      phaseTypes: state.phaseTypes.map(t => (t.id === id ? { ...t, ...updates } : t)),
+    }));
+    get().saveToStorage();
+  },
+
+  removePhaseType: (id) => {
+    // Reassign any bars using this type to the first remaining type, or
+    // 'custom' as a last resort. Caller should confirm-on-in-use upstream.
+    const state = get();
+    if (state.phaseTypes.length <= 1) return; // never let the list go empty
+    pushUndo(state);
+    const remaining = state.phaseTypes.filter(t => t.id !== id);
+    const fallbackId = remaining[0].id;
+    set({
+      phaseTypes: remaining.map((t, i) => ({ ...t, order: i })),
+      phaseBars: state.phaseBars.map(b =>
+        b.phaseType === id ? { ...b, phaseType: fallbackId } : b
+      ),
+      lastUsedPhaseType: state.lastUsedPhaseType === id ? fallbackId : state.lastUsedPhaseType,
+    });
+    get().saveToStorage();
+  },
+
+  reorderPhaseTypes: (orderedIds) => {
+    pushUndo(get());
+    const byId = new Map(get().phaseTypes.map(t => [t.id, t]));
+    const next: PhaseTypeDef[] = [];
+    orderedIds.forEach((id, i) => {
+      const t = byId.get(id);
+      if (t) next.push({ ...t, order: i });
+    });
+    set({ phaseTypes: next });
+    get().saveToStorage();
+  },
+
+  togglePhaseTypesModal: () => set(state => ({
+    phaseTypesModalOpen: !state.phaseTypesModalOpen,
+  })),
+
+  resetPhaseTypesToBuiltins: () => {
+    pushUndo(get());
+    set({ phaseTypes: BUILTIN_PHASE_TYPES });
+    get().saveToStorage();
+  },
+
   // === UI preferences ===
   toggleMonthDates: () => {
     set(state => ({ showMonthDates: !state.showMonthDates }));
@@ -574,6 +823,21 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
     get().saveToStorage();
   },
 
+  toggleEnvIndicators: () => {
+    set(state => ({ showEnvIndicators: !state.showEnvIndicators }));
+    get().saveToStorage();
+  },
+
+  toggleEnvMarquees: () => {
+    set(state => ({ showEnvMarquees: !state.showEnvMarquees }));
+    get().saveToStorage();
+  },
+
+  toggleContention: () => {
+    set(state => ({ showContention: !state.showContention }));
+    get().saveToStorage();
+  },
+
   // === Persistence ===
   saveToStorage: () => {
     try {
@@ -585,13 +849,18 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         milestones: state.milestones,
         dependencies: state.dependencies,
         actionItems: state.actionItems,
+        environments: state.environments,
+        phaseTypes: state.phaseTypes,
         timeline: state.timeline,
         showMonthDates: state.showMonthDates,
         showBarDates: state.showBarDates,
         showWeekends: state.showWeekends,
         showHolidays: state.showHolidays,
         showMilestones: state.showMilestones,
-        calendarModelVersion: 2,
+        showEnvIndicators: state.showEnvIndicators,
+        showEnvMarquees: state.showEnvMarquees,
+        showContention: state.showContention,
+        calendarModelVersion: 6,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch { /* ignore storage errors */ }
@@ -623,16 +892,21 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
       set({
         sections: data.sections || DEFAULT_SECTIONS,
         swimlanes: migrateSwimlanes(data.swimlanes),
-        phaseBars: data.phaseBars || [],
+        phaseBars: migratePhaseBars(data.phaseBars),
         milestones: data.milestones || [],
         dependencies: data.dependencies || [],
         actionItems: data.actionItems || [],
+        environments: migrateEnvironments(data.environments),
+        phaseTypes: migratePhaseTypes(data.phaseTypes),
         timeline: savedTimeline,
         showMonthDates: data.showMonthDates ?? false,
         showBarDates: data.showBarDates ?? false,
         showWeekends: data.showWeekends ?? true,
         showHolidays: data.showHolidays ?? true,
         showMilestones: data.showMilestones ?? true,
+        showEnvIndicators: data.showEnvIndicators ?? true,
+        showEnvMarquees: data.showEnvMarquees ?? true,
+        showContention: data.showContention ?? true,
       });
       ensureTodayVisible(get, set);
       // Restored state matches localStorage — from the user's POV nothing
@@ -653,6 +927,8 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
       milestones: state.milestones,
       dependencies: state.dependencies,
       actionItems: state.actionItems,
+      environments: state.environments,
+      phaseTypes: state.phaseTypes,
       timeline: state.timeline,
       // View preferences — so reimporting restores the user's toggles
       showMonthDates: state.showMonthDates,
@@ -660,8 +936,11 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
       showWeekends: state.showWeekends,
       showHolidays: state.showHolidays,
       showMilestones: state.showMilestones,
+      showEnvIndicators: state.showEnvIndicators,
+      showEnvMarquees: state.showEnvMarquees,
+      showContention: state.showContention,
       // Format marker (so downstream loaders can detect legacy data)
-      calendarModelVersion: 2,
+      calendarModelVersion: 5,
     }, null, 2);
   },
 
@@ -679,10 +958,12 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
       set({
         sections: data.sections || DEFAULT_SECTIONS,
         swimlanes: migrateSwimlanes(data.swimlanes),
-        phaseBars: data.phaseBars,
+        phaseBars: migratePhaseBars(data.phaseBars),
         milestones: data.milestones || [],
         dependencies: data.dependencies || [],
         actionItems: data.actionItems || [],
+        environments: migrateEnvironments(data.environments),
+        phaseTypes: migratePhaseTypes(data.phaseTypes),
         timeline: data.timeline || defaultState.timeline,
         // Restore view preferences — fall back to current defaults if the
         // file predates a given flag.
@@ -691,6 +972,9 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         showWeekends: data.showWeekends ?? true,
         showHolidays: data.showHolidays ?? true,
         showMilestones: data.showMilestones ?? true,
+        showEnvIndicators: data.showEnvIndicators ?? true,
+        showEnvMarquees: data.showEnvMarquees ?? true,
+        showContention: data.showContention ?? true,
       });
       get().saveToStorage();
       // State now matches the imported file; clear the dirty flag that

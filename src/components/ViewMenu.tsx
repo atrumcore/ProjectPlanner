@@ -18,11 +18,17 @@ export default function ViewMenu({ anchor, onClose }: Props) {
   const showMilestones = useGanttStore(s => s.showMilestones);
   const showBarDates = useGanttStore(s => s.showBarDates);
   const showMonthDates = useGanttStore(s => s.showMonthDates);
+  const showEnvIndicators = useGanttStore(s => s.showEnvIndicators);
+  const showEnvMarquees = useGanttStore(s => s.showEnvMarquees);
+  const showContention = useGanttStore(s => s.showContention);
   const toggleWeekends = useGanttStore(s => s.toggleWeekends);
   const toggleHolidays = useGanttStore(s => s.toggleHolidays);
   const toggleMilestones = useGanttStore(s => s.toggleMilestones);
   const toggleBarDates = useGanttStore(s => s.toggleBarDates);
   const toggleMonthDates = useGanttStore(s => s.toggleMonthDates);
+  const toggleEnvIndicators = useGanttStore(s => s.toggleEnvIndicators);
+  const toggleEnvMarquees = useGanttStore(s => s.toggleEnvMarquees);
+  const toggleContention = useGanttStore(s => s.toggleContention);
 
   // Timeline range
   const timeline = useGanttStore(s => s.timeline);
@@ -71,6 +77,24 @@ export default function ViewMenu({ anchor, onClose }: Props) {
         <input type="checkbox" checked={showBarDates} onChange={toggleBarDates} />
         <span className="view-menu-swatch-blank">Aa</span>
         Phase-bar start dates
+      </label>
+
+      <div className="view-menu-divider" />
+      <div className="view-menu-group-label">Environments</div>
+      <label className="view-menu-item">
+        <input type="checkbox" checked={showEnvIndicators} onChange={toggleEnvIndicators} />
+        <span className="view-menu-swatch" style={{ background: '#1e88e5', borderColor: '#1565c0' }} />
+        Environment indicators (dots & pills)
+      </label>
+      <label className="view-menu-item">
+        <input type="checkbox" checked={showEnvMarquees} onChange={toggleEnvMarquees} />
+        <span className="view-menu-swatch view-menu-swatch-dash" style={{ borderColor: '#1e88e5' }} />
+        Environment marquees
+      </label>
+      <label className="view-menu-item">
+        <input type="checkbox" checked={showContention} onChange={toggleContention} />
+        <span className="view-menu-swatch" style={{ background: '#e53935', borderColor: '#b71c1c' }} />
+        Contention ribbons & highlights
       </label>
 
       <div className="view-menu-divider" />
