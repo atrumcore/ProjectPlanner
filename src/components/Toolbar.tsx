@@ -16,9 +16,10 @@ interface Props {
   onExportPNG?: () => void;
   onExportPDF?: () => void;
   onEmailNotes?: () => void;
+  onAddFloatingNote?: () => void;
 }
 
-export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomReset, onExportPNG, onExportPDF, onEmailNotes }: Props) {
+export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomReset, onExportPNG, onExportPDF, onEmailNotes, onAddFloatingNote }: Props) {
   const [openMenu, setOpenMenu] = useState<MenuId | null>(null);
   const [menuAnchor, setMenuAnchor] = useState<DOMRect | null>(null);
   const [showAddSwimlane, setShowAddSwimlane] = useState(false);
@@ -118,7 +119,12 @@ export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomRe
         <FileMenu anchor={menuAnchor} onClose={closeMenu} onExportPNG={onExportPNG} onExportPDF={onExportPDF} onEmailNotes={onEmailNotes} />
       )}
       {openMenu === 'insert' && menuAnchor && (
-        <InsertMenu anchor={menuAnchor} onClose={closeMenu} onAddSwimlane={() => { setShowAddSwimlane(true); closeMenu(); }} />
+        <InsertMenu
+          anchor={menuAnchor}
+          onClose={closeMenu}
+          onAddSwimlane={() => { setShowAddSwimlane(true); closeMenu(); }}
+          onAddFloatingNote={() => { onAddFloatingNote?.(); }}
+        />
       )}
       {openMenu === 'view' && menuAnchor && (
         <ViewMenu anchor={menuAnchor} onClose={closeMenu} />

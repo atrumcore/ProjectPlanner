@@ -78,6 +78,33 @@ export interface Swimlane {
   order: number;
 }
 
+export interface FloatingNote {
+  id: string;
+  /** Position in timeline-content pixel coordinates (top-left of the note). */
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  /** HTML string (rich text via contentEditable). */
+  text: string;
+  /** Background color — pastel sticky-note hue. */
+  color: string;
+}
+
+export const FLOATING_NOTE_COLORS = [
+  '#fff3a8', // yellow
+  '#ffd1dc', // pink
+  '#c5e1ff', // blue
+  '#d4f0c2', // green
+  '#e0d7ff', // lavender
+  '#ffd6a5', // peach
+] as const;
+
+export const FLOATING_NOTE_DEFAULT_WIDTH = 200;
+export const FLOATING_NOTE_DEFAULT_HEIGHT = 120;
+export const FLOATING_NOTE_MIN_WIDTH = 120;
+export const FLOATING_NOTE_MIN_HEIGHT = 70;
+
 export interface Environment {
   id: string;
   name: string;
@@ -103,6 +130,7 @@ export interface GanttState {
   milestones: Milestone[];
   dependencies: Dependency[];
   actionItems: ActionItem[];
+  floatingNotes: FloatingNote[];
   environments: Environment[];
   phaseTypes: PhaseTypeDef[];
   timeline: TimelineConfig;

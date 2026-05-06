@@ -9,9 +9,18 @@ import type {
   Section,
   Environment,
   PhaseTypeDef,
+  FloatingNote,
 } from '../types/gantt';
 // PhaseBar imported above; alias for the migration helper signature.
-import { DEFAULT_SECTIONS, ENV_COLOR_PRESETS } from '../types/gantt';
+import {
+  DEFAULT_SECTIONS,
+  ENV_COLOR_PRESETS,
+  FLOATING_NOTE_COLORS,
+  FLOATING_NOTE_DEFAULT_WIDTH,
+  FLOATING_NOTE_DEFAULT_HEIGHT,
+  FLOATING_NOTE_MIN_WIDTH,
+  FLOATING_NOTE_MIN_HEIGHT,
+} from '../types/gantt';
 import { pickNextEnvColor } from '../utils/contention';
 import { BUILTIN_PHASE_TYPES, getPhaseDef, deriveColorScheme } from '../data/phasePresets';
 import { getWeeksForMonth, getDaysInMonth } from '../utils/dateUtils';
@@ -83,6 +92,14 @@ interface GanttActions {
   removeActionItem: (id: string) => void;
   clearDoneActionItems: () => void;
 
+  // Floating notes (free-positioned sticky notes)
+  addFloatingNote: (x: number, y: number) => string;
+  updateFloatingNote: (id: string, updates: Partial<Omit<FloatingNote, 'id'>>) => void;
+  moveFloatingNote: (id: string, x: number, y: number) => void;
+  resizeFloatingNote: (id: string, width: number, height: number) => void;
+  removeFloatingNote: (id: string) => void;
+  beginFloatingNoteDrag: () => void;
+
   // Notes panel
   toggleNotesPanel: () => void;
   openNotesPanelForSwimlane: (swimlaneId: string) => void;
@@ -147,6 +164,7 @@ const defaultState: GanttState = {
   milestones: [],
   dependencies: [],
   actionItems: [],
+  floatingNotes: [],
   environments: [],
   phaseTypes: BUILTIN_PHASE_TYPES,
   timeline: {
@@ -192,6 +210,7 @@ function snapshot(state: GanttState): GanttState {
     milestones: state.milestones,
     dependencies: state.dependencies,
     actionItems: state.actionItems,
+    floatingNotes: state.floatingNotes,
     environments: state.environments,
     phaseTypes: state.phaseTypes,
     timeline: state.timeline,
@@ -624,6 +643,69 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
     get().saveToStorage();
   },
 
+  // === Floating notes ===
+  addFloatingNote: (x, y) => {
+    pushUndo(get());
+    const id = uid();
+    // Pick the next color in rotation so consecutive notes don't collide.
+    const idx = get().floatingNotes.length % FLOATING_NOTE_COLORS.length;
+    const note: FloatingNote = {
+      id,
+      x: Math.max(0, x),
+      y: Math.max(0, y),
+      width: FLOATING_NOTE_DEFAULT_WIDTH,
+      height: FLOATING_NOTE_DEFAULT_HEIGHT,
+      text: '',
+      color: FLOATING_NOTE_COLORS[idx],
+    };
+    set(state => ({ floatingNotes: [...state.floatingNotes, note] }));
+    get().saveToStorage();
+    return id;
+  },
+
+  updateFloatingNote: (id, updates) => {
+    pushUndo(get());
+    set(state => ({
+      floatingNotes: state.floatingNotes.map(n => (n.id === id ? { ...n, ...updates } : n)),
+    }));
+    get().saveToStorage();
+  },
+
+  // Per-frame drag/resize — skip undo and saveToStorage so the gesture stays
+  // smooth. beginFloatingNoteDrag snapshots once at gesture start and the
+  // pointerup handler triggers a single saveToStorage.
+  moveFloatingNote: (id, x, y) => {
+    set(state => ({
+      floatingNotes: state.floatingNotes.map(n =>
+        n.id === id ? { ...n, x: Math.max(0, x), y: Math.max(0, y) } : n
+      ),
+    }));
+  },
+
+  resizeFloatingNote: (id, width, height) => {
+    set(state => ({
+      floatingNotes: state.floatingNotes.map(n =>
+        n.id === id
+          ? {
+              ...n,
+              width: Math.max(FLOATING_NOTE_MIN_WIDTH, width),
+              height: Math.max(FLOATING_NOTE_MIN_HEIGHT, height),
+            }
+          : n
+      ),
+    }));
+  },
+
+  removeFloatingNote: (id) => {
+    pushUndo(get());
+    set(state => ({ floatingNotes: state.floatingNotes.filter(n => n.id !== id) }));
+    get().saveToStorage();
+  },
+
+  beginFloatingNoteDrag: () => {
+    pushUndo(get());
+  },
+
   // === Notes panel ===
   toggleNotesPanel: () => set(state => ({
     notesPanelOpen: !state.notesPanelOpen,
@@ -849,6 +931,7 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         milestones: state.milestones,
         dependencies: state.dependencies,
         actionItems: state.actionItems,
+        floatingNotes: state.floatingNotes,
         environments: state.environments,
         phaseTypes: state.phaseTypes,
         timeline: state.timeline,
@@ -896,6 +979,7 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         milestones: data.milestones || [],
         dependencies: data.dependencies || [],
         actionItems: data.actionItems || [],
+        floatingNotes: Array.isArray(data.floatingNotes) ? data.floatingNotes : [],
         environments: migrateEnvironments(data.environments),
         phaseTypes: migratePhaseTypes(data.phaseTypes),
         timeline: savedTimeline,
@@ -962,6 +1046,7 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         milestones: data.milestones || [],
         dependencies: data.dependencies || [],
         actionItems: data.actionItems || [],
+        floatingNotes: Array.isArray(data.floatingNotes) ? data.floatingNotes : [],
         environments: migrateEnvironments(data.environments),
         phaseTypes: migratePhaseTypes(data.phaseTypes),
         timeline: data.timeline || defaultState.timeline,

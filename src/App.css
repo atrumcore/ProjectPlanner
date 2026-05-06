@@ -2167,3 +2167,195 @@ body {
   color: #fff;
   border-color: #b52222;
 }
+
+/* ─── Floating Notes (free-positioned sticky notes on the timeline) ─── */
+
+.floating-note {
+  position: absolute;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  border-radius: 6px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    0 8px 18px rgba(0, 0, 0, 0.18);
+  font-family: 'Figtree', Helvetica, Arial, sans-serif;
+  color: #2a2620;
+  z-index: 20;
+  overflow: hidden;
+  /* Subtle paper-grain via gradient — adds depth without a real image. */
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(255, 255, 255, 0) 30%,
+    rgba(0, 0, 0, 0.04) 100%
+  );
+}
+
+.floating-note:hover {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    0 12px 24px rgba(0, 0, 0, 0.22);
+}
+
+.floating-note-header {
+  display: flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  background: rgba(0, 0, 0, 0.07);
+  cursor: grab;
+  user-select: none;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.floating-note-header:active {
+  cursor: grabbing;
+}
+
+.floating-note-color-btn {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6);
+}
+
+.floating-note-color-btn:hover {
+  outline: 1px solid rgba(0, 0, 0, 0.4);
+  outline-offset: 1px;
+}
+
+.floating-note-color-picker {
+  position: absolute;
+  left: 4px;
+  top: 22px;
+  background: #fffaf3;
+  border: 1px solid #c8c3ba;
+  border-radius: 4px;
+  padding: 4px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  z-index: 5;
+}
+
+.floating-note-color-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  padding: 0;
+}
+
+.floating-note-color-swatch:hover {
+  outline: 2px solid rgba(0, 0, 0, 0.4);
+  outline-offset: 1px;
+}
+
+.floating-note-handle-grip {
+  flex: 1;
+  text-align: center;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+.floating-note-close-btn {
+  width: 14px;
+  height: 14px;
+  border: none;
+  background: transparent;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s, background 0.15s;
+}
+
+.floating-note:hover .floating-note-close-btn {
+  opacity: 1;
+}
+
+.floating-note-close-btn:hover {
+  background: rgba(181, 34, 34, 0.18);
+  color: #b52222;
+}
+
+.floating-note-body {
+  flex: 1;
+  min-height: 0;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  overflow: auto;
+  cursor: text;
+  scrollbar-width: thin;
+}
+
+.floating-note-content {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.floating-note-content ul,
+.floating-note-content ol {
+  padding-left: 16px;
+  margin: 0;
+}
+
+.floating-note-placeholder {
+  color: rgba(0, 0, 0, 0.4);
+  font-style: italic;
+  font-size: 11px;
+  user-select: none;
+}
+
+.floating-note-editor {
+  font-size: 12px;
+  min-height: 100%;
+}
+
+.floating-note-resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 14px;
+  height: 14px;
+  cursor: nwse-resize;
+  /* Diagonal stripe handle for visual cue. */
+  background:
+    linear-gradient(
+      135deg,
+      transparent 0%,
+      transparent 45%,
+      rgba(0, 0, 0, 0.35) 45%,
+      rgba(0, 0, 0, 0.35) 55%,
+      transparent 55%,
+      transparent 70%,
+      rgba(0, 0, 0, 0.25) 70%,
+      rgba(0, 0, 0, 0.25) 80%,
+      transparent 80%
+    );
+  border-bottom-right-radius: 6px;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+}
+
+.floating-note:hover .floating-note-resize {
+  opacity: 1;
+}

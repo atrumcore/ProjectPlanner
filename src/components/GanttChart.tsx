@@ -12,6 +12,10 @@ import ManagePhaseTypesModal from './ManagePhaseTypesModal';
 import { useGanttStore } from '../store/useGanttStore';
 import { getTodayWeekOffset } from '../utils/dateUtils';
 import { buildNotesEmail } from '../utils/notesEmail';
+import {
+  FLOATING_NOTE_DEFAULT_WIDTH,
+  FLOATING_NOTE_DEFAULT_HEIGHT,
+} from '../types/gantt';
 
 const LEFT_DEFAULT = 304;
 const LEFT_MIN = 80;
@@ -70,6 +74,7 @@ export default function GanttChart() {
   const swimlanes = useGanttStore(s => s.swimlanes);
   const sections = useGanttStore(s => s.sections);
   const currentFileName = useGanttStore(s => s.currentFileName);
+  const addFloatingNote = useGanttStore(s => s.addFloatingNote);
 
   // Panel collapse toggles
   const toggleLeftCollapse = useCallback(() => {
@@ -337,6 +342,19 @@ export default function GanttChart() {
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }, [swimlanes, sections, actionItems, currentFileName]);
 
+  // Drop a new floating note into the visible center of the timeline so the
+  // user always sees it appear, no matter where they've scrolled.
+  const handleAddFloatingNote = useCallback(() => {
+    const el = timelineBodyRef.current;
+    if (!el) {
+      addFloatingNote(40, 40);
+      return;
+    }
+    const cx = el.scrollLeft + el.clientWidth / 2 - FLOATING_NOTE_DEFAULT_WIDTH / 2;
+    const cy = el.scrollTop + el.clientHeight / 2 - FLOATING_NOTE_DEFAULT_HEIGHT / 2;
+    addFloatingNote(cx, cy);
+  }, [addFloatingNote]);
+
   const scrollToToday = useCallback(() => {
     if (!timelineBodyRef.current) return;
     const todayOffset = getTodayWeekOffset(timeline.startMonth, timeline.startYear);
@@ -348,7 +366,7 @@ export default function GanttChart() {
 
   return (
     <>
-    <Toolbar onScrollToToday={scrollToToday} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} onExportPNG={exportPNG} onExportPDF={exportPDF} onEmailNotes={emailNotes} />
+    <Toolbar onScrollToToday={scrollToToday} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} onExportPNG={exportPNG} onExportPDF={exportPDF} onEmailNotes={emailNotes} onAddFloatingNote={handleAddFloatingNote} />
     <div className="gantt-container" ref={ganttRef}>
       {/* Left panel */}
       {!leftCollapsed && (

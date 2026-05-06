@@ -10,6 +10,7 @@ import PhaseBar from './PhaseBar';
 import TodayMarker from './TodayMarker';
 import MilestoneMarker from './MilestoneMarker';
 import PhaseTypePicker from './PhaseTypePicker';
+import FloatingNote from './FloatingNote';
 
 interface DrawingBar {
   swimlaneId: string;
@@ -39,6 +40,7 @@ export default function TimelineContent() {
   const phaseTypes = useGanttStore(s => s.phaseTypes);
   const environmentFocusId = useGanttStore(s => s.environmentFocusId);
   const hoveredBarId = useGanttStore(s => s.hoveredBarId);
+  const floatingNotes = useGanttStore(s => s.floatingNotes);
 
   const svgRef = useRef<SVGSVGElement>(null);
   const [drawingBar, setDrawingBar] = useState<DrawingBar | null>(null);
@@ -238,6 +240,10 @@ export default function TimelineContent() {
 
   return (
     <>
+    <div
+      className="timeline-content-stack"
+      style={{ position: 'relative', width: gridWidth, height: contentHeight }}
+    >
     <svg
       ref={svgRef}
       width={gridWidth}
@@ -536,6 +542,26 @@ export default function TimelineContent() {
         />
       )}
     </svg>
+
+    {/* Floating notes overlay — absolutely positioned over the SVG content,
+        scrolls with the timeline. pointer-events:none on the layer so empty
+        regions still let bar drag-create work; the notes themselves opt
+        back in via their own styles. */}
+    {floatingNotes.length > 0 && (
+      <div
+        className="floating-notes-layer"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          pointerEvents: 'none',
+        }}
+      >
+        {floatingNotes.map(n => (
+          <FloatingNote key={n.id} note={n} />
+        ))}
+      </div>
+    )}
+    </div>
 
     {/* Phase type picker for just-created bar */}
     {creatingBarPos && svgRef.current && (
