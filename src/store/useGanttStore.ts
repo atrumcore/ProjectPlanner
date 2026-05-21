@@ -1011,6 +1011,7 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
       milestones: state.milestones,
       dependencies: state.dependencies,
       actionItems: state.actionItems,
+      floatingNotes: state.floatingNotes,
       environments: state.environments,
       phaseTypes: state.phaseTypes,
       timeline: state.timeline,
