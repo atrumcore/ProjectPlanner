@@ -14,9 +14,16 @@ export interface Contention {
 type ContentionInput = Pick<GanttState, 'environments' | 'swimlanes' | 'phaseBars'>;
 
 function barsOverlapInTime(a: PhaseBar, b: PhaseBar): boolean {
-  const aEnd = a.startWeek + a.durationWeeks;
-  const bEnd = b.startWeek + b.durationWeeks;
-  return a.startWeek < bEnd && b.startWeek < aEnd;
+  // Compare in whole-day units so adjacency matches the day-rounded labels
+  // the user reads off the bars. Without this, sub-day float drift accumulated
+  // from chained day-snap drag/resize ops can leave a bar's end at e.g.
+  // 4 + 1/7, registering as a 1-day overlap with a bar starting at week 4
+  // even though both bars visually still read as adjacent.
+  const aStart = Math.round(a.startWeek * 7);
+  const aEnd = Math.round((a.startWeek + a.durationWeeks) * 7);
+  const bStart = Math.round(b.startWeek * 7);
+  const bEnd = Math.round((b.startWeek + b.durationWeeks) * 7);
+  return aStart < bEnd && bStart < aEnd;
 }
 
 /** For each Exclusive env, find pairs of bars (different swimlanes) with
