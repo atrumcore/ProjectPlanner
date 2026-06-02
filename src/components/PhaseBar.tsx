@@ -2,10 +2,11 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import type { PhaseBar as PhaseBarType, PhaseType } from '../types/gantt';
 import { BAR_HEIGHT, BAR_RADIUS, ROW_HEIGHT } from '../types/gantt';
-import { getPhaseDef } from '../data/phasePresets';
+import { getPhaseDef, getLegacyPhaseColors } from '../data/phasePresets';
 import { useGanttStore } from '../store/useGanttStore';
 import { getDateAtWeekOffset, formatDayMonth } from '../utils/dateUtils';
 import { getContentionsForBar } from '../utils/contention';
+import { useTheme } from '../theme/ThemeContext';
 import ContextMenu from './ContextMenu';
 import BarEnvPickerPopover from './BarEnvPickerPopover';
 
@@ -22,6 +23,8 @@ interface DragState {
 }
 
 export default function PhaseBar({ bar, rowY }: Props) {
+  const { theme, colors: c } = useTheme();
+  const barStyle = useGanttStore(s => s.barStyle);
   const moveBar = useGanttStore(s => s.moveBar);
   const resizeBar = useGanttStore(s => s.resizeBar);
   const selectBar = useGanttStore(s => s.selectBar);
@@ -45,12 +48,18 @@ export default function PhaseBar({ bar, rowY }: Props) {
   const phaseTypes = useGanttStore(s => s.phaseTypes);
 
   const phaseDef = getPhaseDef(bar.phaseType, phaseTypes);
-  const colors = bar.colorOverride ?? {
-    fill: phaseDef.fill,
-    stroke: phaseDef.stroke,
-    text: phaseDef.text,
-    label: phaseDef.label,
-  };
+  // In legacy bar style, override the built-in phase colours with the muted
+  // (dark) / pastel (light) set the app shipped with. Custom phase types and
+  // per-bar `colorOverride` always win.
+  const legacy = barStyle === 'legacy' ? getLegacyPhaseColors(bar.phaseType, theme) : undefined;
+  const colors = bar.colorOverride ?? (legacy
+    ? { fill: legacy.fill, stroke: legacy.stroke, text: legacy.text, label: phaseDef.label }
+    : {
+        fill: phaseDef.fill,
+        stroke: phaseDef.stroke,
+        text: phaseDef.text,
+        label: phaseDef.label,
+      });
   const env = bar.environmentId
     ? environments.find(e => e.id === bar.environmentId) ?? null
     : null;
@@ -193,44 +202,111 @@ export default function PhaseBar({ bar, rowY }: Props) {
   const durationDays = Math.round(bar.durationWeeks * 7);
   const tooltipText = `${bar.label}\n${colors.label || bar.phaseType}${env ? `\nEnvironment: ${env.name}` : ''}\n${formatDayMonth(startDate)} – ${formatDayMonth(endDate)} (${durationDays} day${durationDays !== 1 ? 's' : ''})\nDouble-click to edit · Right-click for options`;
 
+  // Tagged-bar rendering: long bars (>= SHORT_BAR_THRESHOLD wide) render as a
+  // neutral card with a coloured left-edge "tag" carrying the DHA brand colour.
+  // Short bars fall back to a solid coloured pill so the phase is still
+  // identifiable when the label is hidden.
+  // In "legacy" bar style the user opts back into solid coloured pills for
+  // every bar regardless of width.
+  const SHORT_BAR_THRESHOLD = 24;
+  const TAG_WIDTH = 5;
+  const useSolidPill = displayWidth < SHORT_BAR_THRESHOLD || barStyle === 'legacy';
+  const clipId = `bar-clip-${bar.id}`;
+  // On the neutral card body we use the theme's primary text colour (light on
+  // dark, dark on light). The phase-type's own `text` only applies to the
+  // solid pill path, where the bar fill is the phase colour.
+  const labelFill = useSolidPill ? colors.text : c.TEXT_PRIMARY;
+
   return (
     <g onDoubleClick={(e) => e.stopPropagation()}>
 
-      {/* Main bar body */}
-      <rect
-        x={x}
-        y={y}
-        width={displayWidth}
-        height={BAR_HEIGHT}
-        rx={BAR_RADIUS}
-        ry={BAR_RADIUS}
-        fill={colors.fill}
-        stroke={isSelected ? '#333' : colors.stroke}
-        strokeWidth={isSelected ? 2 : 1}
-        style={{ cursor: 'grab', filter: isSelected ? 'drop-shadow(0 0 3px rgba(0,0,0,0.3))' : undefined }}
-        onPointerDown={e => handlePointerDown(e, 'move')}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerEnter={handlePointerEnter}
-        onPointerLeave={handlePointerLeaveBar}
-        onDoubleClick={handleDoubleClick}
-        onContextMenu={handleContextMenu}
-      >
-        <title>{tooltipText}</title>
-      </rect>
+      {useSolidPill ? (
+        // ── Short-bar fallback: solid coloured pill ────────────────────────
+        <rect
+          x={x}
+          y={y}
+          width={displayWidth}
+          height={BAR_HEIGHT}
+          rx={BAR_RADIUS}
+          ry={BAR_RADIUS}
+          fill={colors.fill}
+          stroke={isSelected ? c.SELECTION_STROKE : colors.stroke}
+          strokeWidth={isSelected ? 2 : 1}
+          style={{ cursor: 'grab', filter: isSelected ? 'drop-shadow(0 0 3px rgba(0,0,0,0.3))' : undefined }}
+          onPointerDown={e => handlePointerDown(e, 'move')}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerEnter={handlePointerEnter}
+          onPointerLeave={handlePointerLeaveBar}
+          onDoubleClick={handleDoubleClick}
+          onContextMenu={handleContextMenu}
+        >
+          <title>{tooltipText}</title>
+        </rect>
+      ) : (
+        // ── Tagged bar: neutral card body + coloured left-edge tag ─────────
+        <>
+          <defs>
+            <clipPath id={clipId}>
+              <rect
+                x={x}
+                y={y}
+                width={displayWidth}
+                height={BAR_HEIGHT}
+                rx={BAR_RADIUS}
+                ry={BAR_RADIUS}
+              />
+            </clipPath>
+          </defs>
+          {/* Body — neutral surface, faint brand-coloured frame */}
+          <rect
+            x={x}
+            y={y}
+            width={displayWidth}
+            height={BAR_HEIGHT}
+            rx={BAR_RADIUS}
+            ry={BAR_RADIUS}
+            fill={c.BG_SURFACE_2}
+            stroke={isSelected ? c.SELECTION_STROKE : colors.fill}
+            strokeOpacity={isSelected ? 1 : 0.5}
+            strokeWidth={isSelected ? 2 : 1}
+            style={{ cursor: 'grab', filter: isSelected ? 'drop-shadow(0 0 3px rgba(0,0,0,0.3))' : undefined }}
+            onPointerDown={e => handlePointerDown(e, 'move')}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerEnter={handlePointerEnter}
+            onPointerLeave={handlePointerLeaveBar}
+            onDoubleClick={handleDoubleClick}
+            onContextMenu={handleContextMenu}
+          >
+            <title>{tooltipText}</title>
+          </rect>
+          {/* Left-edge tag — clipped to the body's rounded shape so the left
+              corners match the body and the right side sits flush */}
+          <rect
+            x={x}
+            y={y}
+            width={TAG_WIDTH}
+            height={BAR_HEIGHT}
+            fill={colors.fill}
+            clipPath={`url(#${clipId})`}
+            style={{ pointerEvents: 'none' }}
+          />
+        </>
+      )}
 
       {/* Start-date label (rotated, on the left edge — toggled via toolbar) */}
       {showBarDates && !editing && (
         <text
-          x={x + 7}
+          x={x + (useSolidPill ? 7 : TAG_WIDTH + 6)}
           y={y + BAR_HEIGHT / 2}
           textAnchor="middle"
           dominantBaseline="middle"
-          fill={colors.text}
+          fill={labelFill}
           fontSize={8}
           fontWeight={700}
-          fontFamily="'Figtree', Helvetica, Arial, sans-serif"
-          transform={`rotate(-90, ${x + 7}, ${y + BAR_HEIGHT / 2})`}
+          fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
+          transform={`rotate(-90, ${x + (useSolidPill ? 7 : TAG_WIDTH + 6)}, ${y + BAR_HEIGHT / 2})`}
           style={{ pointerEvents: 'none', userSelect: 'none', opacity: 0.85 }}
         >
           {formatDayMonth(startDate)}
@@ -240,13 +316,13 @@ export default function PhaseBar({ bar, rowY }: Props) {
       {/* Label */}
       {!editing && (
         <text
-          x={x + displayWidth / 2}
+          x={x + displayWidth / 2 + (useSolidPill ? 0 : TAG_WIDTH / 2)}
           y={y + BAR_HEIGHT / 2 + 3}
           textAnchor="middle"
-          fill={colors.text}
+          fill={labelFill}
           fontSize={10}
           fontWeight={700}
-          fontFamily="'Figtree', Helvetica, Arial, sans-serif"
+          fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
           style={{ pointerEvents: 'none', userSelect: 'none' }}
         >
           {bar.label}
@@ -294,7 +370,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
                 fill="#ffffff"
                 fontSize={9}
                 fontWeight={700}
-                fontFamily="'Figtree', Helvetica, Arial, sans-serif"
+                fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
                 style={{ pointerEvents: 'none', userSelect: 'none', letterSpacing: 0.4 }}
               >
                 {text}
@@ -322,7 +398,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
                 rx={3}
                 ry={3}
                 fill="transparent"
-                stroke="#7a7264"
+                stroke={c.TEXT_SECONDARY}
                 strokeDasharray="2 2"
                 strokeWidth={1}
               />
@@ -330,10 +406,10 @@ export default function PhaseBar({ bar, rowY }: Props) {
                 x={px + pillW / 2}
                 y={py + pillH / 2 + 3}
                 textAnchor="middle"
-                fill="#7a7264"
+                fill={c.TEXT_SECONDARY}
                 fontSize={9}
                 fontWeight={600}
-                fontFamily="'Figtree', Helvetica, Arial, sans-serif"
+                fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
                 style={{ pointerEvents: 'none', userSelect: 'none', letterSpacing: 0.4 }}
               >
                 + env
@@ -358,7 +434,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
               textAlign: 'center',
               fontSize: 10,
               fontWeight: 700,
-              fontFamily: "'Figtree', Helvetica, Arial, sans-serif",
+              fontFamily: "'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif",
               color: colors.text,
               outline: 'none',
             }}
@@ -426,7 +502,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
                 cy={cy}
                 r={dotR}
                 fill={env.color}
-                stroke="#fffaf3"
+                stroke="#ffffff"
                 strokeWidth={1.5}
                 style={{ pointerEvents: 'all' }}
               />

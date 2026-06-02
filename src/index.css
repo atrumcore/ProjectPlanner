@@ -6,7 +6,8 @@
 
 body {
   margin: 0;
-  font-family: 'Figtree', Helvetica, Arial, sans-serif;
+  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  background: #0b1426;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

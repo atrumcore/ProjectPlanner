@@ -22,7 +22,8 @@ import {
   FLOATING_NOTE_MIN_HEIGHT,
 } from '../types/gantt';
 import { pickNextEnvColor } from '../utils/contention';
-import { BUILTIN_PHASE_TYPES, getPhaseDef, deriveColorScheme } from '../data/phasePresets';
+import { getBuiltinPhaseTypes, getPhaseDef, deriveColorScheme, applyThemePresetsToBuiltins } from '../data/phasePresets';
+import type { ThemeName } from '../theme/colors';
 import { getWeeksForMonth, getDaysInMonth } from '../utils/dateUtils';
 import { featuresArrayToHtml } from '../utils/htmlSanitize';
 import {
@@ -125,6 +126,9 @@ interface GanttActions {
   reorderPhaseTypes: (orderedIds: string[]) => void;
   togglePhaseTypesModal: () => void;
   resetPhaseTypesToBuiltins: () => void;
+  /** Refresh theme-managed built-in phase colours to the given theme (cosmetic;
+   * does not mark the document dirty or push undo). */
+  syncBuiltinPhaseColorsToTheme: (theme: ThemeName) => void;
 
   // UI preferences
   toggleMonthDates: () => void;
@@ -135,6 +139,7 @@ interface GanttActions {
   toggleEnvIndicators: () => void;
   toggleEnvMarquees: () => void;
   toggleContention: () => void;
+  setBarStyle: (style: import('../types/gantt').BarStyle) => void;
 
   // Persistence
   saveToStorage: () => void;
@@ -166,7 +171,7 @@ const defaultState: GanttState = {
   actionItems: [],
   floatingNotes: [],
   environments: [],
-  phaseTypes: BUILTIN_PHASE_TYPES,
+  phaseTypes: getBuiltinPhaseTypes(),
   timeline: {
     startMonth: 0, // January
     startYear: 2026,
@@ -183,6 +188,7 @@ const defaultState: GanttState = {
   showEnvIndicators: true,
   showEnvMarquees: true,
   showContention: true,
+  barStyle: 'tagged',
   lastUsedPhaseType: 'development',
   creatingBarId: null,
   isSpaceHeld: false,
@@ -266,8 +272,8 @@ function migrateEnvironments(envs: unknown): Environment[] {
 }
 
 function migratePhaseTypes(types: unknown): PhaseTypeDef[] {
-  const list = Array.isArray(types) && types.length > 0 ? types : BUILTIN_PHASE_TYPES;
-  return list.map((raw: any) => ({
+  const list = Array.isArray(types) && types.length > 0 ? types : getBuiltinPhaseTypes();
+  const mapped = list.map((raw: any) => ({
     id: raw.id,
     name: raw.name,
     label: raw.label,
@@ -276,6 +282,10 @@ function migratePhaseTypes(types: unknown): PhaseTypeDef[] {
     text: raw.text,
     order: raw.order,
   }));
+  // Built-in types that still carry a shipped (theme-managed) fill are refreshed
+  // to the active theme's design-system colours; custom types and user-recoloured
+  // built-ins are left untouched.
+  return applyThemePresetsToBuiltins(mapped);
 }
 
 /** v5 → v6: ensure every bar carries `environmentId` (null when missing). */
@@ -875,8 +885,18 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
 
   resetPhaseTypesToBuiltins: () => {
     pushUndo(get());
-    set({ phaseTypes: BUILTIN_PHASE_TYPES });
+    set({ phaseTypes: getBuiltinPhaseTypes() });
     get().saveToStorage();
+  },
+
+  syncBuiltinPhaseColorsToTheme: (theme) => {
+    const refreshed = applyThemePresetsToBuiltins(get().phaseTypes, theme);
+    // Only update if something actually changed, to avoid needless renders.
+    const changed = refreshed.some((t, i) => {
+      const prev = get().phaseTypes[i];
+      return !prev || t.fill !== prev.fill || t.stroke !== prev.stroke || t.text !== prev.text;
+    });
+    if (changed) set({ phaseTypes: refreshed });
   },
 
   // === UI preferences ===
@@ -920,6 +940,11 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
     get().saveToStorage();
   },
 
+  setBarStyle: (style) => {
+    set({ barStyle: style });
+    get().saveToStorage();
+  },
+
   // === Persistence ===
   saveToStorage: () => {
     try {
@@ -943,6 +968,7 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         showEnvIndicators: state.showEnvIndicators,
         showEnvMarquees: state.showEnvMarquees,
         showContention: state.showContention,
+        barStyle: state.barStyle,
         calendarModelVersion: 6,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -991,6 +1017,7 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         showEnvIndicators: data.showEnvIndicators ?? true,
         showEnvMarquees: data.showEnvMarquees ?? true,
         showContention: data.showContention ?? true,
+        barStyle: data.barStyle === 'legacy' ? 'legacy' : 'tagged',
       });
       ensureTodayVisible(get, set);
       // Restored state matches localStorage — from the user's POV nothing
@@ -1024,6 +1051,7 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
       showEnvIndicators: state.showEnvIndicators,
       showEnvMarquees: state.showEnvMarquees,
       showContention: state.showContention,
+      barStyle: state.barStyle,
       // Format marker (so downstream loaders can detect legacy data)
       calendarModelVersion: 5,
     }, null, 2);
@@ -1061,6 +1089,7 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         showEnvIndicators: data.showEnvIndicators ?? true,
         showEnvMarquees: data.showEnvMarquees ?? true,
         showContention: data.showContention ?? true,
+        barStyle: data.barStyle === 'legacy' ? 'legacy' : 'tagged',
       });
       get().saveToStorage();
       // State now matches the imported file; clear the dirty flag that

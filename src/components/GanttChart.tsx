@@ -12,6 +12,7 @@ import ManagePhaseTypesModal from './ManagePhaseTypesModal';
 import { useGanttStore } from '../store/useGanttStore';
 import { getTodayWeekOffset } from '../utils/dateUtils';
 import { buildNotesEmail } from '../utils/notesEmail';
+import { useThemeColors } from '../theme/ThemeContext';
 import {
   FLOATING_NOTE_DEFAULT_WIDTH,
   FLOATING_NOTE_DEFAULT_HEIGHT,
@@ -23,6 +24,7 @@ const RIGHT_DEFAULT = 180;
 const RIGHT_MIN = 60;
 
 export default function GanttChart() {
+  const themeColors = useThemeColors();
   const ganttRef = useRef<HTMLDivElement>(null);
   const leftRef = useRef<HTMLDivElement>(null);
   const rightRef = useRef<HTMLDivElement>(null);
@@ -298,10 +300,10 @@ export default function GanttChart() {
     // captured into the export. Also flushes any pending onBlur save.
     (document.activeElement as HTMLElement | null)?.blur();
     return html2canvas(ganttRef.current, {
-      backgroundColor: '#e8e4dd',
+      backgroundColor: themeColors.BG_APP,
       scale: 2,
     });
-  }, []);
+  }, [themeColors]);
 
   const exportPNG = useCallback(async () => {
     try {

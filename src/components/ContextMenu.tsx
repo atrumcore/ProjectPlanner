@@ -67,7 +67,7 @@ export default function ContextMenu({ x, y, barId, currentEnvId, onChangePhase, 
       ))}
       <div
         className="context-menu-item"
-        style={{ color: '#7a7264', fontStyle: 'italic' }}
+        style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}
         onClick={() => { onClose(); togglePhaseTypesModal(); }}
       >
         + Manage phase types…
@@ -101,7 +101,7 @@ export default function ContextMenu({ x, y, barId, currentEnvId, onChangePhase, 
       ))}
       <div
         className="context-menu-item"
-        style={{ color: '#7a7264', fontStyle: 'italic' }}
+        style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}
         onClick={() => {
           onClose();
           if (!environmentsPanelOpen) toggleEnvironmentsPanel();
@@ -110,7 +110,7 @@ export default function ContextMenu({ x, y, barId, currentEnvId, onChangePhase, 
         + Manage environments…
       </div>
       <div className="context-menu-divider" />
-      <div className="context-menu-item" style={{ color: '#b52222' }} onClick={onDelete}>
+      <div className="context-menu-item" style={{ color: 'var(--error-bright)' }} onClick={onDelete}>
         Delete
       </div>
     </div>

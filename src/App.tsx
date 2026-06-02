@@ -3,10 +3,19 @@ import './App.css';
 import GanttChart from './components/GanttChart';
 import ErrorBoundary from './components/ErrorBoundary';
 import { useGanttStore } from './store/useGanttStore';
+import { useTheme } from './theme/ThemeContext';
 
 function App() {
   const isDirty = useGanttStore(s => s.isDirty);
   const currentFileName = useGanttStore(s => s.currentFileName);
+  const { theme } = useTheme();
+  const syncBuiltinPhaseColorsToTheme = useGanttStore(s => s.syncBuiltinPhaseColorsToTheme);
+
+  // Keep theme-managed built-in phase colours in step with the active theme,
+  // so switching Dark/Light recolours those bars live (custom types untouched).
+  useEffect(() => {
+    syncBuiltinPhaseColorsToTheme(theme);
+  }, [theme, syncBuiltinPhaseColorsToTheme]);
 
   // Warn before closing/refreshing when there are unsaved changes.
   useEffect(() => {

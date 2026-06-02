@@ -7,6 +7,7 @@ import {
   getDaysInMonth,
   getCalendarWeekBoundaries,
 } from '../utils/dateUtils';
+import { useThemeColors } from '../theme/ThemeContext';
 
 interface Props {
   totalWeeks: number;
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export default function TimelineHeader({ totalWeeks, startMonth, startYear, scrollLeft }: Props) {
+  const c = useThemeColors();
   const weekWidth = useGanttStore(s => s.timeline.weekWidthPx);
   const showMonthDates = useGanttStore(s => s.showMonthDates);
   const gridWidth = totalWeeks * weekWidth;
@@ -54,8 +56,8 @@ export default function TimelineHeader({ totalWeeks, startMonth, startYear, scro
         }}
       >
         {/* Header background */}
-        <rect x={0} y={0} width={gridWidth} height={HEADER_HEIGHT} fill="#1e1b16" />
-        <rect x={0} y={HEADER_HEIGHT} width={gridWidth} height={WEEK_LABEL_HEIGHT} fill="#1e1b16" />
+        <rect x={0} y={0} width={gridWidth} height={HEADER_HEIGHT} fill={c.BG_HEADER} />
+        <rect x={0} y={HEADER_HEIGHT} width={gridWidth} height={WEEK_LABEL_HEIGHT} fill={c.BG_HEADER} />
 
         {/* Month names and dividers */}
         {months.map((month, mi) => {
@@ -67,10 +69,10 @@ export default function TimelineHeader({ totalWeeks, startMonth, startYear, scro
                 x={x + w / 2}
                 y={HEADER_HEIGHT / 2 + 4}
                 textAnchor="middle"
-                fill="#ede9e1"
+                fill={c.TEXT_HEADER}
                 fontSize={11}
                 fontWeight={700}
-                fontFamily="'Figtree', Helvetica, Arial, sans-serif"
+                fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
               >
                 {month.name}
               </text>
@@ -80,7 +82,7 @@ export default function TimelineHeader({ totalWeeks, startMonth, startYear, scro
                   y1={0}
                   x2={x}
                   y2={HEADER_HEIGHT}
-                  stroke="#3d3930"
+                  stroke={c.HEADER_DIVIDER}
                   strokeWidth={1.5}
                 />
               )}
@@ -102,14 +104,14 @@ export default function TimelineHeader({ totalWeeks, startMonth, startYear, scro
                 y={0}
                 width={18}
                 height={totalHeaderHeight}
-                fill="rgba(253, 232, 213, 0.25)"
+                fill={c.TODAY_STRIP}
               />
               <line
                 x1={tx}
                 y1={0}
                 x2={tx}
                 y2={totalHeaderHeight}
-                stroke="#ad4e0a"
+                stroke={c.TODAY_LINE}
                 strokeWidth={2.5}
               />
               <rect
@@ -118,7 +120,7 @@ export default function TimelineHeader({ totalWeeks, startMonth, startYear, scro
                 width={44}
                 height={16}
                 rx={3}
-                fill="#ad4e0a"
+                fill={c.TODAY_LINE}
               />
               <text
                 x={tx}
@@ -127,7 +129,7 @@ export default function TimelineHeader({ totalWeeks, startMonth, startYear, scro
                 fill="white"
                 fontSize={8}
                 fontWeight={700}
-                fontFamily="'Figtree', Helvetica, Arial, sans-serif"
+                fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
               >
                 {dateLabel}
               </text>
@@ -148,7 +150,7 @@ export default function TimelineHeader({ totalWeeks, startMonth, startYear, scro
                   x={(month.weekStart + (d - 1) / 7) * weekWidth}
                   y={HEADER_HEIGHT + WEEK_LABEL_HEIGHT / 2 + 3}
                   textAnchor="middle"
-                  fill="#b6afa4"
+                  fill={c.WEEK_LABEL_COLOR}
                   fontSize={7}
                   fontFamily="Courier New, monospace"
                 >
@@ -185,7 +187,7 @@ export default function TimelineHeader({ totalWeeks, startMonth, startYear, scro
                     x={centerX}
                     y={HEADER_HEIGHT + WEEK_LABEL_HEIGHT / 2 + 3}
                     textAnchor="middle"
-                    fill="#888078"
+                    fill={c.WEEK_LABEL_COLOR}
                     fontSize={7}
                     fontFamily="Courier New, monospace"
                   >

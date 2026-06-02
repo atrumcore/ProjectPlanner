@@ -58,8 +58,9 @@ export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomRe
   const closeMenu = () => setOpenMenu(null);
 
   const menuBtnStyle = (id: MenuId) => ({
-    background: openMenu === id ? '#3d3930' : undefined,
-    color: openMenu === id ? '#ede9e1' : undefined,
+    background: openMenu === id ? 'var(--accent-secondary)' : undefined,
+    color: openMenu === id ? '#ffffff' : undefined,
+    borderColor: openMenu === id ? 'var(--accent-secondary)' : undefined,
   });
 
   return (
@@ -90,7 +91,7 @@ export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomRe
         <button
           onClick={toggleNotesPanel}
           title="Notes & Action Items (Ctrl+Shift+N)"
-          style={notesPanelOpen ? { background: '#3d3930', color: '#ede9e1' } : undefined}
+          style={notesPanelOpen ? { background: 'var(--accent-secondary)', color: '#ffffff', borderColor: 'var(--accent-secondary)' } : undefined}
         >
           Notes{openCount > 0 && <span className="toolbar-notes-badge">{openCount}</span>}
         </button>
@@ -98,7 +99,7 @@ export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomRe
         <button
           onClick={toggleEnvironmentsPanel}
           title="Environments & Contention (Ctrl+Shift+E)"
-          style={environmentsPanelOpen ? { background: '#3d3930', color: '#ede9e1' } : undefined}
+          style={environmentsPanelOpen ? { background: 'var(--accent-secondary)', color: '#ffffff', borderColor: 'var(--accent-secondary)' } : undefined}
         >
           Environments{contentionCount > 0 && <span className="toolbar-env-badge">{contentionCount}</span>}
         </button>

@@ -1,5 +1,6 @@
 import type React from 'react';
 import { ROW_HEIGHT, SECTION_HEADER_HEIGHT } from '../types/gantt';
+import { useThemeColors } from '../theme/ThemeContext';
 
 interface MonthSpan {
   weekStart: number;
@@ -50,6 +51,7 @@ export default function TimelineGrid({
   showWeekends,
   showHolidays,
 }: Props) {
+  const c = useThemeColors();
   const gridWidth = totalWeeks * weekWidth;
 
   // Compute layout: each section has a header band + rows
@@ -74,7 +76,7 @@ export default function TimelineGrid({
     for (let i = 0; i < sec.laneCount; i++) {
       rows.push(
         <rect key={`r-${sec.headerY}-${i}`} x={0} y={sec.rowsY + i * ROW_HEIGHT} width={gridWidth} height={ROW_HEIGHT}
-          fill={i % 2 === 0 ? '#faf9f6' : '#f5f2ec'} />
+          fill={i % 2 === 0 ? c.ROW_EVEN : c.ROW_ODD} />
       );
     }
   }
@@ -88,7 +90,7 @@ export default function TimelineGrid({
       for (const range of rowRanges) {
         monthShading.push(
           <rect key={`ms-${i}-${range.top}`} x={x} y={range.top} width={w} height={range.bottom - range.top}
-            fill="rgba(0, 0, 0, 0.045)" />
+            fill={c.MONTH_SHADE} />
         );
       }
     }
@@ -103,7 +105,7 @@ export default function TimelineGrid({
       for (const range of rowRanges) {
         weekendShading.push(
           <rect key={`ws-${i}-${range.top}`} x={x} y={range.top} width={w} height={range.bottom - range.top}
-            fill="rgba(46, 125, 50, 0.1)" />
+            fill={c.WEEKEND_SHADE} />
         );
       }
     }
@@ -122,7 +124,7 @@ export default function TimelineGrid({
               <title>{h.name}</title>
             </line>
             <line x1={x} y1={range.top} x2={x} y2={range.bottom}
-              stroke="#c44" strokeWidth={1} strokeDasharray="3 3" opacity={0.4}
+              stroke={c.HOLIDAY_MARK} strokeWidth={1} strokeDasharray="3 3" opacity={0.5}
               style={{ pointerEvents: 'none' }} />
           </g>
         );
@@ -144,7 +146,7 @@ export default function TimelineGrid({
     for (const range of rowRanges) {
       gridLines.push(
         <line key={`gl-${i}-${range.top}`} x1={x} y1={range.top} x2={x} y2={range.bottom}
-          stroke="#dedad3" strokeWidth={1} />
+          stroke={c.GRID_WEEKLY} strokeWidth={1} />
       );
     }
   }
@@ -156,7 +158,7 @@ export default function TimelineGrid({
       const hy = sec.rowsY + i * ROW_HEIGHT;
       hLines.push(
         <line key={`hl-${sec.headerY}-${i}`} x1={0} y1={hy} x2={gridWidth} y2={hy}
-          stroke="#dedad3" strokeWidth={1} />
+          stroke={c.GRID_WEEKLY} strokeWidth={1} />
       );
     }
   }
@@ -167,11 +169,11 @@ export default function TimelineGrid({
     sectionHeaders.push(
       <g key={`sh-${sec.headerY}`}>
         <rect x={0} y={sec.headerY} width={gridWidth} height={SECTION_HEADER_HEIGHT}
-          fill="#e2ded6" />
+          fill={c.SECTION_BAND} />
         <line x1={0} y1={sec.headerY} x2={gridWidth} y2={sec.headerY}
-          stroke="#c8c3ba" strokeWidth={1} />
+          stroke={c.GRID_MONTHLY} strokeWidth={1} />
         <line x1={0} y1={sec.headerY + SECTION_HEADER_HEIGHT} x2={gridWidth} y2={sec.headerY + SECTION_HEADER_HEIGHT}
-          stroke="#c8c3ba" strokeWidth={1} />
+          stroke={c.GRID_MONTHLY} strokeWidth={1} />
       </g>
     );
   }

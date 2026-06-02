@@ -2,6 +2,7 @@ import { useRef, useCallback } from 'react';
 import { ROW_HEIGHT } from '../types/gantt';
 import { useGanttStore } from '../store/useGanttStore';
 import { getDateAtWeekOffset, formatDayMonth } from '../utils/dateUtils';
+import { useThemeColors } from '../theme/ThemeContext';
 
 interface Props {
   id: string;
@@ -14,6 +15,7 @@ interface Props {
  * Shows the target date as vertical text inside a thin green bar.
  */
 export default function MilestoneMarker({ id, week, rowY }: Props) {
+  const c = useThemeColors();
   const updateMilestone = useGanttStore(s => s.updateMilestone);
   const removeMilestone = useGanttStore(s => s.removeMilestone);
   const saveToStorage = useGanttStore(s => s.saveToStorage);
@@ -85,8 +87,8 @@ export default function MilestoneMarker({ id, week, rowY }: Props) {
         height={ROW_HEIGHT - 4}
         rx={3}
         ry={3}
-        fill="#d5e8d4"
-        stroke="#82b366"
+        fill={c.MILESTONE_FILL}
+        stroke={c.MILESTONE_STROKE}
         strokeWidth={1.2}
       >
         <title>Go-Live: {label}</title>
@@ -98,8 +100,8 @@ export default function MilestoneMarker({ id, week, rowY }: Props) {
         dominantBaseline="middle"
         fontSize={8}
         fontWeight={700}
-        fontFamily="'Figtree', Helvetica, Arial, sans-serif"
-        fill="#2d4c1c"
+        fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
+        fill={c.MILESTONE_TEXT}
         transform={`rotate(-90, ${cx}, ${cy})`}
         style={{ pointerEvents: 'none', userSelect: 'none' }}
       >

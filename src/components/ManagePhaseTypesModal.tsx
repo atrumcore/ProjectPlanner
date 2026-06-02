@@ -68,7 +68,7 @@ export default function ManagePhaseTypesModal() {
     <div className="modal-overlay" onClick={handleClose}>
       <div className="modal phase-types-modal" onClick={e => e.stopPropagation()}>
         <h2>Phase Types</h2>
-        <p style={{ fontSize: 11, color: '#7a7264', margin: '0 0 12px' }}>
+        <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '0 0 12px' }}>
           Define the kinds of work blocks (Analysis, UAT, Smoke Test, …) that can be placed on the timeline.
           Each type controls a bar's color and label, and appears as a row in every environment's overlap rules.
         </p>

@@ -123,6 +123,11 @@ export interface TimelineConfig {
   weekWidthPx: number;
 }
 
+/** How phase bars are presented:
+ *   - `tagged` (default): neutral card body + a thin DHA-coloured left edge.
+ *   - `legacy`: solid coloured pill in muted (dark) or pastel (light) tones. */
+export type BarStyle = 'tagged' | 'legacy';
+
 export interface GanttState {
   sections: Section[];
   swimlanes: Swimlane[];
@@ -145,6 +150,7 @@ export interface GanttState {
   showEnvIndicators: boolean;
   showEnvMarquees: boolean;
   showContention: boolean;
+  barStyle: BarStyle;
   // Ephemeral (not persisted/snapshotted)
   lastUsedPhaseType: PhaseType;
   creatingBarId: string | null;

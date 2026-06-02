@@ -5,6 +5,8 @@ import { getTodayWeekOffset, getMonthsFromWeeks, getHolidayWeekOffsets, getWeeke
 import { getPhaseDef } from '../data/phasePresets';
 import { useSectionedLanes } from '../hooks/useSectionedLanes';
 import { getContentions } from '../utils/contention';
+import { useTheme } from '../theme/ThemeContext';
+import { brightenForDark } from '../theme/colors';
 import TimelineGrid from './TimelineGrid';
 import PhaseBar from './PhaseBar';
 import TodayMarker from './TodayMarker';
@@ -19,6 +21,7 @@ interface DrawingBar {
 }
 
 export default function TimelineContent() {
+  const { theme, colors: c } = useTheme();
   const swimlanes = useGanttStore(s => s.swimlanes);
   const phaseBars = useGanttStore(s => s.phaseBars);
   const milestones = useGanttStore(s => s.milestones);
@@ -408,10 +411,10 @@ export default function TimelineContent() {
             y={yTop}
             width={w}
             height={yBot - yTop}
-            fill={env.color}
-            opacity={0.22}
-            stroke={env.color}
-            strokeOpacity={0.8}
+            fill={brightenForDark(env.color, theme)}
+            opacity={0.35}
+            stroke={brightenForDark(env.color, theme)}
+            strokeOpacity={0.85}
             strokeWidth={1}
             strokeDasharray="3 3"
             style={{ pointerEvents: 'none' }}
@@ -424,8 +427,8 @@ export default function TimelineContent() {
         <text
           x={gridWidth / 2} y={contentHeight / 2}
           textAnchor="middle" dominantBaseline="middle"
-          fill="var(--text-secondary)" fontSize={13}
-          fontFamily="'Figtree', Helvetica, Arial, sans-serif"
+          fill={c.TEXT_SECONDARY} fontSize={13}
+          fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
           opacity={0.5} style={{ pointerEvents: 'none' }}
         >
           Click and drag to create a phase bar
@@ -496,8 +499,8 @@ export default function TimelineContent() {
                   y={yRibbon}
                   width={w}
                   height={ribbonH}
-                  fill={env.color}
-                  stroke="rgba(0,0,0,0.35)"
+                  fill={brightenForDark(env.color, theme)}
+                  stroke={theme === 'dark' ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.35)'}
                   strokeWidth={0.75}
                   rx={1.5}
                   ry={1.5}
@@ -534,7 +537,7 @@ export default function TimelineContent() {
           y1={0}
           x2={dragIndicatorWeek * weekWidth}
           y2={contentHeight}
-          stroke="#ad4e0a"
+          stroke={c.TODAY_LINE}
           strokeWidth={1}
           strokeDasharray="4 3"
           opacity={0.5}

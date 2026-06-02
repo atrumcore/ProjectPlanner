@@ -24,7 +24,7 @@ const RightPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) 
     <div
       key={lane.id}
       className="deps-cell"
-      style={{ background: index % 2 === 0 ? '#faf9f6' : '#f5f2ec' }}
+      style={{ background: index % 2 === 0 ? 'var(--bg-row-even)' : 'var(--bg-row-odd)' }}
     >
       <RichTextEditor
         key={lane.id}

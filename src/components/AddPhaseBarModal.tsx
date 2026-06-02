@@ -83,7 +83,7 @@ export default function AddPhaseBarModal({ onClose }: Props) {
         </div>
 
         <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 10, color: '#74706a' }}>Preview:</span>
+          <span style={{ fontSize: 10, color: 'var(--text-secondary)' }}>Preview:</span>
           <span
             style={{
               display: 'inline-block',

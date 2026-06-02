@@ -1,4 +1,5 @@
 import { useGanttStore } from '../store/useGanttStore';
+import { useTheme } from '../theme/ThemeContext';
 import { getMonthsFromWeeks, getWeeksForMonth } from '../utils/dateUtils';
 import DropdownMenu from './DropdownMenu';
 
@@ -8,6 +9,11 @@ interface Props {
 }
 
 export default function ViewMenu({ anchor, onClose }: Props) {
+  // Appearance / theme
+  const { theme, setTheme } = useTheme();
+  const barStyle = useGanttStore(s => s.barStyle);
+  const setBarStyle = useGanttStore(s => s.setBarStyle);
+
   // Notes panel
   const notesPanelOpen = useGanttStore(s => s.notesPanelOpen);
   const toggleNotesPanel = useGanttStore(s => s.toggleNotesPanel);
@@ -52,6 +58,45 @@ export default function ViewMenu({ anchor, onClose }: Props) {
 
   return (
     <DropdownMenu anchor={anchor} onClose={onClose}>
+      <div className="view-menu-group-label">Appearance</div>
+      <label className="view-menu-item">
+        <input
+          type="radio"
+          name="dha-theme"
+          checked={theme === 'dark'}
+          onChange={() => setTheme('dark')}
+        />
+        Dark theme
+      </label>
+      <label className="view-menu-item">
+        <input
+          type="radio"
+          name="dha-theme"
+          checked={theme === 'light'}
+          onChange={() => setTheme('light')}
+        />
+        Light theme
+      </label>
+      <div className="view-menu-item" style={{ height: 6 }} />
+      <label className="view-menu-item">
+        <input
+          type="radio"
+          name="dha-bar-style"
+          checked={barStyle === 'tagged'}
+          onChange={() => setBarStyle('tagged')}
+        />
+        Tagged bars
+      </label>
+      <label className="view-menu-item">
+        <input
+          type="radio"
+          name="dha-bar-style"
+          checked={barStyle === 'legacy'}
+          onChange={() => setBarStyle('legacy')}
+        />
+        Solid bars (legacy)
+      </label>
+      <div className="view-menu-divider" />
       <label className="view-menu-item">
         <input type="checkbox" checked={notesPanelOpen} onChange={toggleNotesPanel} />
         Notes panel
@@ -60,7 +105,7 @@ export default function ViewMenu({ anchor, onClose }: Props) {
       <div className="view-menu-group-label">Overlays</div>
       <label className="view-menu-item">
         <input type="checkbox" checked={showWeekends} onChange={toggleWeekends} />
-        <span className="view-menu-swatch" style={{ background: 'rgba(46, 125, 50, 0.35)' }} />
+        <span className="view-menu-swatch" style={{ background: 'rgba(255, 255, 255, 0.16)' }} />
         Weekends
       </label>
       <label className="view-menu-item">
@@ -70,7 +115,7 @@ export default function ViewMenu({ anchor, onClose }: Props) {
       </label>
       <label className="view-menu-item">
         <input type="checkbox" checked={showMilestones} onChange={toggleMilestones} />
-        <span className="view-menu-swatch" style={{ background: '#d5e8d4', borderColor: '#82b366' }} />
+        <span className="view-menu-swatch" style={{ background: 'var(--milestone-fill)', borderColor: 'var(--milestone-stroke)' }} />
         Release dates
       </label>
       <label className="view-menu-item">
@@ -83,17 +128,17 @@ export default function ViewMenu({ anchor, onClose }: Props) {
       <div className="view-menu-group-label">Environments</div>
       <label className="view-menu-item">
         <input type="checkbox" checked={showEnvIndicators} onChange={toggleEnvIndicators} />
-        <span className="view-menu-swatch" style={{ background: '#1e88e5', borderColor: '#1565c0' }} />
+        <span className="view-menu-swatch" style={{ background: 'var(--accent-secondary)', borderColor: 'var(--accent-secondary)' }} />
         Environment indicators (dots & pills)
       </label>
       <label className="view-menu-item">
         <input type="checkbox" checked={showEnvMarquees} onChange={toggleEnvMarquees} />
-        <span className="view-menu-swatch view-menu-swatch-dash" style={{ borderColor: '#1e88e5' }} />
+        <span className="view-menu-swatch view-menu-swatch-dash" style={{ borderColor: 'var(--accent-secondary)' }} />
         Environment marquees
       </label>
       <label className="view-menu-item">
         <input type="checkbox" checked={showContention} onChange={toggleContention} />
-        <span className="view-menu-swatch" style={{ background: '#e53935', borderColor: '#b71c1c' }} />
+        <span className="view-menu-swatch" style={{ background: 'var(--contention)', borderColor: 'var(--contention)' }} />
         Contention ribbons & highlights
       </label>
 

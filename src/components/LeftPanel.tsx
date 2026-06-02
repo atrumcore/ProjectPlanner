@@ -220,10 +220,10 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
           setCtxMenu({ x: e.clientX, y: e.clientY, laneId: lane.id });
         }}
         style={{
-          background: index % 2 === 0 ? '#faf9f6' : '#f5f2ec',
+          background: index % 2 === 0 ? 'var(--bg-row-even)' : 'var(--bg-row-odd)',
           opacity: isDragging ? 0.4 : 1,
-          borderTop: isDropAbove ? '2px solid #ad4e0a' : undefined,
-          borderBottom: isDropBelow ? '2px solid #ad4e0a' : undefined,
+          borderTop: isDropAbove ? '2px solid var(--accent-primary)' : undefined,
+          borderBottom: isDropBelow ? '2px solid var(--accent-primary)' : undefined,
         }}
       >
         <div
@@ -302,7 +302,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
                 defaultValue={section.label}
                 style={{
                   border: 'none', background: 'transparent', textAlign: 'center',
-                  fontSize: 16, fontWeight: 700, outline: '1px solid #c8c3ba',
+                  fontSize: 16, fontWeight: 700, outline: '1px solid var(--border)',
                   borderRadius: 4, padding: '2px 8px', width: '60%',
                 }}
                 onBlur={e => {
@@ -379,7 +379,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
           <div className="context-menu-divider" />
           <div
             className="context-menu-item"
-            style={{ color: '#b52222' }}
+            style={{ color: 'var(--error-bright)' }}
             onClick={() => {
               if (confirmDelete) {
                 removeSwimlane(ctxMenu.laneId);
@@ -434,7 +434,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
               <div className="context-menu-divider" />
               <div
                 className="context-menu-item"
-                style={{ color: '#b52222' }}
+                style={{ color: 'var(--error-bright)' }}
                 onClick={() => {
                   if (confirmDeleteSection) {
                     removeSection(secCtxMenu.sectionId);
