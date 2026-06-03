@@ -135,6 +135,13 @@ body {
   overflow: hidden;
 }
 
+/* Native <option> elements are OS-rendered in the open dropdown; force theme
+   colours so the popup matches the closed select. */
+select option {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
 #root {
   width: 100vw;
   height: 100vh;
@@ -496,6 +503,7 @@ body {
   font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
   margin-bottom: 12px;
   background: var(--bg-surface);
+  color: var(--text-primary);
 }
 
 .modal textarea {
@@ -1244,6 +1252,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 3px;
   background: var(--bg-surface);
+  color: var(--text-primary);
   cursor: pointer;
 }
 
@@ -1277,6 +1286,7 @@ body {
   font-size: 12px;
   font-family: inherit;
   background: var(--bg-surface);
+  color: var(--text-primary);
   outline: none;
 }
 
@@ -1291,6 +1301,7 @@ body {
   font-size: 11px;
   font-family: inherit;
   background: var(--bg-surface);
+  color: var(--text-primary);
   max-width: 120px;
   cursor: pointer;
 }
