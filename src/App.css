@@ -335,7 +335,85 @@ select option {
   display: flex;
   align-items: stretch;
   overflow: hidden;
+  position: relative;
   border-right: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.swimlane-features:hover,
+.swimlane-features:focus-visible {
+  background: rgba(255, 255, 255, 0.04);
+  outline: none;
+}
+
+/* Read-only display container — renders the same HTML the RichTextEditor
+   produces, and gets click-to-open behaviour from the parent cell. */
+.swimlane-features-display {
+  width: 100%;
+  font-size: 9px;
+  color: var(--text-primary);
+  line-height: 1.4;
+  pointer-events: none;
+  overflow: hidden;
+}
+.swimlane-features-display ul,
+.swimlane-features-display ol {
+  padding-left: 12px;
+  margin: 0;
+  list-style: none;
+}
+.swimlane-features-display li {
+  position: relative;
+  padding-left: 10px;
+}
+.swimlane-features-display li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent-secondary);
+}
+.swimlane-features-display p { margin: 0; }
+
+/* Soft bottom fade — only when the content overflows the row height. */
+.swimlane-features.has-overflow::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 18px;
+  background: linear-gradient(180deg, transparent 0%, var(--bg-row-even) 90%);
+  pointer-events: none;
+}
+.swimlane-row:nth-child(even) .swimlane-features.has-overflow::after {
+  background: linear-gradient(180deg, transparent 0%, var(--bg-row-odd) 90%);
+}
+
+/* Tiny "more" pill — fades in on hover when the cell is overflowing. */
+.swimlane-features-more {
+  position: absolute;
+  right: 6px;
+  bottom: 3px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
+  padding: 1px 6px;
+  border-radius: 9px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+  z-index: 1;
+}
+.swimlane-features.has-overflow:hover .swimlane-features-more,
+.swimlane-features.has-overflow:focus-visible .swimlane-features-more {
+  opacity: 1;
 }
 
 .swimlane-features textarea {
@@ -2473,4 +2551,142 @@ select option {
 
 .floating-note:hover .floating-note-resize {
   opacity: 1;
+}
+
+/* ─── Key Features detail popover ─────────────────────────────────── */
+
+.key-features-popover-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 2100;
+  animation: kfp-fade 140ms ease-out;
+}
+
+@keyframes kfp-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.key-features-popover {
+  position: fixed;
+  width: 360px;
+  max-width: calc(100vw - 24px);
+  max-height: 70vh;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 2101;
+  animation: kfp-pop 160ms ease-out;
+  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+}
+
+@keyframes kfp-pop {
+  from { opacity: 0; transform: scale(0.97) translateY(6px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.key-features-popover-header {
+  background: var(--accent-secondary);
+  color: #ffffff;
+  padding: 11px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.key-features-popover-title {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.key-features-popover-eyebrow {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  opacity: 0.80;
+}
+
+.key-features-popover-project {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.key-features-popover-close {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 18px;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  line-height: 1;
+  font-family: inherit;
+  transition: background 120ms ease;
+}
+.key-features-popover-close:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.key-features-popover-body {
+  padding: 14px 16px;
+  overflow-y: auto;
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.55;
+  flex: 1;
+  min-height: 80px;
+}
+
+.key-features-popover-editor {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-primary);
+  min-height: 60px;
+  scrollbar-width: thin;
+}
+.key-features-popover-editor ul,
+.key-features-popover-editor ol {
+  padding-left: 18px;
+  margin: 0;
+}
+.key-features-popover-editor li {
+  margin-bottom: 4px;
+}
+
+.key-features-popover-footer {
+  padding: 9px 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.key-features-popover-footer kbd {
+  font-family: inherit;
+  background: var(--hover);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
 }

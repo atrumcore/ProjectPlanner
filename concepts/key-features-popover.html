@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Concept · Key Features Popover</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
+  <style>
+    :root {
+      /* DHA Dark — tokens lifted straight from src/App.css so the concept
+         matches the real app pixel-for-pixel. */
+      --bg-app: #0b1426;
+      --bg-header: #0d203c;
+      --bg-surface: #102a4a;
+      --bg-surface-2: #16335a;
+      --bg-row-even: #0e2543;
+      --bg-row-odd: #0b1f3a;
+      --text-primary: #eeeeee;
+      --text-secondary: #8aa0b8;
+      --text-muted: #6e8299;
+      --accent-primary: #31bf69;
+      --accent-secondary: #0098cc;
+      --border: rgba(255, 255, 255, 0.10);
+      --hover: rgba(255, 255, 255, 0.06);
+      --card-radius: 14px;
+      --card-shadow: 0 12px 32px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.30);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Figtree', Helvetica, Arial, sans-serif;
+      background: var(--bg-app);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 40px 24px 80px;
+    }
+
+    /* ── Page header ──────────────────────────────────────────────── */
+    .page-header {
+      max-width: 820px;
+      margin: 0 auto 28px;
+    }
+    .page-header .crumb {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      color: var(--accent-primary);
+      margin-bottom: 6px;
+    }
+    .page-header h1 {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+    .page-header p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+    .try-hint {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent-primary);
+      background: rgba(49, 191, 105, 0.10);
+      padding: 5px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(49, 191, 105, 0.30);
+    }
+    .try-hint::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-primary);
+      box-shadow: 0 0 0 4px rgba(49, 191, 105, 0.20);
+    }
+
+    /* ── Left panel mockup ────────────────────────────────────────── */
+    .panel {
+      max-width: 820px;
+      margin: 0 auto;
+      background: var(--bg-row-even);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+    }
+
+    .panel-header {
+      display: flex;
+      height: 40px;
+      background: var(--bg-header);
+      border-bottom: 1px solid var(--border);
+    }
+    .col-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-primary);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+    }
+    .col-header.project { width: 220px; border-right: 1px solid var(--border); }
+    .col-header.features { flex: 1; }
+
+    .row {
+      display: flex;
+      height: 56px;
+      border-bottom: 1px solid var(--hover);
+      transition: background 120ms ease;
+      position: relative;
+    }
+    .row:last-child { border-bottom: none; }
+    .row:nth-child(odd) { background: var(--bg-row-even); }
+    .row:nth-child(even) { background: var(--bg-row-odd); }
+    .row:hover { background: rgba(255, 255, 255, 0.04); }
+
+    .project-cell {
+      width: 220px;
+      padding: 8px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      border-right: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+
+    .features-cell {
+      flex: 1;
+      padding: 8px 14px;
+      font-size: 10px;
+      color: var(--text-primary);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      transition: background 120ms ease;
+    }
+    .features-cell:hover { background: rgba(255, 255, 255, 0.05); }
+
+    .features-cell ul {
+      list-style: none;
+      width: 100%;
+    }
+    .features-cell li {
+      position: relative;
+      padding-left: 12px;
+      line-height: 1.5;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .features-cell li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 7px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--accent-secondary);
+    }
+
+    /* Soft bottom fade — signals "more content below" */
+    .features-cell.overflow::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 22px;
+      background: linear-gradient(180deg, transparent 0%, var(--bg-row-even) 90%);
+      pointer-events: none;
+    }
+    .row:nth-child(even) .features-cell.overflow::after {
+      background: linear-gradient(180deg, transparent 0%, var(--bg-row-odd) 90%);
+    }
+
+    /* Tiny "expand" affordance shown on hover only when content overflows */
+    .features-cell.overflow .expand-cue {
+      position: absolute;
+      bottom: 4px;
+      right: 8px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      color: var(--text-secondary);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      padding: 2px 6px;
+      border-radius: 10px;
+      opacity: 0;
+      transition: opacity 120ms;
+      pointer-events: none;
+    }
+    .features-cell.overflow:hover .expand-cue { opacity: 1; }
+
+    /* ── Popover ──────────────────────────────────────────────────── */
+    .popover-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      z-index: 100;
+      display: none;
+      animation: fadeIn 140ms ease-out;
+    }
+    .popover-backdrop.show { display: block; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .popover {
+      position: fixed;
+      width: 360px;
+      max-height: 70vh;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      display: none;
+      flex-direction: column;
+      z-index: 101;
+      overflow: hidden;
+      animation: popIn 160ms ease-out;
+    }
+    .popover.show { display: flex; }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.97) translateY(6px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .popover-header {
+      background: var(--accent-secondary);
+      color: white;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .popover-title {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .popover-eyebrow {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      opacity: 0.80;
+    }
+    .popover-project {
+      font-size: 14px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .popover-close {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 18px;
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      transition: background 120ms;
+    }
+    .popover-close:hover { background: rgba(255, 255, 255, 0.18); }
+
+    .popover-body {
+      padding: 16px 18px;
+      overflow-y: auto;
+      font-size: 13px;
+      color: var(--text-primary);
+      line-height: 1.55;
+    }
+    .popover-body ul { list-style: none; }
+    .popover-body li {
+      position: relative;
+      padding-left: 18px;
+      padding-bottom: 10px;
+    }
+    .popover-body li:last-child { padding-bottom: 0; }
+    .popover-body li::before {
+      content: '';
+      position: absolute;
+      left: 2px;
+      top: 8px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-primary);
+    }
+
+    .popover-footer {
+      padding: 10px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    kbd {
+      font-family: 'Figtree', sans-serif;
+      background: var(--hover);
+      padding: 1px 7px;
+      border-radius: 4px;
+      font-size: 10px;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    /* ── Annotations ──────────────────────────────────────────────── */
+    .annotations {
+      max-width: 820px;
+      margin: 24px auto 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+    }
+    .annotation {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+    .annotation h3 {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--accent-primary);
+      margin-bottom: 6px;
+    }
+    .annotation p {
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+  <div class="page-header">
+    <div class="crumb">Design Concept</div>
+    <h1>Key Features — click-to-detail popover</h1>
+    <p>
+      In-cell content stays compact and honest (soft fade signals "more below"). Clicking
+      any features cell opens a focused, brand-styled popover with the full list. Same idea
+      could later extend to Key Dependencies if it lands well.
+    </p>
+    <span class="try-hint">Click any features cell below to try it</span>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="col-header project">Project</div>
+      <div class="col-header features">Key Features</div>
+    </div>
+
+    <div class="row">
+      <div class="project-cell">Bank Expansion Project</div>
+      <div class="features-cell overflow" data-key="bank-expansion">
+        <ul>
+          <li>ID Reissue application</li>
+          <li>Bank application software</li>
+          <li>Bank branches</li>
+          <li>Bank Courier</li>
+          <li>Green biometric verified cohort</li>
+        </ul>
+        <span class="expand-cue">+3 more</span>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="project-cell">RoC Patch 1</div>
+      <div class="features-cell" data-key="roc-patch-1">
+        <ul><li>General bug fixes</li></ul>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="project-cell">Bank Expansion Patch 1</div>
+      <div class="features-cell" data-key="bank-exp-patch">
+        <ul>
+          <li>General bug fixes</li>
+          <li>Photo resolution validation</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="project-cell">Fix Release 5</div>
+      <div class="features-cell" data-key="fix-r5">
+        <ul><li>General fixes across the system</li></ul>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="project-cell">Fix Release 6</div>
+      <div class="features-cell" data-key="fix-r6">
+        <ul><li>Priority fixes to be agreed with DHA</li></ul>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="project-cell">ETA/eMCS2.0 R1</div>
+      <div class="features-cell overflow" data-key="eta-emcs">
+        <ul>
+          <li>Extension on current permits</li>
+          <li>Emergency CR06</li>
+          <li>Departures</li>
+          <li>In Progress – No Photo</li>
+          <li>Enable more countries and ports</li>
+        </ul>
+        <span class="expand-cue">+3 more</span>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="project-cell">Ghost Worker</div>
+      <div class="features-cell overflow" data-key="ghost-worker">
+        <ul>
+          <li>Implementation of National Treasury ghost worker solution using QR code, NPR and facial verification capabilities</li>
+        </ul>
+        <span class="expand-cue">+more</span>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="project-cell">Fix Release 7</div>
+      <div class="features-cell" data-key="fix-r7">
+        <ul>
+          <li>BABS Move and Priority fixes</li>
+          <li>Bank ePerson</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="annotations">
+    <div class="annotation">
+      <h3>1 · Fade in cell</h3>
+      <p>Truncated cells show a soft vertical fade at the bottom so the eye reads "there's more". On hover, a tiny "+N more" pill appears.</p>
+    </div>
+    <div class="annotation">
+      <h3>2 · Click opens popover</h3>
+      <p>Clicking anywhere in a features cell opens an anchored card with the full bullet list. Morpho-Blue header strip echoes the design-system card pattern.</p>
+    </div>
+    <div class="annotation">
+      <h3>3 · Edit in the popover</h3>
+      <p>The popover is where editing happens — roomy, readable, autosaves on close. Esc / outside click / × button all dismiss.</p>
+    </div>
+  </div>
+
+  <!-- ── Popover overlay ──────────────────────────────────────────── -->
+  <div class="popover-backdrop" id="backdrop"></div>
+  <div class="popover" id="popover" role="dialog" aria-modal="true" aria-labelledby="popover-title">
+    <div class="popover-header">
+      <div class="popover-title">
+        <span class="popover-eyebrow">Key Features</span>
+        <span class="popover-project" id="popover-title">Project Name</span>
+      </div>
+      <button class="popover-close" id="popover-close" aria-label="Close">×</button>
+    </div>
+    <div class="popover-body" id="popover-body"></div>
+    <div class="popover-footer">
+      <span>Auto-saves on close</span>
+      <span><kbd>Esc</kbd> to close</span>
+    </div>
+  </div>
+
+  <script>
+    const data = {
+      'bank-expansion': {
+        name: 'Bank Expansion Project',
+        items: ['ID Reissue application', 'Bank application software', 'Bank branches', 'Bank Courier', 'Green biometric verified cohort'],
+      },
+      'roc-patch-1':   { name: 'RoC Patch 1',            items: ['General bug fixes'] },
+      'bank-exp-patch':{ name: 'Bank Expansion Patch 1', items: ['General bug fixes', 'Photo resolution validation'] },
+      'fix-r5':        { name: 'Fix Release 5',          items: ['General fixes across the system'] },
+      'fix-r6':        { name: 'Fix Release 6',          items: ['Priority fixes to be agreed with DHA'] },
+      'eta-emcs':      { name: 'ETA/eMCS2.0 R1',         items: ['Extension on current permits', 'Emergency CR06', 'Departures', 'In Progress – No Photo', 'Enable more countries and ports'] },
+      'ghost-worker':  { name: 'Ghost Worker',           items: ['Implementation of National Treasury ghost worker solution using QR code, NPR and facial verification capabilities'] },
+      'fix-r7':        { name: 'Fix Release 7',          items: ['BABS Move and Priority fixes', 'Bank ePerson'] },
+    };
+
+    const backdrop = document.getElementById('backdrop');
+    const popover  = document.getElementById('popover');
+    const titleEl  = document.getElementById('popover-title');
+    const bodyEl   = document.getElementById('popover-body');
+
+    function open(cell) {
+      const key = cell.dataset.key;
+      const d = data[key];
+      if (!d) return;
+      titleEl.textContent = d.name;
+      bodyEl.innerHTML = '<ul>' + d.items.map(i => '<li>' + escapeHtml(i) + '</li>').join('') + '</ul>';
+
+      // Position: anchored to the right of the cell, flipping left if too tight
+      const r = cell.getBoundingClientRect();
+      const pw = 360;
+      const margin = 12;
+      let left = r.right + margin;
+      if (left + pw > window.innerWidth - margin) left = Math.max(margin, r.left - pw - margin);
+      let top = r.top - 6;
+      // keep within viewport vertically
+      top = Math.max(margin, Math.min(top, window.innerHeight - 320));
+      popover.style.left = left + 'px';
+      popover.style.top  = top  + 'px';
+
+      backdrop.classList.add('show');
+      popover.classList.add('show');
+    }
+    function close() {
+      backdrop.classList.remove('show');
+      popover.classList.remove('show');
+    }
+    function escapeHtml(s) { return s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+    document.querySelectorAll('.features-cell').forEach(cell => {
+      cell.addEventListener('click', () => open(cell));
+    });
+    document.getElementById('popover-close').addEventListener('click', close);
+    backdrop.addEventListener('click', close);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+  </script>
+</body>
+</html>

@@ -3,6 +3,8 @@ import type { Swimlane } from '../types/gantt';
 import { useSectionedLanes } from '../hooks/useSectionedLanes';
 import { useState, useMemo, useCallback, useEffect, useRef, forwardRef } from 'react';
 import RichTextEditor from './RichTextEditor';
+import FeaturesCell from './FeaturesCell';
+import KeyFeaturesPopover from './KeyFeaturesPopover';
 
 interface Props {
   onScroll: (scrollTop: number) => void;
@@ -44,6 +46,9 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
   const [dragId, setDragId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<{ id: string; position: 'above' | 'below' } | null>(null);
   const [actionItemHoverLaneId, setActionItemHoverLaneId] = useState<string | null>(null);
+
+  // Open features-detail popover (anchored to the clicked cell)
+  const [featuresPopover, setFeaturesPopover] = useState<{ laneId: string; anchor: DOMRect } | null>(null);
 
   // Swimlane right-click context menu
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; laneId: string } | null>(null);
@@ -256,14 +261,11 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
             </button>
           )}
         </div>
-        <div className="swimlane-features" style={{ flex: 1 }}>
-          <RichTextEditor
-            key={lane.id}
-            value={lane.keyFeatures}
-            onSave={v => updateSwimlane(lane.id, { keyFeatures: v })}
-            className="swimlane-features-editor"
-          />
-        </div>
+        <FeaturesCell
+          key={lane.id}
+          html={lane.keyFeatures}
+          onClick={rect => setFeaturesPopover({ laneId: lane.id, anchor: rect })}
+        />
       </div>
     );
   };
@@ -451,6 +453,22 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
           )}
         </div>
       )}
+
+      {featuresPopover && (() => {
+        const lane = swimlanes.find(l => l.id === featuresPopover.laneId);
+        if (!lane) return null;
+        // Strip HTML from the project name for the popover's title label.
+        const plainName = lane.projectName.replace(/<[^>]+>/g, '').trim() || 'Untitled project';
+        return (
+          <KeyFeaturesPopover
+            anchor={featuresPopover.anchor}
+            projectName={plainName}
+            value={lane.keyFeatures}
+            onSave={v => updateSwimlane(lane.id, { keyFeatures: v })}
+            onClose={() => setFeaturesPopover(null)}
+          />
+        );
+      })()}
     </div>
   );
 });
