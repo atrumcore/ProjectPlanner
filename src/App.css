@@ -331,7 +331,7 @@ select option {
   width: var(--features-col);
   padding: 4px 6px;
   font-size: 9px;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   display: flex;
   align-items: stretch;
   overflow: hidden;
@@ -345,7 +345,7 @@ select option {
   background: transparent;
   font-size: 9px;
   font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   outline: none;
   resize: none;
   line-height: 1.3;
@@ -407,7 +407,7 @@ select option {
   background: transparent;
   font-size: 9px;
   font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   outline: none;
   resize: none;
   line-height: 1.3;
@@ -1046,12 +1046,12 @@ select option {
 
 .swimlane-features-editor {
   font-size: 9px;
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .deps-cell-editor {
   font-size: 9px;
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .swimlane-features-editor:empty::before {
