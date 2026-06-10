@@ -1,4 +1,5 @@
 import type { ActionItem, Section, Swimlane } from '../types/gantt';
+import { htmlToPlainText } from './plainText';
 
 export interface NotesEmail {
   subject: string;
@@ -81,7 +82,7 @@ export function buildNotesEmail(
     for (const lane of lanesInSection) {
       const items = byLane.get(lane.id);
       if (!items || items.length === 0) continue;
-      laneBlocks.push(formatProjectBlock(lane.projectName, items));
+      laneBlocks.push(formatProjectBlock(htmlToPlainText(lane.projectName), items));
     }
 
     if (laneBlocks.length === 0) continue;

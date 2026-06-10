@@ -5,6 +5,7 @@ import { useState, useMemo, useCallback, useEffect, useRef, forwardRef } from 'r
 import RichTextEditor from './RichTextEditor';
 import FeaturesCell from './FeaturesCell';
 import KeyFeaturesPopover from './KeyFeaturesPopover';
+import { htmlToPlainText } from '../utils/plainText';
 
 interface Props {
   onScroll: (scrollTop: number) => void;
@@ -458,7 +459,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
         const lane = swimlanes.find(l => l.id === featuresPopover.laneId);
         if (!lane) return null;
         // Strip HTML from the project name for the popover's title label.
-        const plainName = lane.projectName.replace(/<[^>]+>/g, '').trim() || 'Untitled project';
+        const plainName = htmlToPlainText(lane.projectName) || 'Untitled project';
         return (
           <KeyFeaturesPopover
             anchor={featuresPopover.anchor}

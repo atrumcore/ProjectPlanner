@@ -5,6 +5,7 @@ import type { Environment, PhaseType } from '../types/gantt';
 import { ENV_COLOR_PRESETS } from '../types/gantt';
 import { getPhaseDef } from '../data/phasePresets';
 import { getContentions } from '../utils/contention';
+import { htmlToPlainText } from '../utils/plainText';
 
 const PANEL_MIN = 320;
 const PANEL_MAX = 720;
@@ -115,7 +116,10 @@ export default function EnvironmentsPanel() {
   }, [activeId, environmentFocusId, setEnvironmentFocus]);
 
   const swimlaneNameById = useCallback(
-    (id: string) => swimlanes.find(s => s.id === id)?.projectName ?? '(deleted)',
+    (id: string) => {
+      const lane = swimlanes.find(s => s.id === id);
+      return lane ? htmlToPlainText(lane.projectName) : '(deleted)';
+    },
     [swimlanes]
   );
 

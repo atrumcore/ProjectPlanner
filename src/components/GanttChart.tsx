@@ -12,6 +12,7 @@ import ManagePhaseTypesModal from './ManagePhaseTypesModal';
 import { useGanttStore } from '../store/useGanttStore';
 import { getTodayWeekOffset } from '../utils/dateUtils';
 import { buildNotesEmail } from '../utils/notesEmail';
+import { buildSwimlaneCsv } from '../utils/swimlaneExport';
 import { useThemeColors } from '../theme/ThemeContext';
 import {
   FLOATING_NOTE_DEFAULT_WIDTH,
@@ -344,6 +345,17 @@ export default function GanttChart() {
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }, [swimlanes, sections, actionItems, currentFileName]);
 
+  const exportSwimlanes = useCallback(() => {
+    const csv = buildSwimlaneCsv(swimlanes, sections);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = 'dha-swimlanes.csv';
+    link.href = url;
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [swimlanes, sections]);
+
   // Drop a new floating note into the visible center of the timeline so the
   // user always sees it appear, no matter where they've scrolled.
   const handleAddFloatingNote = useCallback(() => {
@@ -368,7 +380,7 @@ export default function GanttChart() {
 
   return (
     <>
-    <Toolbar onScrollToToday={scrollToToday} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} onExportPNG={exportPNG} onExportPDF={exportPDF} onEmailNotes={emailNotes} onAddFloatingNote={handleAddFloatingNote} />
+    <Toolbar onScrollToToday={scrollToToday} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} onExportPNG={exportPNG} onExportPDF={exportPDF} onExportSwimlanes={exportSwimlanes} onEmailNotes={emailNotes} onAddFloatingNote={handleAddFloatingNote} />
     <div className="gantt-container" ref={ganttRef}>
       {/* Left panel */}
       {!leftCollapsed && (

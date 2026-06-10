@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useGanttStore } from '../store/useGanttStore';
 import type { PhaseType } from '../types/gantt';
 import { getPhaseDef } from '../data/phasePresets';
+import { htmlToPlainText } from '../utils/plainText';
 
 interface Props {
   onClose: () => void;
@@ -47,7 +48,7 @@ export default function AddPhaseBarModal({ onClose }: Props) {
         <label>Swimlane</label>
         <select value={swimlaneId} onChange={e => setSwimlaneId(e.target.value)}>
           {swimlanes.map(s => (
-            <option key={s.id} value={s.id}>{s.projectName}</option>
+            <option key={s.id} value={s.id}>{htmlToPlainText(s.projectName)}</option>
           ))}
         </select>
 

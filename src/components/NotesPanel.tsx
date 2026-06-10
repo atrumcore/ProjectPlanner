@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useGanttStore } from '../store/useGanttStore';
 import type { ActionItem } from '../types/gantt';
 import { buildNotesEmail } from '../utils/notesEmail';
+import { htmlToPlainText } from '../utils/plainText';
 
 const GENERAL_FILTER_ID = '__general__';
 
@@ -18,7 +19,7 @@ function ActionItemRow({ item }: { item: ActionItem }) {
   const swimlaneName = useMemo(() => {
     if (!item.swimlaneId) return null;
     const lane = swimlanes.find(s => s.id === item.swimlaneId);
-    return lane?.projectName || null;
+    return lane ? htmlToPlainText(lane.projectName) || null : null;
   }, [item.swimlaneId, swimlanes]);
 
   return (
@@ -71,7 +72,7 @@ function ActionItemRow({ item }: { item: ActionItem }) {
             >
               <option value="">General</option>
               {swimlanes.map(s => (
-                <option key={s.id} value={s.id}>{s.projectName}</option>
+                <option key={s.id} value={s.id}>{htmlToPlainText(s.projectName)}</option>
               ))}
             </select>
           ) : swimlaneName ? (
@@ -247,7 +248,7 @@ export default function NotesPanel() {
           <option value="">All</option>
           <option value={GENERAL_FILTER_ID}>General</option>
           {swimlanes.map(s => (
-            <option key={s.id} value={s.id}>{s.projectName}</option>
+            <option key={s.id} value={s.id}>{htmlToPlainText(s.projectName)}</option>
           ))}
         </select>
       </div>
@@ -266,7 +267,7 @@ export default function NotesPanel() {
         >
           <option value="">General</option>
           {swimlanes.map(s => (
-            <option key={s.id} value={s.id}>{s.projectName}</option>
+            <option key={s.id} value={s.id}>{htmlToPlainText(s.projectName)}</option>
           ))}
         </select>
       </div>
