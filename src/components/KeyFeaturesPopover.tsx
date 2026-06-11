@@ -104,6 +104,7 @@ export default function KeyFeaturesPopover({ anchor, projectName, value, onSave,
             value={value}
             onSave={onSave}
             className="key-features-popover-editor"
+            dockedToolbar
           />
         </div>
         <div className="key-features-popover-footer">

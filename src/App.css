@@ -1189,6 +1189,20 @@ select option {
   margin: 0 2px;
 }
 
+/* Docked variant: always-visible toolbar above the editor (Key Features popover). */
+.formatting-toolbar--docked {
+  position: static;
+  z-index: auto;
+  box-shadow: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  padding: 0 0 8px 0;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+
 .formatting-size-wrapper {
   position: relative;
 }

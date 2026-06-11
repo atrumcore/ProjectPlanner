@@ -6,6 +6,12 @@ interface Props {
   value: string;
   onSave: (html: string) => void;
   className?: string;
+  /**
+   * Render the formatting toolbar inline, docked above the editor and
+   * always visible — instead of only on right-click. Used by the Key
+   * Features popover so the controls are discoverable.
+   */
+  dockedToolbar?: boolean;
 }
 
 interface ToolbarPos {
@@ -72,7 +78,7 @@ function splitSpanAtRange(span: HTMLElement, range: Range): void {
  * Callers should pass `key={lane.id}` so swapping swimlanes remounts
  * the editor and resets the DOM from `value`.
  */
-export default function RichTextEditor({ value, onSave, className }: Props) {
+export default function RichTextEditor({ value, onSave, className, dockedToolbar }: Props) {
   const editorRef = useRef<HTMLDivElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
   const [toolbar, setToolbar] = useState<ToolbarPos | null>(null);
@@ -130,6 +136,8 @@ export default function RichTextEditor({ value, onSave, className }: Props) {
     // Prevent the browser menu AND the swimlane-row context menu above us.
     e.preventDefault();
     e.stopPropagation();
+    // The docked toolbar is always visible, so don't also pop a floating one.
+    if (dockedToolbar) return;
     setToolbar({ x: e.clientX, y: e.clientY });
     setShowSizeMenu(false);
   };
@@ -252,8 +260,65 @@ export default function RichTextEditor({ value, onSave, className }: Props) {
   // Prevent the toolbar button from stealing focus before its onClick fires.
   const btnMouseDown = (e: React.MouseEvent) => e.preventDefault();
 
+  // Shared button set, reused by both the floating (right-click) toolbar
+  // and the docked (always-visible) toolbar.
+  const toolbarButtons = (
+    <>
+      <button type="button" onMouseDown={btnMouseDown} onClick={() => exec('bold')} title="Bold">
+        <b>B</b>
+      </button>
+      <button type="button" onMouseDown={btnMouseDown} onClick={() => exec('italic')} title="Italic">
+        <i>I</i>
+      </button>
+      <button type="button" onMouseDown={btnMouseDown} onClick={() => exec('underline')} title="Underline">
+        <u>U</u>
+      </button>
+      <span className="formatting-toolbar-divider" />
+      <button type="button" onMouseDown={btnMouseDown} onClick={() => exec('insertUnorderedList')} title="Bullet list">
+        &#x2022; List
+      </button>
+      <button type="button" onMouseDown={btnMouseDown} onClick={() => exec('insertOrderedList')} title="Numbered list">
+        1. List
+      </button>
+      <span className="formatting-toolbar-divider" />
+      <div className="formatting-size-wrapper">
+        <button
+          type="button"
+          onMouseDown={btnMouseDown}
+          onClick={() => setShowSizeMenu(m => !m)}
+          title="Font size"
+        >
+          Size &#x25BE;
+        </button>
+        {showSizeMenu && (
+          <div className="formatting-size-menu">
+            {SIZE_OPTIONS.map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                onMouseDown={btnMouseDown}
+                onClick={() => applySize(opt.value)}
+              >
+                <span style={{ fontSize: opt.value }}>{opt.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+
   return (
     <>
+      {dockedToolbar && (
+        <div
+          className="formatting-toolbar formatting-toolbar--docked"
+          onContextMenu={e => e.preventDefault()}
+          onMouseDown={e => e.preventDefault()}
+        >
+          {toolbarButtons}
+        </div>
+      )}
       <div
         ref={editorRef}
         className={`rich-text-editor ${className || ''}`}
@@ -272,47 +337,7 @@ export default function RichTextEditor({ value, onSave, className }: Props) {
           style={{ left: toolbar.x, top: toolbar.y }}
           onContextMenu={e => e.preventDefault()}
         >
-          <button type="button" onMouseDown={btnMouseDown} onClick={() => exec('bold')} title="Bold">
-            <b>B</b>
-          </button>
-          <button type="button" onMouseDown={btnMouseDown} onClick={() => exec('italic')} title="Italic">
-            <i>I</i>
-          </button>
-          <button type="button" onMouseDown={btnMouseDown} onClick={() => exec('underline')} title="Underline">
-            <u>U</u>
-          </button>
-          <span className="formatting-toolbar-divider" />
-          <button type="button" onMouseDown={btnMouseDown} onClick={() => exec('insertUnorderedList')} title="Bullet list">
-            &#x2022; List
-          </button>
-          <button type="button" onMouseDown={btnMouseDown} onClick={() => exec('insertOrderedList')} title="Numbered list">
-            1. List
-          </button>
-          <span className="formatting-toolbar-divider" />
-          <div className="formatting-size-wrapper">
-            <button
-              type="button"
-              onMouseDown={btnMouseDown}
-              onClick={() => setShowSizeMenu(m => !m)}
-              title="Font size"
-            >
-              Size &#x25BE;
-            </button>
-            {showSizeMenu && (
-              <div className="formatting-size-menu">
-                {SIZE_OPTIONS.map(opt => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onMouseDown={btnMouseDown}
-                    onClick={() => applySize(opt.value)}
-                  >
-                    <span style={{ fontSize: opt.value }}>{opt.label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          {toolbarButtons}
         </div>,
         document.body
       )}
