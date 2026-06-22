@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState, useCallback, useEffect } from 'react';
 import { useGanttStore } from '../store/useGanttStore';
-import { ROW_HEIGHT, BAR_HEIGHT, BAR_RADIUS, SECTION_HEADER_HEIGHT } from '../types/gantt';
+import { BAR_HEIGHT, BAR_RADIUS, SECTION_HEADER_HEIGHT } from '../types/gantt';
+import { useExportLayout } from './ExportLayoutContext';
 import { getTodayWeekOffset, getMonthsFromWeeks, getHolidayWeekOffsets, getWeekendDayRanges, getCalendarWeekBoundaries } from '../utils/dateUtils';
 import { getPhaseDef } from '../data/phasePresets';
 import { useSectionedLanes } from '../hooks/useSectionedLanes';
@@ -51,6 +52,10 @@ export default function TimelineContent() {
 
   const sectionedLanes = useSectionedLanes(sections, swimlanes);
 
+  // Row height grows during export so Key Features lists fit; the SVG reads it
+  // from context so its bars/rows stay aligned with the DOM panels' rows.
+  const { rowHeight: ROW_HEIGHT } = useExportLayout();
+
   const weekWidth = timeline.weekWidthPx;
   const totalRows = sectionedLanes.reduce((sum, sl) => sum + sl.lanes.length, 0);
   const gridWidth = timeline.totalWeeks * weekWidth;
@@ -68,7 +73,7 @@ export default function TimelineContent() {
       }
     }
     return map;
-  }, [sectionedLanes]);
+  }, [sectionedLanes, ROW_HEIGHT]);
 
   const todayOffset = getTodayWeekOffset(timeline.startMonth, timeline.startYear);
 
@@ -111,7 +116,7 @@ export default function TimelineContent() {
     }
     if (!foundLane || week < 0) return null;
     return { swimlaneId: foundLane, week };
-  }, [swimlaneYMap, weekWidth]);
+  }, [swimlaneYMap, weekWidth, ROW_HEIGHT]);
 
   // Double-click: instant bar creation
   const handleDoubleClick = useCallback((e: React.MouseEvent) => {
@@ -196,7 +201,7 @@ export default function TimelineContent() {
       fill: def.fill,
       stroke: def.stroke,
     };
-  }, [drawingBar, swimlaneYMap, weekWidth, lastUsedPhaseType, phaseTypes]);
+  }, [drawingBar, swimlaneYMap, weekWidth, lastUsedPhaseType, phaseTypes, ROW_HEIGHT]);
 
   // === Contention computation ===
   const contentions = useMemo(
@@ -239,7 +244,7 @@ export default function TimelineContent() {
       y: rowY + (ROW_HEIGHT - BAR_HEIGHT) / 2 + BAR_HEIGHT,
       width: creatingBar.durationWeeks * weekWidth,
     };
-  }, [creatingBar, swimlaneYMap, weekWidth]);
+  }, [creatingBar, swimlaneYMap, weekWidth, ROW_HEIGHT]);
 
   return (
     <>
@@ -268,6 +273,7 @@ export default function TimelineContent() {
           laneCount: sl.lanes.length,
         }))}
         weekWidth={weekWidth}
+        rowHeight={ROW_HEIGHT}
         monthSpans={monthSpans}
         holidays={holidays}
         weekendSpans={weekendSpans}

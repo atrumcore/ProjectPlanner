@@ -240,6 +240,70 @@ select option {
   position: relative;
 }
 
+/* Timeline center column (between the two panels). Overflow lives here, not
+   inline, so export mode can override it. */
+.timeline-center {
+  overflow: hidden;
+}
+
+/* ─── Export mode ───────────────────────────────────────────────────────────
+   While capturing a PNG/PDF, GanttChart adds `.is-exporting`. These rules
+   unclip every scroll container and let the chart grow to its full content
+   size so html2canvas captures the ENTIRE plan, and make the rows taller +
+   the left panel wider so all Key Features show. The taller row height
+   (--row-height) is mirrored on the timeline SVG via EXPORT_ROW_HEIGHT
+   (src/types/gantt.ts) so bars stay aligned with the panel rows. */
+.gantt-container.is-exporting {
+  overflow: visible;
+  width: max-content;
+  height: auto;
+  align-items: flex-start;
+  /* Keep in sync with EXPORT_ROW_HEIGHT in src/types/gantt.ts. */
+  --row-height: 104px;
+}
+.gantt-container.is-exporting .left-panel,
+.gantt-container.is-exporting .right-panel {
+  overflow: visible;
+  height: auto;
+  max-height: none;
+}
+/* Widen the left panel so its two flex:1 columns (Project + Key Features) each
+   get more room. min-width only grows it — a user's wider panel is preserved. */
+.gantt-container.is-exporting .left-panel {
+  min-width: 500px;
+}
+.gantt-container.is-exporting .timeline-center {
+  overflow: visible;
+}
+/* TimelineHeader wrapper — show the full-width header above the body. */
+.gantt-container.is-exporting .timeline-center > div:first-child {
+  overflow: visible;
+}
+.gantt-container.is-exporting .timeline-wrapper {
+  overflow: visible;
+  flex: 0 0 auto;
+}
+/* Unclip Key Features so every bullet is visible (no fade / "more" pill), and
+   tighten line spacing so longer lists fit the taller row. */
+.gantt-container.is-exporting .swimlane-features,
+.gantt-container.is-exporting .swimlane-features-display {
+  overflow: visible;
+}
+.gantt-container.is-exporting .swimlane-features-display {
+  line-height: 1.3;
+}
+.gantt-container.is-exporting .swimlane-features.has-overflow::after {
+  display: none;
+}
+/* Hide interactive chrome from the captured image. */
+.gantt-container.is-exporting .resize-handle,
+.gantt-container.is-exporting .collapse-btn,
+.gantt-container.is-exporting .swimlane-features-more,
+.gantt-container.is-exporting .swimlane-add-note-btn,
+.gantt-container.is-exporting .swimlane-note-badge {
+  display: none !important;
+}
+
 /* Left panel */
 .left-panel {
   flex-shrink: 0;

@@ -1,5 +1,5 @@
 import type React from 'react';
-import { ROW_HEIGHT, SECTION_HEADER_HEIGHT } from '../types/gantt';
+import { SECTION_HEADER_HEIGHT } from '../types/gantt';
 import { useThemeColors } from '../theme/ThemeContext';
 
 interface MonthSpan {
@@ -32,6 +32,8 @@ interface Props {
   totalWeeks: number;
   sections: SectionInfo[];
   weekWidth: number;
+  /** Row height to draw with — taller during export (see ExportLayoutContext). */
+  rowHeight: number;
   monthSpans: MonthSpan[];
   holidays: HolidayMark[];
   weekendSpans: WeekendSpan[];
@@ -44,6 +46,7 @@ export default function TimelineGrid({
   totalWeeks,
   sections,
   weekWidth,
+  rowHeight: ROW_HEIGHT,
   monthSpans,
   holidays,
   weekendSpans,

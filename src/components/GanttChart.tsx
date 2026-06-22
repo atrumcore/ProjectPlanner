@@ -17,7 +17,10 @@ import { useThemeColors } from '../theme/ThemeContext';
 import {
   FLOATING_NOTE_DEFAULT_WIDTH,
   FLOATING_NOTE_DEFAULT_HEIGHT,
+  ROW_HEIGHT,
+  EXPORT_ROW_HEIGHT,
 } from '../types/gantt';
+import { ExportLayoutContext } from './ExportLayoutContext';
 
 const LEFT_DEFAULT = 304;
 const LEFT_MIN = 80;
@@ -32,6 +35,8 @@ export default function GanttChart() {
   const timelineBodyRef = useRef<HTMLDivElement>(null);
   const isSyncing = useRef(false);
   const [scrollLeft, setScrollLeft] = useState(0);
+  // True only while capturing an export, so the chart renders expanded/unclipped.
+  const [isExporting, setIsExporting] = useState(false);
 
   // Resizable panel widths
   const [leftWidth, setLeftWidth] = useState(LEFT_DEFAULT);
@@ -295,24 +300,89 @@ export default function GanttChart() {
     handleSpacePanStart(e);
   }, [handlePanStart, handleSpacePanStart]);
 
-  const captureCanvas = useCallback(async () => {
-    if (!ganttRef.current) return null;
+  // Capture the ENTIRE plan (not just the on-screen viewport) by temporarily
+  // entering "export mode": force both side panels open, reset scroll to the
+  // origin, and add `.is-exporting` to the container — which unclips overflow,
+  // expands it to full content size, and renders taller rows so Key Features
+  // fit (see App.css + ExportLayoutContext). Captured at full size, then the
+  // live UI is restored in `finally`. Returns the canvas plus the scale used,
+  // since the scale is clamped for very large plans to stay within the
+  // browser's canvas size limits.
+  const captureCanvas = useCallback(async (): Promise<{ canvas: HTMLCanvasElement; scale: number } | null> => {
+    const el = ganttRef.current;
+    if (!el) return null;
     // Blur any focused rich-text editor so the cursor/selection isn't
     // captured into the export. Also flushes any pending onBlur save.
     (document.activeElement as HTMLElement | null)?.blur();
-    return html2canvas(ganttRef.current, {
-      backgroundColor: themeColors.BG_APP,
-      scale: 2,
-    });
-  }, [themeColors]);
+
+    const body = timelineBodyRef.current;
+    const prevScrollLeft = body?.scrollLeft ?? 0;
+    const prevScrollTop = body?.scrollTop ?? 0;
+    const prevLeftCollapsed = leftCollapsed;
+    const prevRightCollapsed = rightCollapsed;
+
+    try {
+      // Enter export mode (batched into one render): include the full plan by
+      // forcing collapsed panels open, and start from the top-left origin.
+      if (prevLeftCollapsed) setLeftCollapsed(false);
+      if (prevRightCollapsed) setRightCollapsed(false);
+      setScrollLeft(0);
+      if (body) { body.scrollLeft = 0; body.scrollTop = 0; }
+      setIsExporting(true);
+
+      // Wait for React to commit AND the browser to lay out the expanded DOM
+      // (double rAF), plus webfonts, so scrollWidth/Height are final.
+      await new Promise<void>(resolve =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+      if (document.fonts?.ready) { try { await document.fonts.ready; } catch { /* ignore */ } }
+
+      const w = Math.ceil(el.scrollWidth);
+      const h = Math.ceil(el.scrollHeight);
+
+      // Clamp scale so a large plan doesn't blow past the browser canvas limit
+      // (~16384px per side and a total-area cap), which would yield a blank or
+      // truncated image.
+      const MAX_DIM = 16384;
+      const MAX_AREA = 268_000_000;
+      const RAW_SCALE = 2;
+      let scale = Math.min(RAW_SCALE, MAX_DIM / Math.max(w, h));
+      if (w * h * scale * scale > MAX_AREA) {
+        scale = Math.min(scale, Math.sqrt(MAX_AREA / (w * h)));
+      }
+      if (scale < RAW_SCALE) {
+        console.warn(`[export] plan is ${w}×${h}px; scaling ${RAW_SCALE}→${scale.toFixed(3)} to fit canvas limits.`);
+      }
+
+      const canvas = await html2canvas(el, {
+        backgroundColor: themeColors.BG_APP,
+        scale,
+        width: w,
+        height: h,
+        windowWidth: w,
+        windowHeight: h,
+        scrollX: 0,
+        scrollY: 0,
+        logging: false,
+      });
+      return { canvas, scale };
+    } finally {
+      // Restore the live UI even if capture throws. Dropping `.is-exporting`
+      // reverts every CSS override at once.
+      setIsExporting(false);
+      if (prevLeftCollapsed) setLeftCollapsed(true);
+      if (prevRightCollapsed) setRightCollapsed(true);
+      if (body) { body.scrollLeft = prevScrollLeft; body.scrollTop = prevScrollTop; }
+      setScrollLeft(prevScrollLeft);
+    }
+  }, [themeColors, leftCollapsed, rightCollapsed]);
 
   const exportPNG = useCallback(async () => {
     try {
-      const canvas = await captureCanvas();
-      if (!canvas) return;
+      const result = await captureCanvas();
+      if (!result) return;
       const link = document.createElement('a');
       link.download = 'dha-gantt-chart.png';
-      link.href = canvas.toDataURL('image/png');
+      link.href = result.canvas.toDataURL('image/png');
       link.click();
     } catch (err) {
       console.error('PNG export failed:', err);
@@ -321,13 +391,14 @@ export default function GanttChart() {
 
   const exportPDF = useCallback(async () => {
     try {
-      const canvas = await captureCanvas();
-      if (!canvas) return;
+      const result = await captureCanvas();
+      if (!result) return;
+      const { canvas, scale } = result;
       // Size the PDF page to the canvas aspect ratio so the chart fills the
-      // page without letterboxing. `pt` is jsPDF's default unit; the divisor
-      // brings the captured 2x-scaled canvas back to roughly screen size.
-      const w = canvas.width / 2;
-      const h = canvas.height / 2;
+      // page without letterboxing. `pt` is jsPDF's default unit; dividing by
+      // the actual capture scale brings it back to roughly screen size.
+      const w = canvas.width / scale;
+      const h = canvas.height / scale;
       const pdf = new jsPDF({
         orientation: w >= h ? 'landscape' : 'portrait',
         unit: 'pt',
@@ -379,9 +450,9 @@ export default function GanttChart() {
 
 
   return (
-    <>
+    <ExportLayoutContext.Provider value={{ rowHeight: isExporting ? EXPORT_ROW_HEIGHT : ROW_HEIGHT, isExporting }}>
     <Toolbar onScrollToToday={scrollToToday} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} onExportPNG={exportPNG} onExportPDF={exportPDF} onExportSwimlanes={exportSwimlanes} onEmailNotes={emailNotes} onAddFloatingNote={handleAddFloatingNote} />
-    <div className="gantt-container" ref={ganttRef}>
+    <div className={`gantt-container${isExporting ? ' is-exporting' : ''}`} ref={ganttRef}>
       {/* Left panel */}
       {!leftCollapsed && (
         <LeftPanel
@@ -408,8 +479,9 @@ export default function GanttChart() {
         </button>
       </div>
 
-      {/* Timeline center */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 200 }}>
+      {/* Timeline center. Overflow lives in CSS (.timeline-center) so export
+          mode can override it. */}
+      <div className="timeline-center" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 200 }}>
         <TimelineHeader
           totalWeeks={timeline.totalWeeks}
           startMonth={timeline.startMonth}
@@ -459,6 +531,6 @@ export default function GanttChart() {
     {notesPanelOpen && <NotesPanel />}
     {environmentsPanelOpen && <EnvironmentsPanel />}
     {phaseTypesModalOpen && <ManagePhaseTypesModal />}
-    </>
+    </ExportLayoutContext.Provider>
   );
 }

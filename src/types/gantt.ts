@@ -185,6 +185,12 @@ export const ENV_COLOR_PRESETS = [
 
 // Layout constants matching draw.io diagram
 export const ROW_HEIGHT = 48;
+// Taller row used only while exporting, so Key Features lists fit. Must stay
+// in sync with the `--row-height` override in `.gantt-container.is-exporting`
+// (src/App.css) — the timeline SVG and the DOM panels both read this height.
+// Sized so a generous (~8-bullet) feature list fits without overlapping the
+// next row; pathologically long lists can still overflow.
+export const EXPORT_ROW_HEIGHT = 104;
 export const PROJECT_COL_WIDTH = 140;
 export const FEATURES_COL_WIDTH = 164;
 export const DEPS_COL_WIDTH = 180;

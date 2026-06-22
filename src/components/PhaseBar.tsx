@@ -1,8 +1,9 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import type { PhaseBar as PhaseBarType, PhaseType } from '../types/gantt';
-import { BAR_HEIGHT, BAR_RADIUS, ROW_HEIGHT } from '../types/gantt';
+import { BAR_HEIGHT, BAR_RADIUS } from '../types/gantt';
 import { getPhaseDef, getLegacyPhaseColors } from '../data/phasePresets';
+import { useExportLayout } from './ExportLayoutContext';
 import { useGanttStore } from '../store/useGanttStore';
 import { getDateAtWeekOffset, formatDayMonth } from '../utils/dateUtils';
 import { getContentionsForBar } from '../utils/contention';
@@ -46,6 +47,8 @@ export default function PhaseBar({ bar, rowY }: Props) {
   const swimlanes = useGanttStore(s => s.swimlanes);
   const phaseBars = useGanttStore(s => s.phaseBars);
   const phaseTypes = useGanttStore(s => s.phaseTypes);
+  // Taller rows during export — keep the bar vertically centred in its row.
+  const { rowHeight: ROW_HEIGHT } = useExportLayout();
 
   const phaseDef = getPhaseDef(bar.phaseType, phaseTypes);
   // In legacy bar style, override the built-in phase colours with the muted

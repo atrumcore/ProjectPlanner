@@ -1,6 +1,6 @@
 import { useRef, useCallback } from 'react';
-import { ROW_HEIGHT } from '../types/gantt';
 import { useGanttStore } from '../store/useGanttStore';
+import { useExportLayout } from './ExportLayoutContext';
 import { getDateAtWeekOffset, formatDayMonth } from '../utils/dateUtils';
 import { useThemeColors } from '../theme/ThemeContext';
 
@@ -23,6 +23,8 @@ export default function MilestoneMarker({ id, week, rowY }: Props) {
   const weekWidth = useGanttStore(s => s.timeline.weekWidthPx);
   const startMonth = useGanttStore(s => s.timeline.startMonth);
   const startYear = useGanttStore(s => s.timeline.startYear);
+  // Taller rows during export — keep the marker centred and full-height.
+  const { rowHeight: ROW_HEIGHT } = useExportLayout();
 
   const dragRef = useRef<{ startX: number; origWeek: number } | null>(null);
 
