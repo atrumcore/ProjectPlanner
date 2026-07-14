@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState, useCallback, useEffect } from 'react';
 import { useGanttStore } from '../store/useGanttStore';
-import { BAR_HEIGHT, BAR_RADIUS, SECTION_HEADER_HEIGHT } from '../types/gantt';
+import { BAR_HEIGHT, BAR_RADIUS, SECTION_HEADER_HEIGHT, SWIMLANE_TINT_ALPHA } from '../types/gantt';
 import { useExportLayout } from './ExportLayoutContext';
 import { getTodayWeekOffset, getMonthsFromWeeks, getHolidayWeekOffsets, getWeekendDayRanges, getCalendarWeekBoundaries } from '../utils/dateUtils';
 import { getPhaseDef } from '../data/phasePresets';
@@ -271,6 +271,7 @@ export default function TimelineContent() {
           id: sl.section.id,
           label: sl.section.label,
           laneCount: sl.lanes.length,
+          color: sl.section.color,
         }))}
         weekWidth={weekWidth}
         rowHeight={ROW_HEIGHT}
@@ -281,6 +282,27 @@ export default function TimelineContent() {
         showWeekends={showWeekends}
         showHolidays={showHolidays}
       />
+
+      {/* Swimlane row tints — a translucent band matching the user-chosen
+          row colour, drawn over the grid but under bars/markers so grid lines
+          and weekend shading remain faintly visible. */}
+      {sectionedLanes.flatMap(sl => sl.lanes).map(lane => {
+        if (!lane.color) return null;
+        const rowY = swimlaneYMap.get(lane.id);
+        if (rowY === undefined) return null;
+        return (
+          <rect
+            key={`tint-${lane.id}`}
+            x={0}
+            y={rowY}
+            width={gridWidth}
+            height={ROW_HEIGHT}
+            fill={lane.color}
+            opacity={SWIMLANE_TINT_ALPHA}
+            style={{ pointerEvents: 'none' }}
+          />
+        );
+      })}
 
       {/* Row hover highlights */}
       {sectionedLanes.flatMap(sl => sl.lanes).map(lane => {

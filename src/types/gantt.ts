@@ -62,6 +62,11 @@ export interface Section {
   id: string;
   label: string;
   order: number;
+  /** Optional user-chosen tint (hex) for the section's header band. Applied as
+   * a translucent overlay on the header (left panel + timeline) and as the
+   * left-edge accent colour. undefined = default surface + accent. Uses the
+   * same SWIMLANE_COLOR_PRESETS palette and SWIMLANE_TINT_ALPHA opacity. */
+  color?: string;
 }
 
 export const DEFAULT_SECTIONS: Section[] = [
@@ -76,7 +81,28 @@ export interface Swimlane {
   keyDependencies: string; // HTML string (rich text)
   section: SwimlaneSection;
   order: number;
+  /** Optional user-chosen row tint (hex, e.g. '#3e63dd'). Applied as a
+   * translucent band over the themed row background on both the left panel
+   * and the timeline. undefined = no tint (default even/odd striping). */
+  color?: string;
 }
+
+// Swimlane row tint palette — 8 distinct hues at medium saturation, picked so
+// they read clearly as a translucent band over both the dark and light row
+// backgrounds. Applied at SWIMLANE_TINT_ALPHA opacity.
+export const SWIMLANE_COLOR_PRESETS = [
+  '#e5484d', // red
+  '#f76b15', // orange
+  '#ffb224', // amber
+  '#46a758', // green
+  '#00a2c7', // cyan
+  '#3e63dd', // blue
+  '#8e4ec6', // purple
+  '#e93d82', // pink
+] as const;
+
+/** Opacity used when compositing a swimlane's tint over the row background. */
+export const SWIMLANE_TINT_ALPHA = 0.32;
 
 export interface FloatingNote {
   id: string;

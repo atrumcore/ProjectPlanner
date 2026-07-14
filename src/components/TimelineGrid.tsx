@@ -1,5 +1,5 @@
 import type React from 'react';
-import { SECTION_HEADER_HEIGHT } from '../types/gantt';
+import { SECTION_HEADER_HEIGHT, SWIMLANE_TINT_ALPHA } from '../types/gantt';
 import { useThemeColors } from '../theme/ThemeContext';
 
 interface MonthSpan {
@@ -16,6 +16,8 @@ interface SectionInfo {
   id: string;
   label: string;
   laneCount: number;
+  /** Optional header tint (hex); overlaid on the band at SWIMLANE_TINT_ALPHA. */
+  color?: string;
 }
 
 interface HolidayMark {
@@ -58,14 +60,14 @@ export default function TimelineGrid({
   const gridWidth = totalWeeks * weekWidth;
 
   // Compute layout: each section has a header band + rows
-  const sectionLayout: { headerY: number; rowsY: number; rowsHeight: number; laneCount: number; label: string }[] = [];
+  const sectionLayout: { headerY: number; rowsY: number; rowsHeight: number; laneCount: number; label: string; color?: string }[] = [];
   let yOffset = 0;
   for (const sec of sections) {
     const headerY = yOffset;
     yOffset += SECTION_HEADER_HEIGHT;
     const rowsY = yOffset;
     const rowsHeight = sec.laneCount * ROW_HEIGHT;
-    sectionLayout.push({ headerY, rowsY, rowsHeight, laneCount: sec.laneCount, label: sec.label });
+    sectionLayout.push({ headerY, rowsY, rowsHeight, laneCount: sec.laneCount, label: sec.label, color: sec.color });
     yOffset += rowsHeight;
   }
   // Row-only Y ranges (for clipping grid lines to avoid section headers)
@@ -173,6 +175,10 @@ export default function TimelineGrid({
       <g key={`sh-${sec.headerY}`}>
         <rect x={0} y={sec.headerY} width={gridWidth} height={SECTION_HEADER_HEIGHT}
           fill={c.SECTION_BAND} />
+        {sec.color && (
+          <rect x={0} y={sec.headerY} width={gridWidth} height={SECTION_HEADER_HEIGHT}
+            fill={sec.color} opacity={SWIMLANE_TINT_ALPHA} />
+        )}
         <line x1={0} y1={sec.headerY} x2={gridWidth} y2={sec.headerY}
           stroke={c.GRID_MONTHLY} strokeWidth={1} />
         <line x1={0} y1={sec.headerY + SECTION_HEADER_HEIGHT} x2={gridWidth} y2={sec.headerY + SECTION_HEADER_HEIGHT}

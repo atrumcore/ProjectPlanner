@@ -178,6 +178,19 @@ export function brightenForDark(hex: string, theme: ThemeName): string {
   return `#${toHex(mix(r))}${toHex(mix(g))}${toHex(mix(b))}`;
 }
 
+/** Convert a #rrggbb hex string to an `rgba(r, g, b, a)` string. Returns the
+ * input unchanged if it isn't a 6-digit hex. Used to composite a translucent
+ * swimlane tint over the themed row background. */
+export function hexToRgba(hex: string, alpha: number): string {
+  const h = hex.replace('#', '');
+  if (h.length !== 6) return hex;
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  if ([r, g, b].some(n => Number.isNaN(n))) return hex;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 /** Read the active theme without React (for use in the Zustand store). */
 export function getActiveThemeName(): ThemeName {
   try {

@@ -1,7 +1,10 @@
 import { useGanttStore } from '../store/useGanttStore';
 import type { Swimlane } from '../types/gantt';
+import { SWIMLANE_COLOR_PRESETS, SWIMLANE_TINT_ALPHA } from '../types/gantt';
+import { hexToRgba } from '../theme/colors';
 import { useSectionedLanes } from '../hooks/useSectionedLanes';
 import { useState, useMemo, useCallback, useEffect, useRef, forwardRef } from 'react';
+import type { CSSProperties } from 'react';
 import RichTextEditor from './RichTextEditor';
 import FeaturesCell from './FeaturesCell';
 import KeyFeaturesPopover from './KeyFeaturesPopover';
@@ -211,6 +214,24 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
     const isDragging = dragId === lane.id;
     const isActionItemTarget = actionItemHoverLaneId === lane.id;
 
+    // Base row background: themed even/odd striping only when no tint is set.
+    // A tinted row uses a single flat base so the alternating bands don't
+    // darken every other coloured row into a different shade. Both values are
+    // exposed as CSS variables so the Key Features overflow fade can fade to
+    // the same composited colour instead of the untinted base.
+    const baseBg = lane.color
+      ? 'var(--bg-row-even)'
+      : index % 2 === 0 ? 'var(--bg-row-even)' : 'var(--bg-row-odd)';
+    const rowTint = lane.color ? hexToRgba(lane.color, SWIMLANE_TINT_ALPHA) : 'transparent';
+    const rowStyle: Record<string, string | number> = {
+      '--row-base': baseBg,
+      '--row-tint': rowTint,
+      background: `linear-gradient(var(--row-tint), var(--row-tint)), var(--row-base)`,
+      opacity: isDragging ? 0.4 : 1,
+      borderTop: isDropAbove ? '2px solid var(--accent-primary)' : '',
+      borderBottom: isDropBelow ? '2px solid var(--accent-primary)' : '',
+    };
+
     return (
       <div
         key={lane.id}
@@ -225,12 +246,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
           setSecCtxMenu(null);
           setCtxMenu({ x: e.clientX, y: e.clientY, laneId: lane.id });
         }}
-        style={{
-          background: index % 2 === 0 ? 'var(--bg-row-even)' : 'var(--bg-row-odd)',
-          opacity: isDragging ? 0.4 : 1,
-          borderTop: isDropAbove ? '2px solid var(--accent-primary)' : undefined,
-          borderBottom: isDropBelow ? '2px solid var(--accent-primary)' : undefined,
-        }}
+        style={rowStyle as CSSProperties}
       >
         <div
           className="swimlane-drag-handle"
@@ -290,6 +306,10 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
         <div key={section.id}>
           <div
             className="section-header"
+            style={{
+              '--section-tint': section.color ? hexToRgba(section.color, SWIMLANE_TINT_ALPHA) : 'transparent',
+              '--section-accent': section.color || 'var(--accent-primary)',
+            } as CSSProperties}
             onDragOver={handleSectionDragOver}
             onDrop={e => handleSectionDrop(e, section.id)}
             onContextMenu={e => {
@@ -380,6 +400,34 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
             ))
           }
           <div className="context-menu-divider" />
+          <div className="context-menu-label">Row Colour</div>
+          <div className="swimlane-color-swatches">
+            <button
+              className={`swimlane-color-swatch swimlane-color-clear${
+                !swimlanes.find(s => s.id === ctxMenu.laneId)?.color ? ' is-active' : ''
+              }`}
+              title="Default (no tint)"
+              onClick={() => {
+                updateSwimlane(ctxMenu.laneId, { color: undefined });
+                setCtxMenu(null);
+              }}
+            />
+            {SWIMLANE_COLOR_PRESETS.map(color => (
+              <button
+                key={color}
+                className={`swimlane-color-swatch${
+                  swimlanes.find(s => s.id === ctxMenu.laneId)?.color === color ? ' is-active' : ''
+                }`}
+                style={{ background: color }}
+                title={color}
+                onClick={() => {
+                  updateSwimlane(ctxMenu.laneId, { color });
+                  setCtxMenu(null);
+                }}
+              />
+            ))}
+          </div>
+          <div className="context-menu-divider" />
           <div
             className="context-menu-item"
             style={{ color: 'var(--error-bright)' }}
@@ -431,6 +479,34 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
             }}
           >
             Add Section Below
+          </div>
+          <div className="context-menu-divider" />
+          <div className="context-menu-label">Section Colour</div>
+          <div className="swimlane-color-swatches">
+            <button
+              className={`swimlane-color-swatch swimlane-color-clear${
+                !sections.find(s => s.id === secCtxMenu.sectionId)?.color ? ' is-active' : ''
+              }`}
+              title="Default (no tint)"
+              onClick={() => {
+                updateSection(secCtxMenu.sectionId, { color: undefined });
+                setSecCtxMenu(null);
+              }}
+            />
+            {SWIMLANE_COLOR_PRESETS.map(color => (
+              <button
+                key={color}
+                className={`swimlane-color-swatch${
+                  sections.find(s => s.id === secCtxMenu.sectionId)?.color === color ? ' is-active' : ''
+                }`}
+                style={{ background: color }}
+                title={color}
+                onClick={() => {
+                  updateSection(secCtxMenu.sectionId, { color });
+                  setSecCtxMenu(null);
+                }}
+              />
+            ))}
           </div>
           {sections.length > 1 && (
             <>

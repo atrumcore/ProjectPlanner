@@ -24,7 +24,7 @@ import {
 import { pickNextEnvColor } from '../utils/contention';
 import { getBuiltinPhaseTypes, getPhaseDef, deriveColorScheme, applyThemePresetsToBuiltins } from '../data/phasePresets';
 import type { ThemeName } from '../theme/colors';
-import { getWeeksForMonth, getDaysInMonth } from '../utils/dateUtils';
+import { getDaysInMonth } from '../utils/dateUtils';
 import { featuresArrayToHtml } from '../utils/htmlSanitize';
 import {
   isFileSystemAccessSupported,
@@ -246,6 +246,7 @@ function migrateSwimlanes(swimlanes: unknown): Swimlane[] {
       keyDependencies: s.keyDependencies,
       section: s.section,
       order: s.order,
+      ...(typeof s.color === 'string' ? { color: s.color } : {}),
     };
   });
 }
@@ -500,7 +501,11 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         newMonth = 11;
         newYear--;
       }
-      const weeksToAdd = getWeeksForMonth(newMonth, newYear);
+      // Shift by the month's REAL length in weeks (days/7), not ceil(days/7).
+      // Bars and milestones are anchored to calendar dates via their week
+      // offset from the timeline start; shifting by whole week-columns would
+      // drift every date by (ceil(days/7)*7 - days) days per prepend.
+      const weeksToAdd = getDaysInMonth(newMonth, newYear) / 7;
       return {
         timeline: {
           ...state.timeline,
@@ -518,7 +523,9 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
   trimStart: () => {
     pushUndo(get());
     set(state => {
-      const weeksToRemove = getWeeksForMonth(state.timeline.startMonth, state.timeline.startYear);
+      // Remove the first month's REAL length in weeks (days/7), not ceil, so
+      // remaining bars/milestones keep their calendar dates. See prependMonth.
+      const weeksToRemove = getDaysInMonth(state.timeline.startMonth, state.timeline.startYear) / 7;
       if (state.timeline.totalWeeks <= weeksToRemove) return state;
       let newMonth = state.timeline.startMonth + 1;
       let newYear = state.timeline.startYear;
