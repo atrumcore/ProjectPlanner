@@ -81,6 +81,8 @@ export default function GanttChart() {
   const actionItems = useGanttStore(s => s.actionItems);
   const swimlanes = useGanttStore(s => s.swimlanes);
   const sections = useGanttStore(s => s.sections);
+  const phaseBars = useGanttStore(s => s.phaseBars);
+  const phaseTypes = useGanttStore(s => s.phaseTypes);
   const currentFileName = useGanttStore(s => s.currentFileName);
   const addFloatingNote = useGanttStore(s => s.addFloatingNote);
 
@@ -417,7 +419,7 @@ export default function GanttChart() {
   }, [swimlanes, sections, actionItems, currentFileName]);
 
   const exportSwimlanes = useCallback(() => {
-    const csv = buildSwimlaneCsv(swimlanes, sections);
+    const csv = buildSwimlaneCsv(swimlanes, sections, phaseBars, phaseTypes, timeline);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -425,7 +427,7 @@ export default function GanttChart() {
     link.href = url;
     link.click();
     URL.revokeObjectURL(url);
-  }, [swimlanes, sections]);
+  }, [swimlanes, sections, phaseBars, phaseTypes, timeline]);
 
   // Drop a new floating note into the visible center of the timeline so the
   // user always sees it appear, no matter where they've scrolled.
