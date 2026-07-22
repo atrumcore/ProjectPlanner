@@ -1219,6 +1219,119 @@ select option {
 }
 .bar-env-popover-link:hover { text-decoration: underline; }
 
+/* ─── People & teams ────────────────────────────────────────────────────────
+   The people picker + panel reuse the env popover/panel classes; these are
+   the people-specific additions. */
+.people-picker-popover {
+  max-height: 60vh;
+  overflow-y: auto;
+  min-width: 210px;
+}
+.people-picker-group-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 6px 8px 2px;
+}
+.people-picker-meta {
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+.people-picker-empty {
+  font-size: 11px;
+  color: var(--text-secondary);
+  padding: 8px;
+}
+/* Teams read as squares wherever people read as circles. */
+.people-picker-team-dot,
+.people-panel-team-dot {
+  border-radius: 3px !important;
+}
+
+.people-panel-person-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px 10px;
+  font-size: 11px;
+}
+.people-panel-person-meta label {
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.people-panel-person-meta input,
+.people-panel-person-meta select {
+  font-size: 11px;
+  padding: 3px 6px;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  min-width: 0;
+  flex: 1;
+}
+.people-panel-role em {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.people-panel-members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 2px 0;
+}
+.people-panel-member-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-primary);
+  background: var(--hover);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 2px 9px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.people-panel-member-chip:hover {
+  border-color: var(--accent-secondary);
+}
+
+/* Swimlane owner chips — tiny dot strip at the bottom-left of the project
+   cell. Teams are squares, people circles (matching bar chips). */
+.swimlane-owner-chips {
+  position: absolute;
+  left: 22px;
+  bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: transparent;
+  border: none;
+  padding: 1px 2px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.swimlane-owner-chips:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.swimlane-owner-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  flex-shrink: 0;
+}
+.swimlane-owner-dot.is-team {
+  border-radius: 2px;
+}
+
 /* Rich-text editor (shared base) */
 .rich-text-editor {
   width: 100%;

@@ -5,7 +5,7 @@ import { useExportLayout } from './ExportLayoutContext';
 import { getTodayWeekOffset, getMonthsFromWeeks, getHolidayWeekOffsets, getWeekendDayRanges, getCalendarWeekBoundaries } from '../utils/dateUtils';
 import { getPhaseDef } from '../data/phasePresets';
 import { useSectionedLanes } from '../hooks/useSectionedLanes';
-import { getContentions } from '../utils/contention';
+import { getContentions, getPeopleContentions } from '../utils/contention';
 import { useTheme } from '../theme/ThemeContext';
 import { brightenForDark } from '../theme/colors';
 import TimelineGrid from './TimelineGrid';
@@ -38,11 +38,15 @@ export default function TimelineContent() {
   const showMilestones = useGanttStore(s => s.showMilestones);
   const showEnvMarquees = useGanttStore(s => s.showEnvMarquees);
   const showContention = useGanttStore(s => s.showContention);
+  const showPeopleContention = useGanttStore(s => s.showPeopleContention);
 
   const sections = useGanttStore(s => s.sections);
   const environments = useGanttStore(s => s.environments);
+  const people = useGanttStore(s => s.people);
+  const teams = useGanttStore(s => s.teams);
   const phaseTypes = useGanttStore(s => s.phaseTypes);
   const environmentFocusId = useGanttStore(s => s.environmentFocusId);
+  const peopleFocus = useGanttStore(s => s.peopleFocus);
   const hoveredBarId = useGanttStore(s => s.hoveredBarId);
   const floatingNotes = useGanttStore(s => s.floatingNotes);
 
@@ -209,7 +213,14 @@ export default function TimelineContent() {
     [environments, swimlanes, phaseBars]
   );
 
+  const peopleContentions = useMemo(
+    () => getPeopleContentions({ people, teams, phaseBars }),
+    [people, teams, phaseBars]
+  );
+
   const envById = useMemo(() => new Map(environments.map(e => [e.id, e])), [environments]);
+  const personById = useMemo(() => new Map(people.map(p => [p.id, p])), [people]);
+  const teamById = useMemo(() => new Map(teams.map(t => [t.id, t])), [teams]);
   const barById = useMemo(() => new Map(phaseBars.map(b => [b.id, b])), [phaseBars]);
 
   // Listen for the env panel's "scroll-to-bar" custom event so clicks in the
@@ -393,11 +404,16 @@ export default function TimelineContent() {
         return segments;
       })()}
 
-      {/* Phase bars (wrapped with focus-mode opacity when an env is in focus) */}
+      {/* Phase bars (wrapped with focus-mode opacity when an env, person, or
+          team is in focus) */}
       {phaseBars.map(bar => {
         const rowY = swimlaneYMap.get(bar.swimlaneId);
         if (rowY === undefined) return null;
-        const dim = environmentFocusId !== null && bar.environmentId !== environmentFocusId;
+        const envDim = environmentFocusId !== null && bar.environmentId !== environmentFocusId;
+        const peopleDim = peopleFocus !== null && !(peopleFocus.kind === 'team'
+          ? bar.teamIds.includes(peopleFocus.id)
+          : bar.assigneeIds.includes(peopleFocus.id));
+        const dim = envDim || peopleDim;
         return (
           <g
             key={bar.id}
@@ -528,6 +544,77 @@ export default function TimelineContent() {
                   width={w}
                   height={ribbonH}
                   fill={brightenForDark(env.color, theme)}
+                  stroke={theme === 'dark' ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.35)'}
+                  strokeWidth={0.75}
+                  rx={1.5}
+                  ry={1.5}
+                />
+              </g>
+            );
+          });
+        }
+        return segments;
+      })()}
+
+      {/* People contention ribbons — same unified-strip treatment as env
+          ribbons but rendered ABOVE the bar (env ribbons sit below), so both
+          kinds of double-booking can show on one bar without colliding.
+          Coloured by the contended person/team. */}
+      {showPeopleContention && (() => {
+        const byBar = new Map<string, { color: string; ranges: Array<[number, number]> }>();
+        for (const c of peopleContentions) {
+          if (peopleFocus !== null &&
+              !(peopleFocus.kind === c.resource.kind && peopleFocus.id === c.resource.id)) continue;
+          const color = c.resource.kind === 'team'
+            ? teamById.get(c.resource.id)?.color
+            : personById.get(c.resource.id)?.color;
+          if (!color) continue;
+          for (const barId of [c.barAId, c.barBId]) {
+            let entry = byBar.get(barId);
+            if (!entry) { entry = { color, ranges: [] }; byBar.set(barId, entry); }
+            entry.ranges.push([c.weekRange[0], c.weekRange[1]]);
+          }
+        }
+
+        const unionRanges = (ranges: Array<[number, number]>): Array<[number, number]> => {
+          if (ranges.length === 0) return [];
+          const sorted = [...ranges].sort((a, b) => a[0] - b[0]);
+          const out: Array<[number, number]> = [[sorted[0][0], sorted[0][1]]];
+          for (let i = 1; i < sorted.length; i++) {
+            const cur = out[out.length - 1];
+            const [s, e] = sorted[i];
+            if (s <= cur[1]) {
+              if (e > cur[1]) cur[1] = e;
+            } else {
+              out.push([s, e]);
+            }
+          }
+          return out;
+        };
+
+        const ribbonH = 5;
+        const segments: React.ReactElement[] = [];
+        for (const [barId, info] of byBar) {
+          const bar = barById.get(barId);
+          const rowY = bar ? swimlaneYMap.get(bar.swimlaneId) : undefined;
+          if (!bar || rowY === undefined) continue;
+          // Above the bar (env ribbon is below at +BAR_HEIGHT+1).
+          const yRibbon = rowY + (ROW_HEIGHT - BAR_HEIGHT) / 2 - ribbonH - 1;
+          const merged = unionRanges(info.ranges);
+          merged.forEach(([rs, re], idx) => {
+            const startDay = Math.floor(rs * 7);
+            const endDay = Math.ceil(re * 7);
+            const x = (startDay / 7) * weekWidth;
+            const trueW = ((endDay - startDay) / 7) * weekWidth;
+            const w = Math.max(4, trueW);
+            segments.push(
+              <g key={`people-ribbon-${barId}-${idx}`} style={{ pointerEvents: 'none' }}>
+                <rect
+                  x={x}
+                  y={yRibbon}
+                  width={w}
+                  height={ribbonH}
+                  fill={brightenForDark(info.color, theme)}
                   stroke={theme === 'dark' ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.35)'}
                   strokeWidth={0.75}
                   rx={1.5}

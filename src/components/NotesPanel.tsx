@@ -196,9 +196,15 @@ export default function NotesPanel() {
     [filtered]
   );
 
+  const people = useGanttStore(s => s.people);
   const uniqueOwners = useMemo(
-    () => [...new Set(actionItems.map(i => i.owner).filter(Boolean))],
-    [actionItems]
+    () => [...new Set([
+      // The People registry is the primary source; names already used on
+      // items stay suggested even if they aren't registered people.
+      ...people.map(p => p.name),
+      ...actionItems.map(i => i.owner).filter(Boolean),
+    ])],
+    [actionItems, people]
   );
 
   const handleAdd = useCallback(() => {

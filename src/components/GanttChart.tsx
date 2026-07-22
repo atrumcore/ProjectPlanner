@@ -8,6 +8,7 @@ import TimelineContent from './TimelineContent';
 import Toolbar from './Toolbar';
 import NotesPanel from './NotesPanel';
 import EnvironmentsPanel from './EnvironmentsPanel';
+import PeoplePanel from './PeoplePanel';
 import ManagePhaseTypesModal from './ManagePhaseTypesModal';
 import { useGanttStore } from '../store/useGanttStore';
 import { getTodayWeekOffset } from '../utils/dateUtils';
@@ -77,12 +78,18 @@ export default function GanttChart() {
   const toggleEnvironmentsPanel = useGanttStore(s => s.toggleEnvironmentsPanel);
   const environmentFocusId = useGanttStore(s => s.environmentFocusId);
   const setEnvironmentFocus = useGanttStore(s => s.setEnvironmentFocus);
+  const peoplePanelOpen = useGanttStore(s => s.peoplePanelOpen);
+  const togglePeoplePanel = useGanttStore(s => s.togglePeoplePanel);
+  const peopleFocus = useGanttStore(s => s.peopleFocus);
+  const setPeopleFocus = useGanttStore(s => s.setPeopleFocus);
   const phaseTypesModalOpen = useGanttStore(s => s.phaseTypesModalOpen);
   const actionItems = useGanttStore(s => s.actionItems);
   const swimlanes = useGanttStore(s => s.swimlanes);
   const sections = useGanttStore(s => s.sections);
   const phaseBars = useGanttStore(s => s.phaseBars);
   const phaseTypes = useGanttStore(s => s.phaseTypes);
+  const people = useGanttStore(s => s.people);
+  const teams = useGanttStore(s => s.teams);
   const currentFileName = useGanttStore(s => s.currentFileName);
   const addFloatingNote = useGanttStore(s => s.addFloatingNote);
 
@@ -249,6 +256,11 @@ export default function GanttChart() {
         toggleEnvironmentsPanel();
         return;
       }
+      if (mod && e.shiftKey && key === 'p') {
+        e.preventDefault();
+        togglePeoplePanel();
+        return;
+      }
       if (mod && key === 'n') {
         // Browsers typically intercept Ctrl+N before JS sees it, so this
         // may not fire — the toolbar button is the reliable path.
@@ -277,6 +289,8 @@ export default function GanttChart() {
       } else if (e.key === 'Escape') {
         if (environmentFocusId) {
           setEnvironmentFocus(null);
+        } else if (peopleFocus) {
+          setPeopleFocus(null);
         } else {
           selectBar(null);
         }
@@ -284,7 +298,7 @@ export default function GanttChart() {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [undo, redo, selectedBarId, removePhaseBar, selectBar, saveFile, saveFileAs, openFile, newFile, toggleNotesPanel, toggleEnvironmentsPanel, environmentFocusId, setEnvironmentFocus]);
+  }, [undo, redo, selectedBarId, removePhaseBar, selectBar, saveFile, saveFileAs, openFile, newFile, toggleNotesPanel, toggleEnvironmentsPanel, togglePeoplePanel, environmentFocusId, setEnvironmentFocus, peopleFocus, setPeopleFocus]);
 
   const handleSpacePanStart = useCallback((e: React.PointerEvent) => {
     if (spaceHeld.current && e.button === 0) {
@@ -454,7 +468,7 @@ export default function GanttChart() {
   }, [swimlanes, sections, actionItems, currentFileName]);
 
   const exportSwimlanes = useCallback(() => {
-    const csv = buildSwimlaneCsv(swimlanes, sections, phaseBars, phaseTypes, timeline);
+    const csv = buildSwimlaneCsv(swimlanes, sections, phaseBars, phaseTypes, timeline, people, teams);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -462,7 +476,7 @@ export default function GanttChart() {
     link.href = url;
     link.click();
     URL.revokeObjectURL(url);
-  }, [swimlanes, sections, phaseBars, phaseTypes, timeline]);
+  }, [swimlanes, sections, phaseBars, phaseTypes, timeline, people, teams]);
 
   // Drop a new floating note into the visible center of the timeline so the
   // user always sees it appear, no matter where they've scrolled.
@@ -567,6 +581,7 @@ export default function GanttChart() {
     </div>
     {notesPanelOpen && <NotesPanel />}
     {environmentsPanelOpen && <EnvironmentsPanel />}
+    {peoplePanelOpen && <PeoplePanel />}
     {phaseTypesModalOpen && <ManagePhaseTypesModal />}
     </ExportLayoutContext.Provider>
   );

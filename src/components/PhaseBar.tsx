@@ -6,10 +6,19 @@ import { getPhaseDef } from '../data/phasePresets';
 import { useExportLayout } from './ExportLayoutContext';
 import { useGanttStore } from '../store/useGanttStore';
 import { getDateAtWeekOffset, formatDayMonth } from '../utils/dateUtils';
-import { getContentionsForBar } from '../utils/contention';
+import { getContentionsForBar, getPeopleContentionsForBar } from '../utils/contention';
 import { useTheme } from '../theme/ThemeContext';
 import ContextMenu from './ContextMenu';
 import BarEnvPickerPopover from './BarEnvPickerPopover';
+import PeoplePickerPopover from './PeoplePickerPopover';
+
+/** "Alice Smith" -> "AS"; single word takes its first two letters. */
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
 
 interface Props {
   bar: PhaseBarType;
@@ -43,7 +52,12 @@ export default function PhaseBar({ bar, rowY }: Props) {
   const showBarDates = useGanttStore(s => s.showBarDates);
   const showEnvIndicators = useGanttStore(s => s.showEnvIndicators);
   const showContention = useGanttStore(s => s.showContention);
+  const showPeopleIndicators = useGanttStore(s => s.showPeopleIndicators);
+  const showPeopleContention = useGanttStore(s => s.showPeopleContention);
   const environments = useGanttStore(s => s.environments);
+  const people = useGanttStore(s => s.people);
+  const teams = useGanttStore(s => s.teams);
+  const setBarPeople = useGanttStore(s => s.setBarPeople);
   const swimlanes = useGanttStore(s => s.swimlanes);
   const phaseBars = useGanttStore(s => s.phaseBars);
   const phaseTypes = useGanttStore(s => s.phaseTypes);
@@ -73,6 +87,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
   const [editing, setEditing] = useState(false);
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null);
   const [envPicker, setEnvPicker] = useState<{ x: number; y: number } | null>(null);
+  const [peoplePicker, setPeoplePicker] = useState<{ x: number; y: number } | null>(null);
   const [dragPill, setDragPill] = useState<{ envNames: string[]; conflict: boolean } | null>(null);
   const dragRef = useRef<DragState | null>(null);
   const isSelected = selectedBarId === bar.id;
@@ -125,26 +140,37 @@ export default function PhaseBar({ bar, rowY }: Props) {
       proposed = { startWeek: drag.origStartWeek, durationWeeks: newDuration };
     }
 
-    // Live contention check — only meaningful if this bar is in an
-    // Exclusive env. Otherwise drag stays silent.
+    // Live contention check — env conflicts when the bar is in an Exclusive
+    // env, plus people double-bookings when it has assignees/teams. A bar
+    // with neither drags silently.
     if (proposed) {
+      const proposedBar = { ...bar, startWeek: proposed.startWeek, durationWeeks: proposed.durationWeeks };
       const env = bar.environmentId
         ? environments.find(e => e.id === bar.environmentId)
         : null;
-      if (showContention && env && env.exclusive) {
-        const proposedBar = { ...bar, startWeek: proposed.startWeek, durationWeeks: proposed.durationWeeks };
-        const cs = getContentionsForBar(proposedBar, { environments, swimlanes, phaseBars });
-        if (cs.length > 0) {
-          const envNames = environments.filter(e => cs.some(c => c.envId === e.id)).map(e => e.name);
-          setDragPill({ envNames, conflict: true });
-        } else {
-          setDragPill({ envNames: [], conflict: false });
+      const checkEnv = showContention && !!env && env.exclusive;
+      const checkPeople = showPeopleContention && (bar.assigneeIds.length > 0 || bar.teamIds.length > 0);
+      if (checkEnv || checkPeople) {
+        const names: string[] = [];
+        if (checkEnv) {
+          const cs = getContentionsForBar(proposedBar, { environments, swimlanes, phaseBars });
+          names.push(...environments.filter(e => cs.some(c => c.envId === e.id)).map(e => e.name));
         }
+        if (checkPeople) {
+          const pcs = getPeopleContentionsForBar(proposedBar, { people, teams, phaseBars });
+          for (const pc of pcs) {
+            const name = pc.resource.kind === 'team'
+              ? teams.find(t => t.id === pc.resource.id)?.name
+              : people.find(p => p.id === pc.resource.id)?.name;
+            if (name && !names.includes(name)) names.push(name);
+          }
+        }
+        setDragPill({ envNames: names, conflict: names.length > 0 });
       } else {
         setDragPill(null);
       }
     }
-  }, [bar, moveBar, resizeBar, setDragIndicator, weekWidth, swimlanes, environments, phaseBars, showContention]);
+  }, [bar, moveBar, resizeBar, setDragIndicator, weekWidth, swimlanes, environments, phaseBars, showContention, showPeopleContention, people, teams]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
     e.stopPropagation();
@@ -565,6 +591,127 @@ export default function PhaseBar({ bar, rowY }: Props) {
         return null;
       })()}
 
+      {/* People chips — teams first, then person initials, bottom-left of the
+          bar. Click opens the multi-select people picker. */}
+      {!editing && showPeopleIndicators && displayWidth >= 40 && (() => {
+        const assignedTeams = bar.teamIds
+          .map(id => teams.find(t => t.id === id))
+          .filter((t): t is NonNullable<typeof t> => !!t);
+        const assignedPeople = bar.assigneeIds
+          .map(id => people.find(p => p.id === id))
+          .filter((p): p is NonNullable<typeof p> => !!p);
+        const chips: Array<{ key: string; color: string; text: string; isTeam: boolean; title: string }> = [
+          ...assignedTeams.map(t => ({ key: `t-${t.id}`, color: t.color, text: initials(t.name), isTeam: true, title: `Team: ${t.name}` })),
+          ...assignedPeople.map(p => ({ key: `p-${p.id}`, color: p.color, text: initials(p.name), isTeam: false, title: p.role ? `${p.name} (${p.role})` : p.name })),
+        ];
+        const hasAny = chips.length > 0;
+        if (!hasAny && !(isHovered || isSelected)) return null;
+
+        const chipR = 6;
+        const step = chipR * 2 + 2;
+        const maxVisible = 3;
+        const visible = chips.slice(0, maxVisible);
+        const overflow = chips.length - visible.length;
+        const baseX = x + (useSolidPill ? 8 : TAG_WIDTH + 8);
+        const cyChip = y + BAR_HEIGHT - chipR - 2;
+        const openPicker = (e: React.MouseEvent) => {
+          e.stopPropagation();
+          setPeoplePicker({ x: e.clientX, y: e.clientY });
+        };
+        const stopPointer = (e: React.PointerEvent) => e.stopPropagation();
+        const allNames = chips.map(ch => ch.title).join(', ');
+
+        return (
+          <g
+            style={{ cursor: 'pointer' }}
+            onPointerDown={stopPointer}
+            onClick={openPicker}
+          >
+            <title>{hasAny ? `Allocated: ${allNames}\nClick to change` : 'Allocate people/teams'}</title>
+            {hasAny ? (
+              <>
+                {visible.map((ch, i) => {
+                  const cxChip = baseX + chipR + i * step;
+                  return (
+                    <g key={ch.key} style={{ pointerEvents: 'none' }}>
+                      {ch.isTeam ? (
+                        <rect
+                          x={cxChip - chipR}
+                          y={cyChip - chipR}
+                          width={chipR * 2}
+                          height={chipR * 2}
+                          rx={3}
+                          ry={3}
+                          fill={ch.color}
+                          stroke="#ffffff"
+                          strokeWidth={1.25}
+                        />
+                      ) : (
+                        <circle cx={cxChip} cy={cyChip} r={chipR} fill={ch.color} stroke="#ffffff" strokeWidth={1.25} />
+                      )}
+                      <text
+                        x={cxChip}
+                        y={cyChip}
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        fontSize={6}
+                        fontWeight={700}
+                        fill="#ffffff"
+                        fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
+                        style={{ userSelect: 'none' }}
+                      >
+                        {ch.text}
+                      </text>
+                    </g>
+                  );
+                })}
+                {overflow > 0 && (
+                  <text
+                    x={baseX + chipR + visible.length * step - chipR + 2}
+                    y={cyChip}
+                    dominantBaseline="central"
+                    fontSize={7}
+                    fontWeight={700}
+                    fill={c.TEXT_SECONDARY}
+                    fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
+                    style={{ userSelect: 'none', pointerEvents: 'none' }}
+                  >
+                    +{overflow}
+                  </text>
+                )}
+                {/* Widened invisible hit area over the chip row */}
+                <rect
+                  x={baseX - 2}
+                  y={cyChip - chipR - 2}
+                  width={visible.length * step + (overflow > 0 ? 14 : 0) + 4}
+                  height={chipR * 2 + 4}
+                  fill="#ffffff"
+                  fillOpacity={0.001}
+                />
+              </>
+            ) : (
+              // Unassigned affordance on hover/selection — dashed circle with "+"
+              // mirroring the "+ env" pattern.
+              <>
+                <circle cx={baseX + chipR} cy={cyChip} r={chipR + 1} fill="#ffffff" fillOpacity={0.001} />
+                <circle
+                  cx={baseX + chipR}
+                  cy={cyChip}
+                  r={chipR}
+                  fill="none"
+                  stroke={isSelected ? '#3d3930' : '#7a7264'}
+                  strokeDasharray="1.5 1.5"
+                  strokeWidth={1.25}
+                  style={{ pointerEvents: 'none' }}
+                />
+                <line x1={baseX + chipR - 2} y1={cyChip} x2={baseX + chipR + 2} y2={cyChip} stroke={isSelected ? '#3d3930' : '#7a7264'} strokeWidth={1.25} style={{ pointerEvents: 'none' }} />
+                <line x1={baseX + chipR} y1={cyChip - 2} x2={baseX + chipR} y2={cyChip + 2} stroke={isSelected ? '#3d3930' : '#7a7264'} strokeWidth={1.25} style={{ pointerEvents: 'none' }} />
+              </>
+            )}
+          </g>
+        );
+      })()}
+
       {/* Drag-time CLEAR/CONFLICT pill (anchored at bar leading edge) */}
       {dragPill && (
         <foreignObject x={x} y={Math.max(0, y - 22)} width={Math.max(120, displayWidth)} height={20} style={{ pointerEvents: 'none', overflow: 'visible' }}>
@@ -582,6 +729,19 @@ export default function PhaseBar({ bar, rowY }: Props) {
           x={envPicker.x}
           y={envPicker.y}
           onClose={() => setEnvPicker(null)}
+        />
+      )}
+
+      {/* People picker popover (anchored to chip click coordinates) */}
+      {peoplePicker && (
+        <PeoplePickerPopover
+          title="Allocated to"
+          currentAssigneeIds={bar.assigneeIds}
+          currentTeamIds={bar.teamIds}
+          x={peoplePicker.x}
+          y={peoplePicker.y}
+          onChange={allocation => setBarPeople(bar.id, allocation)}
+          onClose={() => setPeoplePicker(null)}
         />
       )}
 
