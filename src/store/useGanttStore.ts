@@ -32,12 +32,21 @@ import {
   pickSaveFile,
   readFileAsText,
   writeFileText,
+  downloadTextFile,
+  pickUploadFile,
 } from '../utils/fileSystemAccess';
 
 const uid = () => crypto.randomUUID();
 
 const STORAGE_KEY = 'dha-gantt-state';
 const MAX_HISTORY = 50;
+
+// Single version stamp written by BOTH localStorage autosave and file export.
+// History: v2 real-calendar model · v5 env exclusive flag · v6 bar environmentId.
+// Bump when the schema changes and add a matching migration in loadFromStorage /
+// importFromJSON (they run idempotent field migrations regardless of version;
+// the only hard gate is `< 2`, which discards pre-real-calendar data).
+const SCHEMA_VERSION = 6;
 
 interface GanttActions {
   // Sections
@@ -976,7 +985,7 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         showEnvMarquees: state.showEnvMarquees,
         showContention: state.showContention,
         barStyle: state.barStyle,
-        calendarModelVersion: 6,
+        calendarModelVersion: SCHEMA_VERSION,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch { /* ignore storage errors */ }
@@ -1060,7 +1069,7 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
       showContention: state.showContention,
       barStyle: state.barStyle,
       // Format marker (so downstream loaders can detect legacy data)
-      calendarModelVersion: 5,
+      calendarModelVersion: SCHEMA_VERSION,
     }, null, 2);
   },
 
@@ -1128,13 +1137,16 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
   },
 
   saveFileAs: async () => {
-    if (!isFileSystemAccessSupported()) {
-      alert('Save As requires Chrome or Edge.');
-      return false;
-    }
     try {
       (document.activeElement as HTMLElement | null)?.blur();
       const suggested = get().currentFileName || 'roadmap.json';
+      if (!isFileSystemAccessSupported()) {
+        // Fallback (Firefox/Safari): download a copy. No handle to save back
+        // to later, but the payload is identical.
+        downloadTextFile(suggested, get().exportToJSON());
+        set({ currentFileName: suggested, isDirty: false });
+        return true;
+      }
       const handle = await pickSaveFile(suggested);
       if (!handle) return false; // user cancelled
       await writeFileText(handle, get().exportToJSON());
@@ -1152,14 +1164,23 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
   },
 
   openFile: async () => {
-    if (!isFileSystemAccessSupported()) {
-      alert('Open requires Chrome or Edge.');
-      return false;
-    }
     if (get().isDirty && !window.confirm('Discard unsaved changes?')) {
       return false;
     }
     try {
+      if (!isFileSystemAccessSupported()) {
+        // Fallback (Firefox/Safari): upload via file input. No handle, so a
+        // later Save falls back to a download.
+        const picked = await pickUploadFile();
+        if (!picked) return false; // user cancelled
+        get().importFromJSON(picked.text);
+        set({
+          currentFileHandle: null,
+          currentFileName: picked.name,
+          isDirty: false,
+        });
+        return true;
+      }
       const handle = await pickOpenFile();
       if (!handle) return false; // user cancelled
       const text = await readFileAsText(handle);
