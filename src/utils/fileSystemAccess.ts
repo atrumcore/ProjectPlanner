@@ -1,10 +1,11 @@
-// Thin wrappers around the File System Access API.
+// Thin wrappers around the File System Access API, plus download/upload
+// fallbacks for browsers without it.
 //
-// The API is Chromium-only (Chrome, Edge, Opera). Callers should guard
-// UI with `isFileSystemAccessSupported()` and disable/hide file actions
-// in unsupported browsers — we intentionally do NOT fall back to
-// download/upload, because the whole point of this module is to give
-// true "save back to the same file" semantics.
+// The API is Chromium-only (Chrome, Edge, Opera). Where it's available the
+// app gets true "save back to the same file" semantics via handles. In other
+// browsers (Firefox, Safari) callers fall back to `downloadTextFile` /
+// `pickUploadFile` — same JSON payload, but each save downloads a fresh copy
+// and no handle is retained.
 //
 // User cancels surface as `null` returns (not thrown errors), so callers
 // can write `if (!handle) return;` without a try/catch.
@@ -90,4 +91,35 @@ export async function writeFileText(handle: FileSystemFileHandle, text: string):
   } finally {
     await writable.close();
   }
+}
+
+// ── Fallbacks for browsers without the File System Access API ──────────────
+
+/** Save `text` as a browser download named `fileName`. */
+export function downloadTextFile(fileName: string, text: string): void {
+  const blob = new Blob([text], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.download = fileName;
+  link.href = url;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+/** Prompt for a .json file via a hidden file input. Resolves to the file's
+ *  name + contents, or null if the user cancels. */
+export function pickUploadFile(): Promise<{ name: string; text: string } | null> {
+  return new Promise(resolve => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) { resolve(null); return; }
+      resolve({ name: file.name, text: await file.text() });
+    };
+    // `cancel` fires on modern browsers when the picker is dismissed.
+    input.oncancel = () => resolve(null);
+    input.click();
+  });
 }

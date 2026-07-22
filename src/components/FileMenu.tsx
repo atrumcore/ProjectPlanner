@@ -1,5 +1,4 @@
 import { useGanttStore } from '../store/useGanttStore';
-import { isFileSystemAccessSupported } from '../utils/fileSystemAccess';
 import DropdownMenu from './DropdownMenu';
 
 interface Props {
@@ -16,7 +15,6 @@ export default function FileMenu({ anchor, onClose, onExportPNG, onExportPDF, on
   const openFile = useGanttStore(s => s.openFile);
   const saveFile = useGanttStore(s => s.saveFile);
   const saveFileAs = useGanttStore(s => s.saveFileAs);
-  const supported = isFileSystemAccessSupported();
 
   const item = (label: string, action: () => void, shortcut?: string, disabled?: boolean) => (
     <div
@@ -31,10 +29,10 @@ export default function FileMenu({ anchor, onClose, onExportPNG, onExportPDF, on
 
   return (
     <DropdownMenu anchor={anchor} onClose={onClose}>
-      {item('New', newFile, 'Ctrl+N', !supported)}
-      {item('Open', openFile, 'Ctrl+O', !supported)}
-      {item('Save', saveFile, 'Ctrl+S', !supported)}
-      {item('Save As', saveFileAs, 'Ctrl+Shift+S', !supported)}
+      {item('New', newFile, 'Ctrl+N')}
+      {item('Open', openFile, 'Ctrl+O')}
+      {item('Save', saveFile, 'Ctrl+S')}
+      {item('Save As', saveFileAs, 'Ctrl+Shift+S')}
       {(onExportPNG || onExportPDF || onExportSwimlanes || onEmailNotes) && <div className="view-menu-divider" />}
       {onExportPNG && item('Export PNG', onExportPNG)}
       {onExportPDF && item('Export PDF', onExportPDF)}

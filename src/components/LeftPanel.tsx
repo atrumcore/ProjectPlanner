@@ -379,7 +379,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
               setCtxMenu(null);
             }}
           >
-            Add Go-Live Marker
+            Add Go-live Marker
           </div>
           <div className="context-menu-divider" />
           {sections

@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useState, useEffect } from 'react';
 import { useGanttStore } from '../store/useGanttStore';
 import { useExportLayout } from './ExportLayoutContext';
 import { getDateAtWeekOffset, formatDayMonth } from '../utils/dateUtils';
@@ -27,6 +27,15 @@ export default function MilestoneMarker({ id, week, rowY }: Props) {
   const { rowHeight: ROW_HEIGHT } = useExportLayout();
 
   const dragRef = useRef<{ startX: number; origWeek: number } | null>(null);
+
+  // Two-click delete confirm (matches the app-wide pattern — no native
+  // confirm dialogs). First right-click arms; a second within 3s deletes.
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  useEffect(() => {
+    if (!confirmDelete) return;
+    const t = setTimeout(() => setConfirmDelete(false), 3000);
+    return () => clearTimeout(t);
+  }, [confirmDelete]);
 
   // Enough room for rotated "DD Mon" text at 8px. Keeps a readable minimum
   // even when zoomed way out, and grows with zoom so it stays proportional.
@@ -69,10 +78,12 @@ export default function MilestoneMarker({ id, week, rowY }: Props) {
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (confirm('Delete this milestone?')) {
+    if (confirmDelete) {
       removeMilestone(id);
+    } else {
+      setConfirmDelete(true);
     }
-  }, [id, removeMilestone]);
+  }, [id, removeMilestone, confirmDelete]);
 
   return (
     <g
@@ -89,11 +100,13 @@ export default function MilestoneMarker({ id, week, rowY }: Props) {
         height={ROW_HEIGHT - 4}
         rx={3}
         ry={3}
-        fill={c.MILESTONE_FILL}
-        stroke={c.MILESTONE_STROKE}
+        fill={confirmDelete ? '#c0445a' : c.MILESTONE_FILL}
+        stroke={confirmDelete ? '#99001b' : c.MILESTONE_STROKE}
         strokeWidth={1.2}
       >
-        <title>Go-Live: {label}</title>
+        <title>{confirmDelete
+          ? 'Right-click again to delete this go-live marker'
+          : `Go-live: ${label} · Right-click to delete`}</title>
       </rect>
       <text
         x={cx}

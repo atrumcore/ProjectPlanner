@@ -70,7 +70,7 @@ export default function ManagePhaseTypesModal() {
         <h2>Phase Types</h2>
         <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '0 0 12px' }}>
           Define the kinds of work blocks (Analysis, UAT, Smoke Test, …) that can be placed on the timeline.
-          Each type controls a bar's color and label, and appears as a row in every environment's overlap rules.
+          Each type controls a bar's colour and label.
         </p>
 
         <div className="phase-types-list">

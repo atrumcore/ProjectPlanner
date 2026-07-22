@@ -116,7 +116,7 @@ export default function ViewMenu({ anchor, onClose }: Props) {
       <label className="view-menu-item">
         <input type="checkbox" checked={showMilestones} onChange={toggleMilestones} />
         <span className="view-menu-swatch" style={{ background: 'var(--milestone-fill)', borderColor: 'var(--milestone-stroke)' }} />
-        Release dates
+        Go-live markers
       </label>
       <label className="view-menu-item">
         <input type="checkbox" checked={showBarDates} onChange={toggleBarDates} />
