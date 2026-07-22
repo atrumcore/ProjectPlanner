@@ -33,6 +33,14 @@ export interface PhaseBar {
    * sharing the same Exclusive env that overlap in time are flagged as
    * contention. null = unassigned, contributes nothing to contention. */
   environmentId: string | null;
+  /** People executing this phase (Person ids). Every person is an exclusive
+   * resource: the same person on two overlapping bars on different swimlanes
+   * is flagged as people contention. Empty = unassigned. */
+  assigneeIds: string[];
+  /** Teams executing this phase (Team ids). A team is an atomic exclusive
+   * resource just like a person — a team assignment does NOT expand to its
+   * members for contention purposes. Empty = unassigned. */
+  teamIds: string[];
 }
 
 export interface Milestone {
@@ -85,6 +93,11 @@ export interface Swimlane {
    * translucent band over the themed row background on both the left panel
    * and the timeline. undefined = no tint (default even/odd striping). */
   color?: string;
+  /** People who OWN this project (ownership label, shown as chips beside the
+   * project name). Ownership does not participate in contention. */
+  assigneeIds: string[];
+  /** Teams who OWN this project — same ownership-label semantics. */
+  teamIds: string[];
 }
 
 // Swimlane row tint palette — 8 distinct hues at medium saturation, picked so
@@ -142,6 +155,30 @@ export interface Environment {
   exclusive: boolean;
 }
 
+/** A group of people that can be allocated to work as a unit. Teams are
+ * planning resources inside the document (like Environments), not accounts. */
+export interface Team {
+  id: string;
+  name: string;
+  color: string;
+  order: number;
+}
+
+/** A person that can be allocated to execute planned work. People are
+ * planning resources inside the document — they never log in. */
+export interface Person {
+  id: string;
+  name: string;
+  /** Optional role shown alongside the name, e.g. "BA", "Backend Dev". */
+  role?: string;
+  color: string;
+  order: number;
+  /** Team this person belongs to (grouping in the People panel + pickers).
+   * null/undefined = not in a team. Membership is organisational only — it
+   * does not link the person's bookings to the team's for contention. */
+  teamId?: string | null;
+}
+
 export interface TimelineConfig {
   startMonth: number;
   startYear: number;
@@ -164,6 +201,8 @@ export interface GanttState {
   actionItems: ActionItem[];
   floatingNotes: FloatingNote[];
   environments: Environment[];
+  teams: Team[];
+  people: Person[];
   phaseTypes: PhaseTypeDef[];
   timeline: TimelineConfig;
   selectedBarId: string | null;
@@ -177,6 +216,8 @@ export interface GanttState {
   showEnvIndicators: boolean;
   showEnvMarquees: boolean;
   showContention: boolean;
+  showPeopleIndicators: boolean;
+  showPeopleContention: boolean;
   barStyle: BarStyle;
   // Ephemeral (not persisted/snapshotted)
   lastUsedPhaseType: PhaseType;
@@ -187,6 +228,9 @@ export interface GanttState {
   notesPanelFilterId: string | null;
   environmentsPanelOpen: boolean;
   environmentFocusId: string | null;
+  peoplePanelOpen: boolean;
+  /** Focused resource in people focus mode — dims bars not assigned to it. */
+  peopleFocus: { kind: 'person' | 'team'; id: string } | null;
   hoveredBarId: string | null;
   phaseTypesModalOpen: boolean;
   // File session state (not persisted — handles are session-scoped and
@@ -208,6 +252,19 @@ export const ENV_COLOR_PRESETS = [
   '#1e88e5', // bright blue
   '#8e24aa', // vivid purple
   '#455a64', // slate charcoal
+] as const;
+
+// People/team palette — deliberately offset from ENV_COLOR_PRESETS hues so a
+// person chip and an env dot on the same bar don't read as the same series.
+export const PEOPLE_COLOR_PRESETS = [
+  '#d81b60', // raspberry
+  '#5e35b1', // deep violet
+  '#039be5', // sky blue
+  '#00897b', // teal
+  '#7cb342', // leaf green
+  '#c0ca33', // lime
+  '#ef6c00', // burnt orange
+  '#6d4c41', // cocoa
 ] as const;
 
 // Layout constants matching draw.io diagram

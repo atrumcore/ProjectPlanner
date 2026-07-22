@@ -8,6 +8,8 @@ import type {
   SwimlaneSection,
   Section,
   Environment,
+  Team,
+  Person,
   PhaseTypeDef,
   FloatingNote,
 } from '../types/gantt';
@@ -15,6 +17,7 @@ import type {
 import {
   DEFAULT_SECTIONS,
   ENV_COLOR_PRESETS,
+  PEOPLE_COLOR_PRESETS,
   FLOATING_NOTE_COLORS,
   FLOATING_NOTE_DEFAULT_WIDTH,
   FLOATING_NOTE_DEFAULT_HEIGHT,
@@ -42,11 +45,12 @@ const STORAGE_KEY = 'dha-gantt-state';
 const MAX_HISTORY = 50;
 
 // Single version stamp written by BOTH localStorage autosave and file export.
-// History: v2 real-calendar model · v5 env exclusive flag · v6 bar environmentId.
+// History: v2 real-calendar model · v5 env exclusive flag · v6 bar environmentId
+// · v7 teams/people + bar/lane assigneeIds+teamIds.
 // Bump when the schema changes and add a matching migration in loadFromStorage /
 // importFromJSON (they run idempotent field migrations regardless of version;
 // the only hard gate is `< 2`, which discards pre-real-calendar data).
-const SCHEMA_VERSION = 6;
+const SCHEMA_VERSION = 7;
 
 interface GanttActions {
   // Sections
@@ -128,6 +132,23 @@ interface GanttActions {
   setEnvironmentFocus: (envId: string | null) => void;
   setHoveredBar: (id: string | null) => void;
 
+  // People & teams
+  addTeam: (name: string, color?: string) => string;
+  updateTeam: (id: string, updates: Partial<Omit<Team, 'id'>>) => void;
+  removeTeam: (id: string) => void;
+  addPerson: (name: string, opts?: { role?: string; teamId?: string | null; color?: string }) => string;
+  updatePerson: (id: string, updates: Partial<Omit<Person, 'id'>>) => void;
+  removePerson: (id: string) => void;
+  /** Replace a bar's execution allocation (people + teams) in one action. */
+  setBarPeople: (barId: string, allocation: { assigneeIds?: string[]; teamIds?: string[] }) => void;
+  /** Replace a swimlane's ownership chips (people + teams) in one action. */
+  setSwimlaneOwners: (laneId: string, owners: { assigneeIds?: string[]; teamIds?: string[] }) => void;
+  /** Merge people & teams from another plan's JSON export (by id; existing
+   * entries win). Returns how many were added, or null on parse failure. */
+  importPeopleFromJSON: (json: string) => { people: number; teams: number } | null;
+  togglePeoplePanel: () => void;
+  setPeopleFocus: (focus: { kind: 'person' | 'team'; id: string } | null) => void;
+
   // Phase types
   addPhaseType: (name?: string, baseColor?: string) => string;
   updatePhaseType: (id: string, updates: Partial<Omit<PhaseTypeDef, 'id'>>) => void;
@@ -148,6 +169,8 @@ interface GanttActions {
   toggleEnvIndicators: () => void;
   toggleEnvMarquees: () => void;
   toggleContention: () => void;
+  togglePeopleIndicators: () => void;
+  togglePeopleContention: () => void;
   setBarStyle: (style: import('../types/gantt').BarStyle) => void;
 
   // Persistence
@@ -180,6 +203,8 @@ const defaultState: GanttState = {
   actionItems: [],
   floatingNotes: [],
   environments: [],
+  teams: [],
+  people: [],
   phaseTypes: getBuiltinPhaseTypes(),
   timeline: {
     startMonth: 0, // January
@@ -197,6 +222,8 @@ const defaultState: GanttState = {
   showEnvIndicators: true,
   showEnvMarquees: true,
   showContention: true,
+  showPeopleIndicators: true,
+  showPeopleContention: true,
   barStyle: 'tagged',
   lastUsedPhaseType: 'development',
   creatingBarId: null,
@@ -206,6 +233,8 @@ const defaultState: GanttState = {
   notesPanelFilterId: null,
   environmentsPanelOpen: false,
   environmentFocusId: null,
+  peoplePanelOpen: false,
+  peopleFocus: null,
   hoveredBarId: null,
   phaseTypesModalOpen: false,
   currentFileName: null,
@@ -227,6 +256,8 @@ function snapshot(state: GanttState): GanttState {
     actionItems: state.actionItems,
     floatingNotes: state.floatingNotes,
     environments: state.environments,
+    teams: state.teams,
+    people: state.people,
     phaseTypes: state.phaseTypes,
     timeline: state.timeline,
     selectedBarId: state.selectedBarId,
@@ -239,8 +270,14 @@ function pushUndo(state: GanttState) {
   redoStack = [];
 }
 
+/** Keep only entries that are valid string ids. */
+function idArray(v: unknown): string[] {
+  return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+}
+
 /** Migrate legacy keyFeatures: string[] → HTML string. Strips the deprecated
- * environmentId field (v4 → v5). Idempotent. */
+ * environmentId field (v4 → v5). v6 → v7 adds owner assigneeIds/teamIds.
+ * Idempotent. */
 function migrateSwimlanes(swimlanes: unknown): Swimlane[] {
   if (!Array.isArray(swimlanes)) return [];
   return swimlanes.map(raw => {
@@ -256,6 +293,8 @@ function migrateSwimlanes(swimlanes: unknown): Swimlane[] {
       section: s.section,
       order: s.order,
       ...(typeof s.color === 'string' ? { color: s.color } : {}),
+      assigneeIds: idArray(s.assigneeIds),
+      teamIds: idArray(s.teamIds),
     };
   });
 }
@@ -298,7 +337,8 @@ function migratePhaseTypes(types: unknown): PhaseTypeDef[] {
   return applyThemePresetsToBuiltins(mapped);
 }
 
-/** v5 → v6: ensure every bar carries `environmentId` (null when missing). */
+/** v5 → v6: ensure every bar carries `environmentId` (null when missing).
+ * v6 → v7: ensure assigneeIds/teamIds arrays. */
 function migratePhaseBars(bars: unknown): PhaseBar[] {
   if (!Array.isArray(bars)) return [];
   return bars.map((raw: any) => ({
@@ -310,7 +350,37 @@ function migratePhaseBars(bars: unknown): PhaseBar[] {
     durationWeeks: raw.durationWeeks,
     colorOverride: raw.colorOverride,
     environmentId: raw.environmentId ?? null,
+    assigneeIds: idArray(raw.assigneeIds),
+    teamIds: idArray(raw.teamIds),
   }));
+}
+
+/** v7: validate the teams array (absent in older documents). */
+function migrateTeams(teams: unknown): Team[] {
+  if (!Array.isArray(teams)) return [];
+  return teams
+    .filter((raw: any) => raw && typeof raw.id === 'string' && typeof raw.name === 'string')
+    .map((raw: any, i: number) => ({
+      id: raw.id,
+      name: raw.name,
+      color: typeof raw.color === 'string' ? raw.color : PEOPLE_COLOR_PRESETS[i % PEOPLE_COLOR_PRESETS.length],
+      order: typeof raw.order === 'number' ? raw.order : i,
+    }));
+}
+
+/** v7: validate the people array (absent in older documents). */
+function migratePeople(people: unknown): Person[] {
+  if (!Array.isArray(people)) return [];
+  return people
+    .filter((raw: any) => raw && typeof raw.id === 'string' && typeof raw.name === 'string')
+    .map((raw: any, i: number) => ({
+      id: raw.id,
+      name: raw.name,
+      ...(typeof raw.role === 'string' && raw.role ? { role: raw.role } : {}),
+      color: typeof raw.color === 'string' ? raw.color : PEOPLE_COLOR_PRESETS[i % PEOPLE_COLOR_PRESETS.length],
+      order: typeof raw.order === 'number' ? raw.order : i,
+      teamId: typeof raw.teamId === 'string' ? raw.teamId : null,
+    }));
 }
 
 function ensureTodayVisible(
@@ -387,6 +457,8 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
           keyDependencies: '',
           section,
           order: maxOrder + 1,
+          assigneeIds: [],
+          teamIds: [],
         },
       ],
     }));
@@ -425,7 +497,13 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
     set(state => ({
       phaseBars: [
         ...state.phaseBars,
-        { ...bar, id: uid(), environmentId: bar.environmentId ?? null },
+        {
+          ...bar,
+          id: uid(),
+          environmentId: bar.environmentId ?? null,
+          assigneeIds: bar.assigneeIds ?? [],
+          teamIds: bar.teamIds ?? [],
+        },
       ],
     }));
     get().saveToStorage();
@@ -613,6 +691,8 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         startWeek: Math.max(0, startWeek),
         durationWeeks: Math.max(1 / 7, durationWeeks),
         environmentId: null,
+        assigneeIds: [],
+        teamIds: [],
       }],
       selectedBarId: newId,
       creatingBarId: newId,
@@ -836,6 +916,161 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
 
   setHoveredBar: (id) => set({ hoveredBarId: id }),
 
+  // === People & teams ===
+  addTeam: (name, color) => {
+    pushUndo(get());
+    const id = uid();
+    const team: Team = {
+      id,
+      name: name.trim() || `Team ${get().teams.length + 1}`,
+      color: color ?? pickNextEnvColor([...get().teams, ...get().people], PEOPLE_COLOR_PRESETS),
+      order: get().teams.length,
+    };
+    set(state => ({ teams: [...state.teams, team] }));
+    get().saveToStorage();
+    return id;
+  },
+
+  updateTeam: (id, updates) => {
+    pushUndo(get());
+    set(state => ({
+      teams: state.teams.map(t => (t.id === id ? { ...t, ...updates } : t)),
+    }));
+    get().saveToStorage();
+  },
+
+  removeTeam: (id) => {
+    pushUndo(get());
+    set(state => ({
+      teams: state.teams
+        .filter(t => t.id !== id)
+        .map((t, i) => ({ ...t, order: i })),
+      // Un-team members; the people themselves remain.
+      people: state.people.map(p => (p.teamId === id ? { ...p, teamId: null } : p)),
+      // Unassign from bar allocations and swimlane ownership.
+      phaseBars: state.phaseBars.map(b =>
+        b.teamIds.includes(id) ? { ...b, teamIds: b.teamIds.filter(t => t !== id) } : b
+      ),
+      swimlanes: state.swimlanes.map(s =>
+        s.teamIds.includes(id) ? { ...s, teamIds: s.teamIds.filter(t => t !== id) } : s
+      ),
+      peopleFocus: state.peopleFocus?.kind === 'team' && state.peopleFocus.id === id
+        ? null : state.peopleFocus,
+    }));
+    get().saveToStorage();
+  },
+
+  addPerson: (name, opts) => {
+    pushUndo(get());
+    const id = uid();
+    const person: Person = {
+      id,
+      name: name.trim() || `Person ${get().people.length + 1}`,
+      ...(opts?.role?.trim() ? { role: opts.role.trim() } : {}),
+      color: opts?.color ?? pickNextEnvColor([...get().teams, ...get().people], PEOPLE_COLOR_PRESETS),
+      order: get().people.length,
+      teamId: opts?.teamId ?? null,
+    };
+    set(state => ({ people: [...state.people, person] }));
+    get().saveToStorage();
+    return id;
+  },
+
+  updatePerson: (id, updates) => {
+    pushUndo(get());
+    set(state => ({
+      people: state.people.map(p => (p.id === id ? { ...p, ...updates } : p)),
+    }));
+    get().saveToStorage();
+  },
+
+  removePerson: (id) => {
+    pushUndo(get());
+    set(state => ({
+      people: state.people
+        .filter(p => p.id !== id)
+        .map((p, i) => ({ ...p, order: i })),
+      phaseBars: state.phaseBars.map(b =>
+        b.assigneeIds.includes(id) ? { ...b, assigneeIds: b.assigneeIds.filter(a => a !== id) } : b
+      ),
+      swimlanes: state.swimlanes.map(s =>
+        s.assigneeIds.includes(id) ? { ...s, assigneeIds: s.assigneeIds.filter(a => a !== id) } : s
+      ),
+      peopleFocus: state.peopleFocus?.kind === 'person' && state.peopleFocus.id === id
+        ? null : state.peopleFocus,
+    }));
+    get().saveToStorage();
+  },
+
+  setBarPeople: (barId, allocation) => {
+    pushUndo(get());
+    const knownPeople = new Set(get().people.map(p => p.id));
+    const knownTeams = new Set(get().teams.map(t => t.id));
+    set(state => ({
+      phaseBars: state.phaseBars.map(b => {
+        if (b.id !== barId) return b;
+        return {
+          ...b,
+          assigneeIds: (allocation.assigneeIds ?? b.assigneeIds).filter(id => knownPeople.has(id)),
+          teamIds: (allocation.teamIds ?? b.teamIds).filter(id => knownTeams.has(id)),
+        };
+      }),
+    }));
+    get().saveToStorage();
+  },
+
+  setSwimlaneOwners: (laneId, owners) => {
+    pushUndo(get());
+    const knownPeople = new Set(get().people.map(p => p.id));
+    const knownTeams = new Set(get().teams.map(t => t.id));
+    set(state => ({
+      swimlanes: state.swimlanes.map(s => {
+        if (s.id !== laneId) return s;
+        return {
+          ...s,
+          assigneeIds: (owners.assigneeIds ?? s.assigneeIds).filter(id => knownPeople.has(id)),
+          teamIds: (owners.teamIds ?? s.teamIds).filter(id => knownTeams.has(id)),
+        };
+      }),
+    }));
+    get().saveToStorage();
+  },
+
+  importPeopleFromJSON: (json) => {
+    try {
+      const data = JSON.parse(json);
+      const incomingTeams = migrateTeams(data.teams);
+      const incomingPeople = migratePeople(data.people);
+      if (incomingTeams.length === 0 && incomingPeople.length === 0) {
+        return { people: 0, teams: 0 };
+      }
+      pushUndo(get());
+      const state = get();
+      const haveTeam = new Set(state.teams.map(t => t.id));
+      const havePerson = new Set(state.people.map(p => p.id));
+      const newTeams = incomingTeams.filter(t => !haveTeam.has(t.id));
+      const teamIdsAfter = new Set([...haveTeam, ...newTeams.map(t => t.id)]);
+      const newPeople = incomingPeople
+        .filter(p => !havePerson.has(p.id))
+        // Drop dangling team refs the merge didn't bring along.
+        .map(p => (p.teamId && !teamIdsAfter.has(p.teamId) ? { ...p, teamId: null } : p));
+      set({
+        teams: [...state.teams, ...newTeams].map((t, i) => ({ ...t, order: i })),
+        people: [...state.people, ...newPeople].map((p, i) => ({ ...p, order: i })),
+      });
+      get().saveToStorage();
+      return { people: newPeople.length, teams: newTeams.length };
+    } catch {
+      return null;
+    }
+  },
+
+  togglePeoplePanel: () => set(state => ({
+    peoplePanelOpen: !state.peoplePanelOpen,
+  })),
+
+  setPeopleFocus: (focus) => set({ peopleFocus: focus }),
+
   // === Phase types ===
   addPhaseType: (name, baseColor) => {
     pushUndo(get());
@@ -956,6 +1191,16 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
     get().saveToStorage();
   },
 
+  togglePeopleIndicators: () => {
+    set(state => ({ showPeopleIndicators: !state.showPeopleIndicators }));
+    get().saveToStorage();
+  },
+
+  togglePeopleContention: () => {
+    set(state => ({ showPeopleContention: !state.showPeopleContention }));
+    get().saveToStorage();
+  },
+
   setBarStyle: (style) => {
     set({ barStyle: style });
     get().saveToStorage();
@@ -974,6 +1219,8 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         actionItems: state.actionItems,
         floatingNotes: state.floatingNotes,
         environments: state.environments,
+        teams: state.teams,
+        people: state.people,
         phaseTypes: state.phaseTypes,
         timeline: state.timeline,
         showMonthDates: state.showMonthDates,
@@ -984,6 +1231,8 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         showEnvIndicators: state.showEnvIndicators,
         showEnvMarquees: state.showEnvMarquees,
         showContention: state.showContention,
+        showPeopleIndicators: state.showPeopleIndicators,
+        showPeopleContention: state.showPeopleContention,
         barStyle: state.barStyle,
         calendarModelVersion: SCHEMA_VERSION,
       };
@@ -1023,6 +1272,8 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         actionItems: data.actionItems || [],
         floatingNotes: Array.isArray(data.floatingNotes) ? data.floatingNotes : [],
         environments: migrateEnvironments(data.environments),
+        teams: migrateTeams(data.teams),
+        people: migratePeople(data.people),
         phaseTypes: migratePhaseTypes(data.phaseTypes),
         timeline: savedTimeline,
         showMonthDates: data.showMonthDates ?? false,
@@ -1033,6 +1284,8 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         showEnvIndicators: data.showEnvIndicators ?? true,
         showEnvMarquees: data.showEnvMarquees ?? true,
         showContention: data.showContention ?? true,
+        showPeopleIndicators: data.showPeopleIndicators ?? true,
+        showPeopleContention: data.showPeopleContention ?? true,
         barStyle: data.barStyle === 'legacy' ? 'legacy' : 'tagged',
       });
       ensureTodayVisible(get, set);
@@ -1056,6 +1309,8 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
       actionItems: state.actionItems,
       floatingNotes: state.floatingNotes,
       environments: state.environments,
+      teams: state.teams,
+      people: state.people,
       phaseTypes: state.phaseTypes,
       timeline: state.timeline,
       // View preferences — so reimporting restores the user's toggles
@@ -1067,6 +1322,8 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
       showEnvIndicators: state.showEnvIndicators,
       showEnvMarquees: state.showEnvMarquees,
       showContention: state.showContention,
+      showPeopleIndicators: state.showPeopleIndicators,
+      showPeopleContention: state.showPeopleContention,
       barStyle: state.barStyle,
       // Format marker (so downstream loaders can detect legacy data)
       calendarModelVersion: SCHEMA_VERSION,
@@ -1093,6 +1350,8 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         actionItems: data.actionItems || [],
         floatingNotes: Array.isArray(data.floatingNotes) ? data.floatingNotes : [],
         environments: migrateEnvironments(data.environments),
+        teams: migrateTeams(data.teams),
+        people: migratePeople(data.people),
         phaseTypes: migratePhaseTypes(data.phaseTypes),
         timeline: data.timeline || defaultState.timeline,
         // Restore view preferences — fall back to current defaults if the
@@ -1105,6 +1364,8 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         showEnvIndicators: data.showEnvIndicators ?? true,
         showEnvMarquees: data.showEnvMarquees ?? true,
         showContention: data.showContention ?? true,
+        showPeopleIndicators: data.showPeopleIndicators ?? true,
+        showPeopleContention: data.showPeopleContention ?? true,
         barStyle: data.barStyle === 'legacy' ? 'legacy' : 'tagged',
       });
       get().saveToStorage();

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useGanttStore } from '../store/useGanttStore';
-import { getContentions } from '../utils/contention';
+import { getContentions, getPeopleContentions } from '../utils/contention';
 import FileMenu from './FileMenu';
 import InsertMenu from './InsertMenu';
 import ViewMenu from './ViewMenu';
@@ -45,6 +45,16 @@ export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomRe
   const contentionCount = useMemo(
     () => showContention ? getContentions({ environments, swimlanes, phaseBars }).length : 0,
     [environments, swimlanes, phaseBars, showContention]
+  );
+
+  const people = useGanttStore(s => s.people);
+  const teams = useGanttStore(s => s.teams);
+  const showPeopleContention = useGanttStore(s => s.showPeopleContention);
+  const peoplePanelOpen = useGanttStore(s => s.peoplePanelOpen);
+  const togglePeoplePanel = useGanttStore(s => s.togglePeoplePanel);
+  const peopleContentionCount = useMemo(
+    () => showPeopleContention ? getPeopleContentions({ people, teams, phaseBars }).length : 0,
+    [people, teams, phaseBars, showPeopleContention]
   );
 
   const toggleMenu = (id: MenuId, e: React.MouseEvent<HTMLButtonElement>) => {
@@ -103,6 +113,14 @@ export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomRe
           style={environmentsPanelOpen ? { background: 'var(--accent-secondary)', color: '#ffffff', borderColor: 'var(--accent-secondary)' } : undefined}
         >
           Environments{contentionCount > 0 && <span className="toolbar-env-badge">{contentionCount}</span>}
+        </button>
+
+        <button
+          onClick={togglePeoplePanel}
+          title="People & Teams (Ctrl+Shift+P)"
+          style={peoplePanelOpen ? { background: 'var(--accent-secondary)', color: '#ffffff', borderColor: 'var(--accent-secondary)' } : undefined}
+        >
+          People{peopleContentionCount > 0 && <span className="toolbar-env-badge">{peopleContentionCount}</span>}
         </button>
 
         <div className="toolbar-spacer" />

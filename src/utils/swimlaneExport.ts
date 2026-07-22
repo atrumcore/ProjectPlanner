@@ -1,4 +1,4 @@
-import type { Section, Swimlane, PhaseBar, PhaseTypeDef, TimelineConfig } from '../types/gantt';
+import type { Section, Swimlane, PhaseBar, PhaseTypeDef, Person, Team, TimelineConfig } from '../types/gantt';
 import { htmlToPlainText } from './plainText';
 import { getDateAtWeekOffset } from './dateUtils';
 
@@ -17,8 +17,8 @@ function formatISODate(date: Date): string {
 
 /**
  * Build a CSV of every swimlane broken down by phase bar, with columns:
- * Section, Project Name, Phase, Start Date, End Date, Duration (Days),
- * Key Features.
+ * Section, Project Name, Owners, Phase, Start Date, End Date,
+ * Duration (Days), Allocated To, Key Features.
  *
  * Grain is one row per phase bar. A swimlane with no phase bars still emits a
  * single row (blank phase/date columns) so it isn't dropped from the export.
@@ -35,10 +35,19 @@ export function buildSwimlaneCsv(
   phaseBars: PhaseBar[],
   phaseTypes: PhaseTypeDef[],
   timeline: Pick<TimelineConfig, 'startMonth' | 'startYear'>,
+  people: Person[] = [],
+  teams: Team[] = [],
 ): string {
   const sectionById = new Map(sections.map(s => [s.id, s]));
   const sectionOrder = (id: string) => sectionById.get(id)?.order ?? Number.MAX_SAFE_INTEGER;
   const phaseTypeById = new Map(phaseTypes.map(t => [t.id, t]));
+  const personById = new Map(people.map(p => [p.id, p]));
+  const teamById = new Map(teams.map(t => [t.id, t]));
+  /** "Backend team; Alice; Bob" — teams first, then people, for a bar or lane. */
+  const allocationText = (teamIds: string[], assigneeIds: string[]) => [
+    ...teamIds.map(id => teamById.get(id)?.name).filter(Boolean),
+    ...assigneeIds.map(id => personById.get(id)?.name).filter(Boolean),
+  ].join('; ');
 
   // Group bars by swimlane, chronological within each lane.
   const barsByLane = new Map<string, PhaseBar[]>();
@@ -54,19 +63,20 @@ export function buildSwimlaneCsv(
     return sectionDelta !== 0 ? sectionDelta : a.order - b.order;
   });
 
-  const header = ['Section', 'Project Name', 'Phase', 'Start Date', 'End Date', 'Duration (Days)', 'Key Features'];
+  const header = ['Section', 'Project Name', 'Owners', 'Phase', 'Start Date', 'End Date', 'Duration (Days)', 'Allocated To', 'Key Features'];
   const rows: string[] = [];
 
   for (const lane of ordered) {
     const sectionLabel = sectionById.get(lane.section)?.label ?? '';
     const projectName = htmlToPlainText(lane.projectName);
+    const owners = allocationText(lane.teamIds, lane.assigneeIds);
     const keyFeatures = htmlToPlainText(lane.keyFeatures, '; ');
     const bars = barsByLane.get(lane.id) ?? [];
 
     if (bars.length === 0) {
       rows.push([
-        csvField(sectionLabel), csvField(projectName),
-        csvField(''), csvField(''), csvField(''), csvField(''),
+        csvField(sectionLabel), csvField(projectName), csvField(owners),
+        csvField(''), csvField(''), csvField(''), csvField(''), csvField(''),
         csvField(keyFeatures),
       ].join(','));
       continue;
@@ -81,10 +91,13 @@ export function buildSwimlaneCsv(
       rows.push([
         csvField(sectionLabel),
         csvField(projectName),
+        // Owners are swimlane-level — only on the lane's first bar row.
+        csvField(i === 0 ? owners : ''),
         csvField(phaseName),
         csvField(formatISODate(startDate)),
         csvField(formatISODate(endDate)),
         csvField(String(durationDays)),
+        csvField(allocationText(bar.teamIds, bar.assigneeIds)),
         // Key Features are swimlane-level — only on the lane's first bar row.
         csvField(i === 0 ? keyFeatures : ''),
       ].join(','));

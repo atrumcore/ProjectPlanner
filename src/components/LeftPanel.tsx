@@ -8,6 +8,7 @@ import type { CSSProperties } from 'react';
 import RichTextEditor from './RichTextEditor';
 import FeaturesCell from './FeaturesCell';
 import KeyFeaturesPopover from './KeyFeaturesPopover';
+import PeoplePickerPopover from './PeoplePickerPopover';
 import { htmlToPlainText } from '../utils/plainText';
 
 interface Props {
@@ -32,6 +33,9 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
   const openNotesPanelForSwimlane = useGanttStore(s => s.openNotesPanelForSwimlane);
   const openNotesPanelFiltered = useGanttStore(s => s.openNotesPanelFiltered);
   const updateActionItem = useGanttStore(s => s.updateActionItem);
+  const people = useGanttStore(s => s.people);
+  const teams = useGanttStore(s => s.teams);
+  const setSwimlaneOwners = useGanttStore(s => s.setSwimlaneOwners);
 
   const sectionedLanes = useSectionedLanes(sections, swimlanes);
 
@@ -53,6 +57,9 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
 
   // Open features-detail popover (anchored to the clicked cell)
   const [featuresPopover, setFeaturesPopover] = useState<{ laneId: string; anchor: DOMRect } | null>(null);
+
+  // Swimlane owner picker (people/teams allocation for the whole project)
+  const [ownerPicker, setOwnerPicker] = useState<{ laneId: string; x: number; y: number } | null>(null);
 
   // Swimlane right-click context menu
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; laneId: string } | null>(null);
@@ -277,6 +284,33 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
               {noteCountMap.get(lane.id)}
             </button>
           )}
+          {(() => {
+            const ownerTeams = lane.teamIds
+              .map(id => teams.find(t => t.id === id))
+              .filter((t): t is NonNullable<typeof t> => !!t);
+            const ownerPeople = lane.assigneeIds
+              .map(id => people.find(p => p.id === id))
+              .filter((p): p is NonNullable<typeof p> => !!p);
+            if (ownerTeams.length === 0 && ownerPeople.length === 0) return null;
+            const names = [...ownerTeams.map(t => t.name), ...ownerPeople.map(p => p.name)];
+            return (
+              <button
+                className="swimlane-owner-chips"
+                title={`Owned by: ${names.join(', ')} — click to change`}
+                onClick={e => {
+                  e.stopPropagation();
+                  setOwnerPicker({ laneId: lane.id, x: e.clientX, y: e.clientY });
+                }}
+              >
+                {ownerTeams.map(t => (
+                  <span key={`t-${t.id}`} className="swimlane-owner-dot is-team" style={{ background: t.color }} />
+                ))}
+                {ownerPeople.map(p => (
+                  <span key={`p-${p.id}`} className="swimlane-owner-dot" style={{ background: p.color }} />
+                ))}
+              </button>
+            );
+          })()}
         </div>
         <FeaturesCell
           key={lane.id}
@@ -380,6 +414,15 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
             }}
           >
             Add Go-live Marker
+          </div>
+          <div
+            className="context-menu-item"
+            onClick={() => {
+              setOwnerPicker({ laneId: ctxMenu.laneId, x: ctxMenu.x, y: ctxMenu.y });
+              setCtxMenu(null);
+            }}
+          >
+            Assign Owners…
           </div>
           <div className="context-menu-divider" />
           {sections
@@ -543,6 +586,23 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
             value={lane.keyFeatures}
             onSave={v => updateSwimlane(lane.id, { keyFeatures: v })}
             onClose={() => setFeaturesPopover(null)}
+          />
+        );
+      })()}
+
+      {/* Swimlane owner picker (people/teams who own the project) */}
+      {ownerPicker && (() => {
+        const lane = swimlanes.find(s => s.id === ownerPicker.laneId);
+        if (!lane) return null;
+        return (
+          <PeoplePickerPopover
+            title="Owners"
+            currentAssigneeIds={lane.assigneeIds}
+            currentTeamIds={lane.teamIds}
+            x={ownerPicker.x}
+            y={ownerPicker.y}
+            onChange={owners => setSwimlaneOwners(lane.id, owners)}
+            onClose={() => setOwnerPicker(null)}
           />
         );
       })()}

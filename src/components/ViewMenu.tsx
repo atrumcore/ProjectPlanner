@@ -27,6 +27,8 @@ export default function ViewMenu({ anchor, onClose }: Props) {
   const showEnvIndicators = useGanttStore(s => s.showEnvIndicators);
   const showEnvMarquees = useGanttStore(s => s.showEnvMarquees);
   const showContention = useGanttStore(s => s.showContention);
+  const showPeopleIndicators = useGanttStore(s => s.showPeopleIndicators);
+  const showPeopleContention = useGanttStore(s => s.showPeopleContention);
   const toggleWeekends = useGanttStore(s => s.toggleWeekends);
   const toggleHolidays = useGanttStore(s => s.toggleHolidays);
   const toggleMilestones = useGanttStore(s => s.toggleMilestones);
@@ -35,6 +37,8 @@ export default function ViewMenu({ anchor, onClose }: Props) {
   const toggleEnvIndicators = useGanttStore(s => s.toggleEnvIndicators);
   const toggleEnvMarquees = useGanttStore(s => s.toggleEnvMarquees);
   const toggleContention = useGanttStore(s => s.toggleContention);
+  const togglePeopleIndicators = useGanttStore(s => s.togglePeopleIndicators);
+  const togglePeopleContention = useGanttStore(s => s.togglePeopleContention);
 
   // Timeline range
   const timeline = useGanttStore(s => s.timeline);
@@ -140,6 +144,19 @@ export default function ViewMenu({ anchor, onClose }: Props) {
         <input type="checkbox" checked={showContention} onChange={toggleContention} />
         <span className="view-menu-swatch" style={{ background: 'var(--contention)', borderColor: 'var(--contention)' }} />
         Contention ribbons & highlights
+      </label>
+
+      <div className="view-menu-divider" />
+      <div className="view-menu-group-label">People</div>
+      <label className="view-menu-item">
+        <input type="checkbox" checked={showPeopleIndicators} onChange={togglePeopleIndicators} />
+        <span className="view-menu-swatch" style={{ background: '#5e35b1', borderColor: '#5e35b1', borderRadius: '50%' }} />
+        People chips on bars
+      </label>
+      <label className="view-menu-item">
+        <input type="checkbox" checked={showPeopleContention} onChange={togglePeopleContention} />
+        <span className="view-menu-swatch" style={{ background: '#d81b60', borderColor: '#d81b60' }} />
+        Double-booking ribbons
       </label>
 
       <div className="view-menu-divider" />
