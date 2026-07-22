@@ -7,6 +7,8 @@ interface Props {
   anchor: DOMRect;
   /** Swimlane the popover is editing — drives the title + value. */
   projectName: string;
+  /** Eyebrow label naming the field being edited (defaults to Key Features). */
+  title?: string;
   value: string;
   onSave: (html: string) => void;
   onClose: () => void;
@@ -24,7 +26,7 @@ const ANCHOR_GAP = 12;
  *
  * Dismiss paths: Esc · backdrop click · close button.
  */
-export default function KeyFeaturesPopover({ anchor, projectName, value, onSave, onClose }: Props) {
+export default function KeyFeaturesPopover({ anchor, projectName, title = 'Key Features', value, onSave, onClose }: Props) {
   const popoverRef = useRef<HTMLDivElement>(null);
 
   // Position the popover by mutating its inline style after measuring its
@@ -78,7 +80,7 @@ export default function KeyFeaturesPopover({ anchor, projectName, value, onSave,
         className="key-features-popover"
         role="dialog"
         aria-modal="true"
-        aria-label={`Key Features — ${projectName}`}
+        aria-label={`${title} — ${projectName}`}
         // Initial visibility:hidden so we never flash at 0,0; the layout
         // effect sets visibility:visible once it's positioned.
         style={{ visibility: 'hidden' }}
@@ -87,7 +89,7 @@ export default function KeyFeaturesPopover({ anchor, projectName, value, onSave,
       >
         <div className="key-features-popover-header">
           <div className="key-features-popover-title">
-            <span className="key-features-popover-eyebrow">Key Features</span>
+            <span className="key-features-popover-eyebrow">{title}</span>
             <span className="key-features-popover-project">{projectName || 'Untitled project'}</span>
           </div>
           <button

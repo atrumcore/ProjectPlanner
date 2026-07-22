@@ -1,11 +1,13 @@
-import { forwardRef } from 'react';
+import { forwardRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useGanttStore } from '../store/useGanttStore';
 import type { Swimlane } from '../types/gantt';
 import { SWIMLANE_TINT_ALPHA } from '../types/gantt';
 import { hexToRgba } from '../theme/colors';
 import { useSectionedLanes } from '../hooks/useSectionedLanes';
-import RichTextEditor from './RichTextEditor';
+import FeaturesCell from './FeaturesCell';
+import KeyFeaturesPopover from './KeyFeaturesPopover';
+import { htmlToPlainText } from '../utils/plainText';
 
 interface Props {
   onScroll: (scrollTop: number) => void;
@@ -19,6 +21,9 @@ const RightPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) 
 
   const sectionedLanes = useSectionedLanes(sections, swimlanes);
 
+  // Open dependencies-detail popover (anchored to the clicked cell)
+  const [depsPopover, setDepsPopover] = useState<{ laneId: string; anchor: DOMRect } | null>(null);
+
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     onScroll((e.target as HTMLDivElement).scrollTop);
   };
@@ -26,21 +31,28 @@ const RightPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) 
   const renderCell = (lane: Swimlane, index: number) => {
     // Match the left panel: a tinted row uses a flat base (no even/odd striping)
     // so adjacent coloured rows don't darken; untinted rows keep the stripe.
+    // Exposed as CSS variables so the overflow fade blends into the same
+    // composited colour, mirroring the Key Features cells.
     const baseBg = lane.color
       ? 'var(--bg-row-even)'
       : index % 2 === 0 ? 'var(--bg-row-even)' : 'var(--bg-row-odd)';
     const tint = lane.color ? hexToRgba(lane.color, SWIMLANE_TINT_ALPHA) : 'transparent';
+    const cellStyle: Record<string, string> = {
+      '--row-base': baseBg,
+      '--row-tint': tint,
+      background: `linear-gradient(var(--row-tint), var(--row-tint)), var(--row-base)`,
+    };
     return (
     <div
       key={lane.id}
       className="deps-cell"
-      style={{ background: `linear-gradient(${tint}, ${tint}), ${baseBg}` }}
+      style={cellStyle as CSSProperties}
     >
-      <RichTextEditor
+      <FeaturesCell
         key={lane.id}
-        value={lane.keyDependencies}
-        onSave={v => updateSwimlane(lane.id, { keyDependencies: v })}
-        className="deps-cell-editor"
+        html={lane.keyDependencies}
+        title="Click to view all dependencies"
+        onClick={rect => setDepsPopover({ laneId: lane.id, anchor: rect })}
       />
     </div>
     );
@@ -63,6 +75,23 @@ const RightPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) 
           {lanes.map((lane, i) => renderCell(lane, i))}
         </div>
       ))}
+
+      {depsPopover && (() => {
+        const lane = swimlanes.find(l => l.id === depsPopover.laneId);
+        if (!lane) return null;
+        // Strip HTML from the project name for the popover's title label.
+        const plainName = htmlToPlainText(lane.projectName) || 'Untitled project';
+        return (
+          <KeyFeaturesPopover
+            anchor={depsPopover.anchor}
+            projectName={plainName}
+            title="Key Dependencies"
+            value={lane.keyDependencies}
+            onSave={v => updateSwimlane(lane.id, { keyDependencies: v })}
+            onClose={() => setDepsPopover(null)}
+          />
+        );
+      })()}
     </div>
   );
 });

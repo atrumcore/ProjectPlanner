@@ -6,6 +6,8 @@ interface Props {
   html: string;
   /** Receives the cell's bounding rect so the popover can anchor to it. */
   onClick: (rect: DOMRect) => void;
+  /** Hover tooltip (defaults to the Key Features wording). */
+  title?: string;
 }
 
 /**
@@ -13,7 +15,7 @@ interface Props {
  * RichTextEditor produces, detects when content overflows the row height,
  * and exposes a click target that asks the parent to open the popover.
  */
-export default function FeaturesCell({ html, onClick }: Props) {
+export default function FeaturesCell({ html, onClick, title = 'Click to view all features' }: Props) {
   const cellRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [overflow, setOverflow] = useState(false);
@@ -48,7 +50,7 @@ export default function FeaturesCell({ html, onClick }: Props) {
       }}
       role="button"
       tabIndex={0}
-      title="Click to view all features"
+      title={title}
     >
       <div
         ref={contentRef}

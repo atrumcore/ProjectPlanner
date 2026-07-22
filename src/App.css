@@ -545,10 +545,17 @@ select option {
 
 .deps-cell {
   height: var(--row-height);
-  padding: 4px 6px;
   border-bottom: 1px solid var(--grid-weekly);
   display: flex;
-  align-items: center;
+  align-items: stretch;
+}
+
+/* The read-only cell reuses the Key Features styles; inside the right panel it
+   fills the whole row (its own 4px 6px padding replaces the cell's) and drops
+   the column border the left panel needs. */
+.deps-cell .swimlane-features {
+  width: auto;
+  border-right: none;
 }
 
 .deps-cell textarea {
@@ -1251,19 +1258,7 @@ select option {
   color: var(--text-primary);
 }
 
-.deps-cell-editor {
-  font-size: 9px;
-  color: var(--text-primary);
-}
-
 .swimlane-features-editor:empty::before {
-  content: 'Right-click to format';
-  color: var(--grid-monthly);
-  font-style: italic;
-  pointer-events: none;
-}
-
-.deps-cell-editor:empty::before {
   content: 'Right-click to format';
   color: var(--grid-monthly);
   font-style: italic;
