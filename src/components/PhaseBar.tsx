@@ -2,7 +2,7 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import type { PhaseBar as PhaseBarType, PhaseType } from '../types/gantt';
 import { BAR_HEIGHT, BAR_RADIUS } from '../types/gantt';
-import { getPhaseDef, getLegacyPhaseColors } from '../data/phasePresets';
+import { getPhaseDef } from '../data/phasePresets';
 import { useExportLayout } from './ExportLayoutContext';
 import { useGanttStore } from '../store/useGanttStore';
 import { getDateAtWeekOffset, formatDayMonth } from '../utils/dateUtils';
@@ -24,7 +24,7 @@ interface DragState {
 }
 
 export default function PhaseBar({ bar, rowY }: Props) {
-  const { theme, colors: c } = useTheme();
+  const { colors: c } = useTheme();
   const barStyle = useGanttStore(s => s.barStyle);
   const moveBar = useGanttStore(s => s.moveBar);
   const resizeBar = useGanttStore(s => s.resizeBar);
@@ -51,18 +51,16 @@ export default function PhaseBar({ bar, rowY }: Props) {
   const { rowHeight: ROW_HEIGHT } = useExportLayout();
 
   const phaseDef = getPhaseDef(bar.phaseType, phaseTypes);
-  // In legacy bar style, override the built-in phase colours with the muted
-  // (dark) / pastel (light) set the app shipped with. Custom phase types and
-  // per-bar `colorOverride` always win.
-  const legacy = barStyle === 'legacy' ? getLegacyPhaseColors(bar.phaseType, theme) : undefined;
-  const colors = bar.colorOverride ?? (legacy
-    ? { fill: legacy.fill, stroke: legacy.stroke, text: legacy.text, label: phaseDef.label }
-    : {
-        fill: phaseDef.fill,
-        stroke: phaseDef.stroke,
-        text: phaseDef.text,
-        label: phaseDef.label,
-      });
+  // Colours always come from the phase type's own definition, so both bar
+  // styles show whatever the user configured in Manage Phase Types. `barStyle`
+  // only decides the SHAPE (solid pill vs tagged card), never the colour.
+  // A per-bar `colorOverride` still wins.
+  const colors = bar.colorOverride ?? {
+    fill: phaseDef.fill,
+    stroke: phaseDef.stroke,
+    text: phaseDef.text,
+    label: phaseDef.label,
+  };
   const env = bar.environmentId
     ? environments.find(e => e.id === bar.environmentId) ?? null
     : null;

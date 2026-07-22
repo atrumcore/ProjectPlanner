@@ -378,40 +378,75 @@ export default function GanttChart() {
     }
   }, [themeColors, leftCollapsed, rightCollapsed]);
 
+  // Base name for exported files: the open document's name (sans .json), else
+  // a sensible default. Keeps downloads identifiable instead of a generic name.
+  const exportBaseName = useCallback(() => {
+    const raw = currentFileName?.replace(/\.json$/i, '').trim();
+    return raw && raw.length > 0 ? raw : 'Project Roadmap';
+  }, [currentFileName]);
+
   const exportPNG = useCallback(async () => {
     try {
       const result = await captureCanvas();
       if (!result) return;
       const link = document.createElement('a');
-      link.download = 'dha-gantt-chart.png';
+      link.download = `${exportBaseName()}.png`;
       link.href = result.canvas.toDataURL('image/png');
       link.click();
     } catch (err) {
       console.error('PNG export failed:', err);
+      alert(`PNG export failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
-  }, [captureCanvas]);
+  }, [captureCanvas, exportBaseName]);
 
   const exportPDF = useCallback(async () => {
     try {
       const result = await captureCanvas();
       if (!result) return;
       const { canvas, scale } = result;
-      // Size the PDF page to the canvas aspect ratio so the chart fills the
-      // page without letterboxing. `pt` is jsPDF's default unit; dividing by
-      // the actual capture scale brings it back to roughly screen size.
-      const w = canvas.width / scale;
-      const h = canvas.height / scale;
+      // Chart image size in points (dividing by the capture scale brings the
+      // hi-DPI canvas back to roughly screen size).
+      const imgW = canvas.width / scale;
+      const imgH = canvas.height / scale;
+
+      // Frame the chart on a content-sized page: a margin all round plus a
+      // title band up top with the plan name and generation date. This turns
+      // the export from a bare edge-to-edge raster into a titled document.
+      const margin = 28;
+      const titleBand = 52;
+      const pageW = imgW + margin * 2;
+      const pageH = imgH + margin * 2 + titleBand;
+
       const pdf = new jsPDF({
-        orientation: w >= h ? 'landscape' : 'portrait',
+        orientation: pageW >= pageH ? 'landscape' : 'portrait',
         unit: 'pt',
-        format: [w, h],
+        format: [pageW, pageH],
+        compress: true,
       });
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, w, h);
-      pdf.save('dha-gantt-chart.pdf');
+
+      const title = exportBaseName();
+      const generated = new Date().toLocaleDateString(undefined, {
+        year: 'numeric', month: 'short', day: 'numeric',
+      });
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(18);
+      pdf.setTextColor(20, 20, 20);
+      pdf.text(title, margin, margin + 20);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(10);
+      pdf.setTextColor(120, 120, 120);
+      pdf.text(`Generated ${generated}`, margin, margin + 38);
+
+      pdf.addImage(
+        canvas.toDataURL('image/png'), 'PNG',
+        margin, margin + titleBand, imgW, imgH, undefined, 'FAST',
+      );
+      pdf.save(`${title}.pdf`);
     } catch (err) {
       console.error('PDF export failed:', err);
+      alert(`PDF export failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
-  }, [captureCanvas]);
+  }, [captureCanvas, exportBaseName]);
 
   const emailNotes = useCallback(() => {
     const { subject, body } = buildNotesEmail(swimlanes, sections, actionItems, currentFileName);

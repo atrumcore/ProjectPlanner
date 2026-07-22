@@ -40,48 +40,6 @@ const PRESETS_BY_THEME: Record<ThemeName, PresetMap> = {
 };
 
 /**
- * "Legacy" solid-bar presets used when the user opts back into the old
- * full-coloured pill style (View → Appearance → Solid bars). Dark theme uses
- * the muted DHA tones we tried before tagged bars; light theme uses the
- * original pastel palette the app shipped with. Custom phase types keep their
- * stored colour in legacy mode (we only override built-in ids here).
- */
-const LEGACY_DARK_PRESETS: PresetMap = {
-  analysis: { fill: '#3e7e99', stroke: '#0098cc', text: '#ffffff', label: 'ANALYSIS & DESIGN' },
-  development: { fill: '#bd7a40', stroke: '#cb6600', text: '#ffffff', label: 'DEVELOPMENT' },
-  sit: { fill: '#3e867f', stroke: '#009991', text: '#ffffff', label: 'SIT' },
-  uat: { fill: '#4e9168', stroke: '#31bf69', text: '#ffffff', label: 'UAT' },
-  live: { fill: '#a85563', stroke: '#c0445a', text: '#ffffff', label: 'LIVE' },
-  concept: { fill: '#3e7e99', stroke: '#0098cc', text: '#ffffff', label: 'CONCEPTUALISATION' },
-  custom: { fill: '#6e7e92', stroke: '#8aa0b8', text: '#ffffff', label: 'CUSTOM' },
-};
-
-const LEGACY_LIGHT_PRESETS: PresetMap = {
-  analysis: { fill: '#f5e6a3', stroke: '#b89400', text: '#5c4a00', label: 'ANALYSIS & DESIGN' },
-  development: { fill: '#fcdea4', stroke: '#cc6d00', text: '#6b3800', label: 'DEVELOPMENT' },
-  sit: { fill: '#c6e9c6', stroke: '#2e7c2e', text: '#174d17', label: 'SIT' },
-  uat: { fill: '#beddfa', stroke: '#1565b5', text: '#0a3672', label: 'UAT' },
-  live: { fill: '#f8baba', stroke: '#b52222', text: '#6b1010', label: 'LIVE' },
-  concept: { fill: '#f5e6a3', stroke: '#b89400', text: '#5c4a00', label: 'CONCEPTUALISATION' },
-  custom: { fill: '#e0e0e0', stroke: '#808080', text: '#333333', label: 'CUSTOM' },
-};
-
-const LEGACY_PRESETS_BY_THEME: Record<ThemeName, PresetMap> = {
-  dark: LEGACY_DARK_PRESETS,
-  light: LEGACY_LIGHT_PRESETS,
-};
-
-/** Legacy solid-bar colour scheme for a built-in phase id, or undefined if
- * the id isn't a built-in (caller falls back to the stored colour, which
- * preserves user-picked colours on custom phase types). */
-export function getLegacyPhaseColors(
-  id: string,
-  theme: ThemeName = getActiveThemeName(),
-): PhaseColorScheme | undefined {
-  return LEGACY_PRESETS_BY_THEME[theme][id];
-}
-
-/**
  * Every fill that a built-in phase type has shipped with (legacy pastels, an
  * intermediate vivid set, and the current per-theme design fills). A built-in
  * type whose stored fill is in this set is treated as "theme-managed" and gets

@@ -257,6 +257,13 @@ select option {
   overflow: visible;
   width: max-content;
   height: auto;
+  /* The container normally grows to fill the app-shell's flex column
+     (flex: 1 → full viewport height). During export we must stop that grow,
+     or the capture includes the whole viewport height of empty canvas below
+     the plan. flex/align-self shrink-wrap it to the actual content height —
+     `height: auto` alone can't win against flex-grow. */
+  flex: 0 0 auto;
+  align-self: flex-start;
   align-items: flex-start;
   /* Keep in sync with EXPORT_ROW_HEIGHT in src/types/gantt.ts. */
   --row-height: 104px;
