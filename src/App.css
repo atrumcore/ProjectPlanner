@@ -2732,6 +2732,18 @@ select option {
   justify-content: space-between;
   gap: 8px;
   flex-shrink: 0;
+  /* The header doubles as the drag handle for moving the popover. */
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.key-features-popover.is-dragging .key-features-popover-header {
+  cursor: grabbing;
+}
+/* Don't let a drag pass over the editor and start selecting its text. */
+.key-features-popover.is-dragging {
+  user-select: none;
 }
 
 .key-features-popover-title {
@@ -2779,20 +2791,32 @@ select option {
 
 .key-features-popover-body {
   padding: 14px 16px;
-  overflow-y: auto;
   font-size: 13px;
   color: var(--text-primary);
   line-height: 1.55;
   flex: 1;
   min-height: 80px;
+  /* Column layout: the docked toolbar stays pinned while only the editor
+     scrolls. The body itself never scrolls, so the toolbar can't drift. */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Inside the popover the docked toolbar must not scroll with the content. */
+.key-features-popover-body .formatting-toolbar--docked {
+  flex-shrink: 0;
 }
 
 .key-features-popover-editor {
   font-size: 13px;
   line-height: 1.55;
   color: var(--text-primary);
-  min-height: 60px;
   scrollbar-width: thin;
+  /* Only the editor scrolls; flex child needs min-height:0 to shrink. */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 .key-features-popover-editor ul,
 .key-features-popover-editor ol {
@@ -2812,6 +2836,33 @@ select option {
   font-size: 11px;
   color: var(--text-muted);
   flex-shrink: 0;
+}
+
+/* Bottom-right resize grip: hit area with a small chevron-style corner mark. */
+.key-features-popover-resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  touch-action: none;
+  z-index: 1;
+}
+.key-features-popover-resize::before {
+  content: '';
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+  border-radius: 0 0 3px 0;
+  opacity: 0.7;
+}
+.key-features-popover-resize:hover::before {
+  opacity: 1;
 }
 
 .key-features-popover-footer kbd {
