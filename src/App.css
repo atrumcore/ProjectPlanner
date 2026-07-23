@@ -1579,6 +1579,80 @@ select option {
   border-top: 1px solid var(--border);
 }
 
+/* ── Shared-file collaboration ────────────────────────────────────────────── */
+
+/* Non-blocking "file changed on disk" banner, between toolbar and chart. */
+.file-update-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  background: color-mix(in srgb, var(--accent-secondary) 18%, var(--bg-surface));
+  border-bottom: 1px solid var(--accent-secondary);
+  font-size: 12px;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+.file-update-banner-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.file-update-banner button {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.file-update-banner-reload {
+  background: var(--accent-secondary);
+  border: 1px solid var(--accent-secondary);
+  color: #fff;
+}
+.file-update-banner-dismiss {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+.file-update-banner-dismiss:hover {
+  color: var(--text-primary);
+  border-color: var(--accent-secondary);
+}
+
+/* Save-conflict dialog: stacked full-width choice buttons. */
+.save-conflict-text,
+.display-name-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+.save-conflict-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.save-conflict-actions button {
+  width: 100%;
+  text-align: center;
+}
+.save-conflict-overwrite {
+  color: var(--error-bright, #e5484d);
+  border-color: var(--error-bright, #e5484d);
+}
+
+/* Save-attribution note beside the file name. */
+.toolbar-saved-by {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: 11px;
+}
+
 /* Rich-text editor (shared base) */
 .rich-text-editor {
   width: 100%;

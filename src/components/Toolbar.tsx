@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useGanttStore } from '../store/useGanttStore';
 import { getContentions, getPeopleContentions } from '../utils/contention';
+import { formatSavedAt } from '../utils/dateUtils';
 import FileMenu from './FileMenu';
 import InsertMenu from './InsertMenu';
 import ViewMenu from './ViewMenu';
@@ -18,15 +19,17 @@ interface Props {
   onExportSwimlanes?: () => void;
   onEmailNotes?: () => void;
   onAddFloatingNote?: () => void;
+  onSetDisplayName?: () => void;
 }
 
-export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomReset, onExportPNG, onExportPDF, onExportSwimlanes, onEmailNotes, onAddFloatingNote }: Props) {
+export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomReset, onExportPNG, onExportPDF, onExportSwimlanes, onEmailNotes, onAddFloatingNote, onSetDisplayName }: Props) {
   const [openMenu, setOpenMenu] = useState<MenuId | null>(null);
   const [menuAnchor, setMenuAnchor] = useState<DOMRect | null>(null);
   const [showAddSwimlane, setShowAddSwimlane] = useState(false);
 
   const currentFileName = useGanttStore(s => s.currentFileName);
   const isDirty = useGanttStore(s => s.isDirty);
+  const fileMeta = useGanttStore(s => s.fileMeta);
   const undo = useGanttStore(s => s.undo);
   const redo = useGanttStore(s => s.redo);
   const canUndo = useGanttStore(s => s.canUndo);
@@ -82,6 +85,12 @@ export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomRe
           <span className="toolbar-filename">
             {' \u2014 '}{currentFileName || 'Untitled'}
             {isDirty && <span className="toolbar-filename-dirty" title="Unsaved changes">&nbsp;&bull;</span>}
+            {fileMeta?.savedBy && (
+              <span className="toolbar-saved-by" title={fileMeta.savedAtIso ?? undefined}>
+                {' \u00b7 '}saved by {fileMeta.savedBy}
+                {formatSavedAt(fileMeta.savedAtIso) ? ` \u00b7 ${formatSavedAt(fileMeta.savedAtIso)}` : ''}
+              </span>
+            )}
           </span>
         </h1>
 
@@ -136,7 +145,7 @@ export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomRe
       </div>
 
       {openMenu === 'file' && menuAnchor && (
-        <FileMenu anchor={menuAnchor} onClose={closeMenu} onExportPNG={onExportPNG} onExportPDF={onExportPDF} onExportSwimlanes={onExportSwimlanes} onEmailNotes={onEmailNotes} />
+        <FileMenu anchor={menuAnchor} onClose={closeMenu} onExportPNG={onExportPNG} onExportPDF={onExportPDF} onExportSwimlanes={onExportSwimlanes} onEmailNotes={onEmailNotes} onSetDisplayName={onSetDisplayName} />
       )}
       {openMenu === 'insert' && menuAnchor && (
         <InsertMenu

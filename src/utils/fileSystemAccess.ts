@@ -93,6 +93,13 @@ export async function writeFileText(handle: FileSystemFileHandle, text: string):
   }
 }
 
+/** The file's current on-disk lastModified timestamp (ms). Reading through
+ *  the handle also forces cloud-placeholder files (OneDrive) to hydrate. */
+export async function getFileLastModified(handle: FileSystemFileHandle): Promise<number> {
+  const file = await handle.getFile();
+  return file.lastModified;
+}
+
 // ── Fallbacks for browsers without the File System Access API ──────────────
 
 /** Save `text` as a browser download named `fileName`. */

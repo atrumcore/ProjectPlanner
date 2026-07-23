@@ -12,6 +12,7 @@ import type {
   Person,
   PhaseTypeDef,
   FloatingNote,
+  FileMeta,
 } from '../types/gantt';
 // PhaseBar imported above; alias for the migration helper signature.
 import {
@@ -37,7 +38,9 @@ import {
   writeFileText,
   downloadTextFile,
   pickUploadFile,
+  getFileLastModified,
 } from '../utils/fileSystemAccess';
+import { getUserName } from '../utils/userName';
 
 const uid = () => crypto.randomUUID();
 
@@ -180,10 +183,21 @@ interface GanttActions {
   importFromJSON: (json: string) => void;
 
   // File operations (Chromium-only, File System Access API)
-  saveFile: () => Promise<boolean>;
+  /** Save to the current file. When another editor saved the file after our
+   * baseline, sets `saveConflict` and returns false instead of writing —
+   * pass `{ force: true }` (from the conflict dialog) to overwrite anyway. */
+  saveFile: (opts?: { force?: boolean }) => Promise<boolean>;
   saveFileAs: () => Promise<boolean>;
   openFile: () => Promise<boolean>;
   newFile: () => void;
+  /** Compare the open file's on-disk lastModified against our baseline and
+   * surface `externalUpdate` when someone else saved. Called on window focus
+   * and on a slow poll. No-op without a file handle. */
+  checkFileFreshness: () => Promise<void>;
+  /** Re-read the current file from disk, replacing local state. */
+  reloadFromDisk: () => Promise<boolean>;
+  dismissExternalUpdate: () => void;
+  clearSaveConflict: () => void;
 
   // History
   undo: () => void;
@@ -240,7 +254,25 @@ const defaultState: GanttState = {
   currentFileName: null,
   currentFileHandle: null,
   isDirty: false,
+  fileMeta: null,
+  fileBaselineMs: null,
+  externalUpdate: null,
+  externalUpdateDismissedMs: null,
+  saveConflict: null,
 };
+
+/** Extract the save-attribution meta block from a plan file's JSON text. */
+function parseFileMeta(text: string): FileMeta {
+  try {
+    const d = JSON.parse(text);
+    return {
+      savedBy: typeof d?.meta?.savedBy === 'string' ? d.meta.savedBy : null,
+      savedAtIso: typeof d?.meta?.savedAtIso === 'string' ? d.meta.savedAtIso : null,
+    };
+  } catch {
+    return { savedBy: null, savedAtIso: null };
+  }
+}
 
 // History stacks stored outside zustand to avoid serialization issues
 let undoStack: GanttState[] = [];
@@ -1325,6 +1357,12 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
       showPeopleIndicators: state.showPeopleIndicators,
       showPeopleContention: state.showPeopleContention,
       barStyle: state.barStyle,
+      // Save attribution for shared files — self-declared display name, so
+      // other editors can see who last saved. Not authentication.
+      meta: {
+        savedBy: getUserName(),
+        savedAtIso: new Date().toISOString(),
+      },
       // Format marker (so downstream loaders can detect legacy data)
       calendarModelVersion: SCHEMA_VERSION,
     }, null, 2);
@@ -1371,24 +1409,52 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
       get().saveToStorage();
       // State now matches the imported file; clear the dirty flag that
       // saveToStorage just set. openFile() sets currentFileName/Handle
-      // on top of this.
-      set({ isDirty: false });
+      // on top of this. Capture the file's save-attribution meta if present.
+      set({
+        isDirty: false,
+        fileMeta: {
+          savedBy: typeof data?.meta?.savedBy === 'string' ? data.meta.savedBy : null,
+          savedAtIso: typeof data?.meta?.savedAtIso === 'string' ? data.meta.savedAtIso : null,
+        },
+      });
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Unknown error';
       alert(`Import failed: ${msg}`);
     }
   },
 
-  saveFile: async () => {
-    const { currentFileHandle, exportToJSON, saveFileAs } = get();
+  saveFile: async (opts) => {
+    const { currentFileHandle, exportToJSON, saveFileAs, fileBaselineMs } = get();
     if (!currentFileHandle) {
       return saveFileAs();
     }
     try {
       // Flush any pending contentEditable edits before snapshotting state.
       (document.activeElement as HTMLElement | null)?.blur();
-      await writeFileText(currentFileHandle, exportToJSON());
-      set({ isDirty: false });
+
+      // Overwrite guard: if the file on disk is newer than the version this
+      // session opened/last saved, someone else saved in between — surface
+      // the conflict dialog instead of silently clobbering their work.
+      if (!opts?.force && fileBaselineMs !== null) {
+        const diskMs = await getFileLastModified(currentFileHandle);
+        if (diskMs > fileBaselineMs) {
+          const diskMeta = parseFileMeta(await readFileAsText(currentFileHandle));
+          set({ saveConflict: diskMeta });
+          return false;
+        }
+      }
+
+      const json = exportToJSON();
+      await writeFileText(currentFileHandle, json);
+      const newBaseline = await getFileLastModified(currentFileHandle);
+      set({
+        isDirty: false,
+        fileMeta: parseFileMeta(json),
+        fileBaselineMs: newBaseline,
+        saveConflict: null,
+        externalUpdate: null,
+        externalUpdateDismissedMs: null,
+      });
       return true;
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Unknown error';
@@ -1404,17 +1470,25 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
       if (!isFileSystemAccessSupported()) {
         // Fallback (Firefox/Safari): download a copy. No handle to save back
         // to later, but the payload is identical.
-        downloadTextFile(suggested, get().exportToJSON());
-        set({ currentFileName: suggested, isDirty: false });
+        const json = get().exportToJSON();
+        downloadTextFile(suggested, json);
+        set({ currentFileName: suggested, isDirty: false, fileMeta: parseFileMeta(json) });
         return true;
       }
       const handle = await pickSaveFile(suggested);
       if (!handle) return false; // user cancelled
-      await writeFileText(handle, get().exportToJSON());
+      const json = get().exportToJSON();
+      await writeFileText(handle, json);
+      const baseline = await getFileLastModified(handle);
       set({
         currentFileHandle: handle,
         currentFileName: handle.name,
         isDirty: false,
+        fileMeta: parseFileMeta(json),
+        fileBaselineMs: baseline,
+        saveConflict: null,
+        externalUpdate: null,
+        externalUpdateDismissedMs: null,
       });
       return true;
     } catch (e) {
@@ -1439,12 +1513,17 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
           currentFileHandle: null,
           currentFileName: picked.name,
           isDirty: false,
+          fileBaselineMs: null,
+          saveConflict: null,
+          externalUpdate: null,
+          externalUpdateDismissedMs: null,
         });
         return true;
       }
       const handle = await pickOpenFile();
       if (!handle) return false; // user cancelled
       const text = await readFileAsText(handle);
+      const baseline = await getFileLastModified(handle);
       // importFromJSON handles parse, validation, migration, and clears
       // isDirty at the end. Then we layer on the file identity.
       get().importFromJSON(text);
@@ -1452,6 +1531,10 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         currentFileHandle: handle,
         currentFileName: handle.name,
         isDirty: false,
+        fileBaselineMs: baseline,
+        saveConflict: null,
+        externalUpdate: null,
+        externalUpdateDismissedMs: null,
       });
       return true;
     } catch (e) {
@@ -1473,12 +1556,68 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
       currentFileName: null,
       currentFileHandle: null,
       isDirty: false,
+      fileMeta: null,
+      fileBaselineMs: null,
+      saveConflict: null,
+      externalUpdate: null,
+      externalUpdateDismissedMs: null,
     });
     ensureTodayVisible(get, set);
     get().saveToStorage();
     // saveToStorage flipped dirty on; "New" is a clean starting point.
     set({ isDirty: false });
   },
+
+  checkFileFreshness: async () => {
+    const { currentFileHandle, fileBaselineMs, externalUpdateDismissedMs } = get();
+    if (!currentFileHandle || fileBaselineMs === null) return;
+    try {
+      const diskMs = await getFileLastModified(currentFileHandle);
+      if (diskMs <= fileBaselineMs) {
+        // Disk matches (or predates) what we have — clear any stale banner.
+        if (get().externalUpdate) set({ externalUpdate: null });
+        return;
+      }
+      // Someone saved after us. Respect a "Keep mine" dismissal until an
+      // even newer save shows up.
+      if (externalUpdateDismissedMs !== null && diskMs <= externalUpdateDismissedMs) return;
+      const meta = parseFileMeta(await readFileAsText(currentFileHandle));
+      set({ externalUpdate: { ...meta, diskMs } });
+    } catch {
+      // Transient read failures (file locked mid-sync on OneDrive etc.) are
+      // ignored — the next poll retries.
+    }
+  },
+
+  reloadFromDisk: async () => {
+    const { currentFileHandle } = get();
+    if (!currentFileHandle) return false;
+    try {
+      const text = await readFileAsText(currentFileHandle);
+      const baseline = await getFileLastModified(currentFileHandle);
+      get().importFromJSON(text);
+      set({
+        isDirty: false,
+        fileBaselineMs: baseline,
+        externalUpdate: null,
+        externalUpdateDismissedMs: null,
+        saveConflict: null,
+      });
+      return true;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Unknown error';
+      alert(`Reload failed: ${msg}`);
+      return false;
+    }
+  },
+
+  dismissExternalUpdate: () => {
+    const { externalUpdate } = get();
+    if (!externalUpdate) return;
+    set({ externalUpdateDismissedMs: externalUpdate.diskMs, externalUpdate: null });
+  },
+
+  clearSaveConflict: () => set({ saveConflict: null }),
 
   // === History ===
   undo: () => {
@@ -1500,3 +1639,8 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
   canUndo: () => undoStack.length > 0,
   canRedo: () => redoStack.length > 0,
 }));
+
+// Dev-only: expose the store for browser-automation testing (never in builds).
+if (import.meta.env.DEV) {
+  (window as unknown as { __ganttStore?: typeof useGanttStore }).__ganttStore = useGanttStore;
+}

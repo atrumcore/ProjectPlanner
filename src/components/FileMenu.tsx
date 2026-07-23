@@ -8,9 +8,10 @@ interface Props {
   onExportPDF?: () => void;
   onExportSwimlanes?: () => void;
   onEmailNotes?: () => void;
+  onSetDisplayName?: () => void;
 }
 
-export default function FileMenu({ anchor, onClose, onExportPNG, onExportPDF, onExportSwimlanes, onEmailNotes }: Props) {
+export default function FileMenu({ anchor, onClose, onExportPNG, onExportPDF, onExportSwimlanes, onEmailNotes, onSetDisplayName }: Props) {
   const newFile = useGanttStore(s => s.newFile);
   const openFile = useGanttStore(s => s.openFile);
   const saveFile = useGanttStore(s => s.saveFile);
@@ -38,6 +39,8 @@ export default function FileMenu({ anchor, onClose, onExportPNG, onExportPDF, on
       {onExportPDF && item('Export PDF', onExportPDF)}
       {onExportSwimlanes && item('Export Swimlanes (CSV)', onExportSwimlanes)}
       {onEmailNotes && item('Email Notes…', onEmailNotes)}
+      {onSetDisplayName && <div className="view-menu-divider" />}
+      {onSetDisplayName && item('Set Display Name…', onSetDisplayName)}
     </DropdownMenu>
   );
 }
