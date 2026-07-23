@@ -1332,6 +1332,253 @@ select option {
   border-radius: 2px;
 }
 
+/* ── People panel: roster + detail (master-detail) layout ─────────────────
+   Replaces the tab strip — a searchable team-grouped roster (scrolls, scales
+   to any headcount) over a fixed detail pane for the selection. */
+.people-roster-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.people-roster-search {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  padding: 5px 9px;
+  background: var(--bg-app);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: inherit;
+}
+.people-roster-search:focus {
+  outline: none;
+  border-color: var(--accent-secondary);
+}
+.people-roster-filter,
+.people-roster-add {
+  font-size: 11px;
+  padding: 5px 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.people-roster-filter:hover,
+.people-roster-add:hover {
+  border-color: var(--accent-secondary);
+  color: var(--text-primary);
+}
+.people-roster-filter.active {
+  background: var(--contention);
+  border-color: var(--contention);
+  color: #fff;
+}
+
+.people-roster {
+  flex: 1;
+  min-height: 90px;
+  overflow-y: auto;
+  padding: 4px 0 8px;
+}
+.people-roster-no-results {
+  padding: 18px 14px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+.people-roster-group {
+  margin-bottom: 2px;
+}
+.people-roster-team,
+.people-roster-person {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-primary);
+  border-left: 2px solid transparent;
+}
+.people-roster-team {
+  font-weight: 700;
+  padding-left: 6px;
+  position: sticky;
+  top: 0;
+  background: var(--bg-surface);
+  z-index: 1;
+}
+.people-roster-team.is-label {
+  cursor: default;
+  padding-left: 12px;
+}
+.people-roster-person {
+  padding-left: 30px;
+}
+.people-roster-team:not(.is-label):hover,
+.people-roster-person:hover {
+  background: var(--hover);
+}
+.people-roster-team.selected,
+.people-roster-person.selected {
+  background: var(--hover);
+  border-left-color: var(--accent-secondary);
+}
+.people-roster-chevron {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 10px;
+  width: 16px;
+  padding: 0;
+  flex-shrink: 0;
+  font-family: inherit;
+}
+.people-roster-chevron:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.people-roster-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+.people-roster-dot.is-team {
+  border-radius: 2.5px;
+}
+.people-roster-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.people-roster-unteamed {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.people-roster-meta {
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-left: auto;
+  flex-shrink: 1;
+  min-width: 0;
+}
+.env-panel-tab-badge.is-muted {
+  background: var(--text-muted);
+}
+
+.people-detail {
+  flex-shrink: 0;
+  max-height: 55%;
+  overflow-y: auto;
+  border-top: 1px solid var(--border);
+  padding: 10px 14px 14px;
+  background: var(--bg-surface);
+}
+.people-detail-empty {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 16px 14px;
+}
+.people-detail-identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.people-detail-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  cursor: text;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.people-detail-name:hover {
+  text-decoration: underline dotted;
+}
+.people-detail-name-input {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 3px 6px;
+  background: var(--bg-app);
+  color: var(--text-primary);
+  border: 1px solid var(--accent-secondary);
+  border-radius: 4px;
+  font-family: inherit;
+  flex: 1;
+  min-width: 0;
+}
+.people-detail-kind {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1px 7px;
+  flex-shrink: 0;
+}
+.people-detail-focus {
+  margin-left: auto;
+  font-size: 11px;
+  padding: 4px 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+.people-detail-focus:hover {
+  border-color: var(--accent-secondary);
+  color: var(--text-primary);
+}
+.people-detail-focus.active {
+  background: var(--accent-secondary);
+  border-color: var(--accent-secondary);
+  color: #fff;
+}
+.people-detail-section {
+  margin-top: 10px;
+}
+.people-detail-section h4 {
+  margin: 0 0 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+}
+.people-detail-footer {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
 /* Rich-text editor (shared base) */
 .rich-text-editor {
   width: 100%;

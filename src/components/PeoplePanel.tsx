@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useGanttStore } from '../store/useGanttStore';
-import type { PhaseType } from '../types/gantt';
+import type { Person, PhaseType, Team } from '../types/gantt';
 import { PEOPLE_COLOR_PRESETS } from '../types/gantt';
 import { getPhaseDef } from '../data/phasePresets';
 import { getPeopleContentions, type ResourceRef } from '../utils/contention';
@@ -13,11 +13,14 @@ const PANEL_MAX = 720;
 const sameRef = (a: ResourceRef | null, b: ResourceRef | null) =>
   !!a && !!b && a.kind === b.kind && a.id === b.id;
 
+const refKey = (r: ResourceRef) => `${r.kind}:${r.id}`;
+
 /**
- * People & Teams panel — the people analogue of EnvironmentsPanel (and it
- * reuses its CSS classes). One tab per team and per person; the active tab
- * shows identity, allocated bars, and double-booking contentions. Clicking
- * the active tab toggles focus mode, dimming bars not allocated to it.
+ * People & Teams panel — a searchable master-detail layout built to scale to
+ * large rosters. Top: a team-grouped roster list with search and a
+ * conflicts-only filter. Bottom: a fixed detail pane for the selected person
+ * or team (identity editing, focus mode, allocated bars, double-bookings).
+ * Reuses the env-panel shell CSS; roster/detail styles are its own.
  */
 export default function PeoplePanel() {
   const teams = useGanttStore(s => s.teams);
@@ -37,33 +40,32 @@ export default function PeoplePanel() {
   const setPeopleFocus = useGanttStore(s => s.setPeopleFocus);
   const selectBar = useGanttStore(s => s.selectBar);
 
-  const orderedTeams = useMemo(() => [...teams].sort((a, b) => a.order - b.order), [teams]);
-  const orderedPeople = useMemo(() => [...people].sort((a, b) => a.order - b.order), [people]);
-
-  const firstRef = useMemo<ResourceRef | null>(() => {
-    if (orderedTeams.length > 0) return { kind: 'team', id: orderedTeams[0].id };
-    if (orderedPeople.length > 0) return { kind: 'person', id: orderedPeople[0].id };
-    return null;
-  }, [orderedTeams, orderedPeople]);
-
-  const [active, setActive] = useState<ResourceRef | null>(firstRef);
+  const [active, setActive] = useState<ResourceRef | null>(null);
   const [closing, setClosing] = useState(false);
   const [width, setWidth] = useState(420);
+  const [search, setSearch] = useState('');
+  const [conflictsOnly, setConflictsOnly] = useState(false);
+  const [collapsedTeams, setCollapsedTeams] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [editingRole, setEditingRole] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const resizing = useRef<{ startX: number; startWidth: number } | null>(null);
 
-  // Keep the active selection valid as resources come and go.
-  useEffect(() => {
-    const exists = active && (active.kind === 'team'
-      ? teams.some(t => t.id === active.id)
-      : people.some(p => p.id === active.id));
-    if (!exists) setActive(firstRef);
-  }, [teams, people, active, firstRef]);
+  const orderedTeams = useMemo(() => [...teams].sort((a, b) => a.order - b.order), [teams]);
+  const orderedPeople = useMemo(() => [...people].sort((a, b) => a.order - b.order), [people]);
 
-  useEffect(() => { setConfirmDelete(false); setEditingName(false); setEditingRole(false); setShowColorPicker(false); }, [active]);
+  // Select a resource, resetting any in-flight edit state from the previous
+  // selection. A selection whose entity was deleted needs no cleanup effect —
+  // the derived activeTeam/activePerson lookups below simply come back null
+  // and the detail pane falls back to its empty state.
+  const selectResource = useCallback((ref: ResourceRef | null) => {
+    setActive(ref);
+    setConfirmDelete(false);
+    setEditingName(false);
+    setEditingRole(false);
+    setShowColorPicker(false);
+  }, []);
 
   // Resize
   useEffect(() => {
@@ -89,12 +91,70 @@ export default function PeoplePanel() {
   const contentionCountByKey = useMemo(() => {
     const m = new Map<string, number>();
     for (const c of contentions) {
-      const key = `${c.resource.kind}:${c.resource.id}`;
+      const key = refKey(c.resource);
       m.set(key, (m.get(key) || 0) + 1);
     }
     return m;
   }, [contentions]);
 
+  const conflictCount = useCallback(
+    (ref: ResourceRef) => contentionCountByKey.get(refKey(ref)) || 0,
+    [contentionCountByKey]
+  );
+
+  // ── Roster (search + filter + grouping) ──────────────────────────────────
+  const query = search.trim().toLowerCase();
+  const filtering = query.length > 0 || conflictsOnly;
+
+  const matchesPerson = useCallback((p: Person, teamName: string | undefined) => {
+    if (conflictsOnly && conflictCount({ kind: 'person', id: p.id }) === 0) return false;
+    if (!query) return true;
+    return p.name.toLowerCase().includes(query)
+      || (p.role ?? '').toLowerCase().includes(query)
+      || (teamName ?? '').toLowerCase().includes(query);
+  }, [query, conflictsOnly, conflictCount]);
+
+  const matchesTeam = useCallback((t: Team) => {
+    if (conflictsOnly && conflictCount({ kind: 'team', id: t.id }) === 0) return false;
+    if (!query) return true;
+    return t.name.toLowerCase().includes(query);
+  }, [query, conflictsOnly, conflictCount]);
+
+  /** Groups: one per team (header + visible members), then unteamed people.
+   * While searching/filtering, a group shows if its header OR any member
+   * matches; collapse state is ignored so results are never hidden. */
+  const rosterGroups = useMemo(() => {
+    const groups: Array<{ team: Team | null; members: Person[]; teamVisible: boolean }> = [];
+    for (const team of orderedTeams) {
+      const members = orderedPeople.filter(p => p.teamId === team.id);
+      const visibleMembers = members.filter(p => matchesPerson(p, team.name));
+      const teamVisible = matchesTeam(team);
+      if (!filtering || teamVisible || visibleMembers.length > 0) {
+        groups.push({
+          team,
+          members: filtering ? (teamVisible ? members.filter(p => !conflictsOnly || matchesPerson(p, team.name)) : visibleMembers) : members,
+          teamVisible: true,
+        });
+      }
+    }
+    const unteamed = orderedPeople.filter(p => !p.teamId || !teams.some(t => t.id === p.teamId));
+    const visibleUnteamed = filtering ? unteamed.filter(p => matchesPerson(p, undefined)) : unteamed;
+    if (visibleUnteamed.length > 0) {
+      groups.push({ team: null, members: visibleUnteamed, teamVisible: true });
+    }
+    return groups;
+  }, [orderedTeams, orderedPeople, teams, filtering, conflictsOnly, matchesPerson, matchesTeam]);
+
+  const toggleCollapse = useCallback((teamId: string) => {
+    setCollapsedTeams(prev => {
+      const next = new Set(prev);
+      if (next.has(teamId)) next.delete(teamId);
+      else next.add(teamId);
+      return next;
+    });
+  }, []);
+
+  // ── Selection detail data ────────────────────────────────────────────────
   const activeTeam = active?.kind === 'team' ? teams.find(t => t.id === active.id) ?? null : null;
   const activePerson = active?.kind === 'person' ? people.find(p => p.id === active.id) ?? null : null;
 
@@ -115,40 +175,37 @@ export default function PeoplePanel() {
     [orderedPeople, activeTeam]
   );
 
+  const isFocused = sameRef(peopleFocus, active);
+
   const handleClose = useCallback(() => setClosing(true), []);
 
   const handleAddTeam = useCallback(() => {
     const id = addTeam('');
-    setActive({ kind: 'team', id });
+    selectResource({ kind: 'team', id });
     setEditingName(true);
-  }, [addTeam]);
+  }, [addTeam, selectResource]);
 
   const handleAddPerson = useCallback(() => {
     const id = addPerson('');
-    setActive({ kind: 'person', id });
+    selectResource({ kind: 'person', id });
     setEditingName(true);
-  }, [addPerson]);
+  }, [addPerson, selectResource]);
 
   const handleDelete = useCallback(() => {
     if (!active) return;
     if (confirmDelete) {
       if (active.kind === 'team') removeTeam(active.id);
       else removePerson(active.id);
-      setConfirmDelete(false);
+      selectResource(null);
     } else {
       setConfirmDelete(true);
     }
-  }, [active, confirmDelete, removeTeam, removePerson]);
+  }, [active, confirmDelete, removeTeam, removePerson, selectResource]);
 
-  const handleTabClick = useCallback((ref: ResourceRef) => {
-    if (sameRef(active, ref)) {
-      // Toggle focus mode
-      setPeopleFocus(sameRef(peopleFocus, ref) ? null : ref);
-    } else {
-      setActive(ref);
-      if (peopleFocus !== null) setPeopleFocus(ref);
-    }
-  }, [active, peopleFocus, setPeopleFocus]);
+  const handleToggleFocus = useCallback(() => {
+    if (!active) return;
+    setPeopleFocus(isFocused ? null : active);
+  }, [active, isFocused, setPeopleFocus]);
 
   const swimlaneNameById = useCallback(
     (id: string) => {
@@ -179,30 +236,7 @@ export default function PeoplePanel() {
   const activeName = activeTeam?.name ?? activePerson?.name ?? '';
   const activeColor = activeTeam?.color ?? activePerson?.color ?? '#888';
 
-  const renderTab = (ref: ResourceRef, name: string, color: string, isTeam: boolean) => {
-    const key = `${ref.kind}:${ref.id}`;
-    const conflictCount = contentionCountByKey.get(key) || 0;
-    const isActive = sameRef(active, ref);
-    const isFocused = sameRef(peopleFocus, ref);
-    return (
-      <button
-        key={key}
-        className={`env-panel-tab${isActive ? ' active' : ''}${isFocused ? ' focused' : ''}`}
-        onClick={() => handleTabClick(ref)}
-        title={isFocused ? 'Active focus — click to clear' : isActive ? 'Click to enter focus mode' : `Switch to this ${ref.kind}`}
-        style={{ borderBottomColor: isActive ? color : 'transparent' }}
-      >
-        <span
-          className={`env-panel-tab-dot${isTeam ? ' people-panel-team-dot' : ''}`}
-          style={{ background: color }}
-        />
-        {name}
-        {conflictCount > 0 && (
-          <span className="env-panel-tab-badge">{conflictCount}</span>
-        )}
-      </button>
-    );
-  };
+  const rosterEmpty = teams.length === 0 && people.length === 0;
 
   return createPortal(
     <div
@@ -226,234 +260,314 @@ export default function PeoplePanel() {
         </div>
       </div>
 
-      {/* Tabs — teams first, then people */}
-      <div className="env-panel-tabs">
-        {orderedTeams.map(t => renderTab({ kind: 'team', id: t.id }, t.name, t.color, true))}
-        {orderedPeople.map(p => renderTab({ kind: 'person', id: p.id }, p.name, p.color, false))}
-        <button className="env-panel-tab-add" onClick={handleAddTeam} title="New team">+ Team</button>
-        <button className="env-panel-tab-add" onClick={handleAddPerson} title="New person">+ Person</button>
+      {/* Search / filter / add row */}
+      <div className="people-roster-toolbar">
+        <input
+          className="people-roster-search"
+          type="search"
+          placeholder="Search people, roles, teams…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        <button
+          className={`people-roster-filter${conflictsOnly ? ' active' : ''}`}
+          onClick={() => setConflictsOnly(v => !v)}
+          title="Show only people/teams with double-bookings"
+        >
+          &#x26A0; {contentions.length > 0 ? contentions.length : ''}
+        </button>
+        <button className="people-roster-add" onClick={handleAddPerson} title="Add person">+ Person</button>
+        <button className="people-roster-add" onClick={handleAddTeam} title="Add team">+ Team</button>
       </div>
 
-      {/* Body */}
-      {!active || (!activeTeam && !activePerson) ? (
+      {/* Roster list */}
+      {rosterEmpty ? (
         <div className="env-panel-empty">
           <p>No people or teams yet.</p>
           <p>Add the teams and people who execute the planned work, then allocate them to phase bars. Double-bookings across projects are flagged automatically.</p>
-          <button onClick={handleAddTeam} className="env-panel-primary-btn">Create team</button>
           <button onClick={handleAddPerson} className="env-panel-primary-btn">Add person</button>
+          <button onClick={handleAddTeam} className="env-panel-primary-btn">Create team</button>
         </div>
       ) : (
-        <div className="env-panel-body">
-          {/* Identity row */}
-          <div className="env-panel-identity">
-            <label>{activeTeam ? 'Team' : 'Name'}</label>
-            {editingName ? (
-              <input
-                autoFocus
-                defaultValue={activeName}
-                onBlur={e => {
-                  const v = e.target.value.trim();
-                  if (v) {
-                    if (activeTeam) updateTeam(activeTeam.id, { name: v });
-                    else if (activePerson) updatePerson(activePerson.id, { name: v });
-                  }
-                  setEditingName(false);
-                }}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-                  if (e.key === 'Escape') setEditingName(false);
-                }}
-              />
-            ) : (
-              <span className="env-panel-name" onClick={() => setEditingName(true)} title="Click to rename">
-                {activeName}
-              </span>
-            )}
-            <div className="env-panel-color-wrap">
-              <button
-                className="env-panel-color-btn"
-                style={{ background: activeColor }}
-                onClick={() => setShowColorPicker(v => !v)}
-                title="Change color"
-              />
-              {showColorPicker && (
-                <div className="env-panel-color-picker">
-                  {PEOPLE_COLOR_PRESETS.map(c => (
-                    <button
-                      key={c}
-                      className="env-panel-color-swatch"
-                      style={{ background: c }}
-                      onClick={() => {
-                        if (activeTeam) updateTeam(activeTeam.id, { color: c });
-                        else if (activePerson) updatePerson(activePerson.id, { color: c });
-                        setShowColorPicker(false);
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
+        <div className="people-roster">
+          {rosterGroups.length === 0 && (
+            <div className="people-roster-no-results">
+              No matches{conflictsOnly ? ' — no double-bookings' : ''}.
             </div>
-          </div>
+          )}
+          {rosterGroups.map(group => {
+            const team = group.team;
+            const collapsed = !filtering && team !== null && collapsedTeams.has(team.id);
+            const teamRef: ResourceRef | null = team ? { kind: 'team', id: team.id } : null;
+            const teamConflicts = teamRef ? conflictCount(teamRef) : 0;
+            // Conflicts hidden inside a collapsed group still deserve a signal.
+            const memberConflicts = group.members.reduce(
+              (sum, p) => sum + conflictCount({ kind: 'person', id: p.id }), 0);
+            return (
+              <div key={team?.id ?? '__none__'} className="people-roster-group">
+                {team ? (
+                  <div
+                    className={`people-roster-team${sameRef(active, teamRef) ? ' selected' : ''}`}
+                    onClick={() => selectResource(teamRef)}
+                  >
+                    <button
+                      className="people-roster-chevron"
+                      onClick={e => { e.stopPropagation(); toggleCollapse(team.id); }}
+                      title={collapsed ? 'Expand' : 'Collapse'}
+                      disabled={filtering}
+                    >
+                      {collapsed ? '▸' : '▾'}
+                    </button>
+                    <span className="people-roster-dot is-team" style={{ background: team.color }} />
+                    <span className="people-roster-name">{team.name}</span>
+                    <span className="people-roster-meta">{group.members.length || 'no'} member{group.members.length === 1 ? '' : 's'}</span>
+                    {teamConflicts > 0 && <span className="env-panel-tab-badge">{teamConflicts}</span>}
+                    {collapsed && memberConflicts > 0 && (
+                      <span className="env-panel-tab-badge is-muted" title="Double-bookings inside this team">{memberConflicts}</span>
+                    )}
+                  </div>
+                ) : (
+                  <div className="people-roster-team is-label">
+                    <span className="people-roster-name people-roster-unteamed">No team</span>
+                  </div>
+                )}
+                {!collapsed && group.members.map(p => {
+                  const ref: ResourceRef = { kind: 'person', id: p.id };
+                  const conflicts = conflictCount(ref);
+                  return (
+                    <div
+                      key={p.id}
+                      className={`people-roster-person${sameRef(active, ref) ? ' selected' : ''}`}
+                      onClick={() => selectResource(ref)}
+                    >
+                      <span className="people-roster-dot" style={{ background: p.color }} />
+                      <span className="people-roster-name">{p.name}</span>
+                      {p.role && <span className="people-roster-meta">{p.role}</span>}
+                      {conflicts > 0 && <span className="env-panel-tab-badge">{conflicts}</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
-          {/* Person extras: role + team membership */}
-          {activePerson && (
-            <div className="people-panel-person-meta">
-              <label>Role</label>
-              {editingRole ? (
+      {/* Detail pane (fixed below the roster) */}
+      {!rosterEmpty && (
+        !active || (!activeTeam && !activePerson) ? (
+          <div className="people-detail people-detail-empty">
+            Select a person or team to see details, allocations and double-bookings.
+          </div>
+        ) : (
+          <div className="people-detail">
+            {/* Identity row */}
+            <div className="people-detail-identity">
+              <div className="env-panel-color-wrap">
+                <button
+                  className="env-panel-color-btn"
+                  style={{ background: activeColor }}
+                  onClick={() => setShowColorPicker(v => !v)}
+                  title="Change color"
+                />
+                {showColorPicker && (
+                  <div className="env-panel-color-picker">
+                    {PEOPLE_COLOR_PRESETS.map(c => (
+                      <button
+                        key={c}
+                        className="env-panel-color-swatch"
+                        style={{ background: c }}
+                        onClick={() => {
+                          if (activeTeam) updateTeam(activeTeam.id, { color: c });
+                          else if (activePerson) updatePerson(activePerson.id, { color: c });
+                          setShowColorPicker(false);
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+              {editingName ? (
                 <input
+                  className="people-detail-name-input"
                   autoFocus
-                  defaultValue={activePerson.role ?? ''}
-                  placeholder="e.g. Backend Dev"
+                  defaultValue={activeName}
                   onBlur={e => {
-                    updatePerson(activePerson.id, { role: e.target.value.trim() || undefined });
-                    setEditingRole(false);
+                    const v = e.target.value.trim();
+                    if (v) {
+                      if (activeTeam) updateTeam(activeTeam.id, { name: v });
+                      else if (activePerson) updatePerson(activePerson.id, { name: v });
+                    }
+                    setEditingName(false);
                   }}
                   onKeyDown={e => {
                     if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-                    if (e.key === 'Escape') setEditingRole(false);
+                    if (e.key === 'Escape') setEditingName(false);
                   }}
                 />
               ) : (
-                <span
-                  className="env-panel-name people-panel-role"
-                  onClick={() => setEditingRole(true)}
-                  title="Click to edit role"
-                >
-                  {activePerson.role || <em>none</em>}
+                <span className="people-detail-name" onClick={() => setEditingName(true)} title="Click to rename">
+                  {activeName}
                 </span>
               )}
-              <label>Team</label>
-              <select
-                value={activePerson.teamId ?? ''}
-                onChange={e => updatePerson(activePerson.id, { teamId: e.target.value || null })}
+              <span className="people-detail-kind">{active.kind}</span>
+              <button
+                className={`people-detail-focus${isFocused ? ' active' : ''}`}
+                onClick={handleToggleFocus}
+                title={isFocused ? 'Clear focus (Esc)' : 'Dim bars not allocated to this'}
               >
-                <option value="">No team</option>
-                {orderedTeams.map(t => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
-                ))}
-              </select>
+                {isFocused ? 'Focused' : 'Focus'}
+              </button>
             </div>
-          )}
 
-          {/* Team extras: members */}
-          {activeTeam && (
-            <div className="env-panel-section">
-              <div className="env-panel-section-header">
-                <h4>Members ({teamMembers.length})</h4>
+            {/* Person extras: role + team membership */}
+            {activePerson && (
+              <div className="people-panel-person-meta">
+                <label>Role</label>
+                {editingRole ? (
+                  <input
+                    autoFocus
+                    defaultValue={activePerson.role ?? ''}
+                    placeholder="e.g. Backend Dev"
+                    onBlur={e => {
+                      updatePerson(activePerson.id, { role: e.target.value.trim() || undefined });
+                      setEditingRole(false);
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                      if (e.key === 'Escape') setEditingRole(false);
+                    }}
+                  />
+                ) : (
+                  <span
+                    className="env-panel-name people-panel-role"
+                    onClick={() => setEditingRole(true)}
+                    title="Click to edit role"
+                  >
+                    {activePerson.role || <em>none</em>}
+                  </span>
+                )}
+                <label>Team</label>
+                <select
+                  value={activePerson.teamId ?? ''}
+                  onChange={e => updatePerson(activePerson.id, { teamId: e.target.value || null })}
+                >
+                  <option value="">No team</option>
+                  {orderedTeams.map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
               </div>
-              {teamMembers.length === 0 ? (
+            )}
+
+            {/* Team extras: members */}
+            {activeTeam && (
+              <div className="people-detail-section">
+                <h4>Members ({teamMembers.length})</h4>
+                {teamMembers.length === 0 ? (
+                  <div className="env-panel-section-empty">
+                    No members. Select a person and set their Team to add them.
+                  </div>
+                ) : (
+                  <div className="people-panel-members">
+                    {teamMembers.map(p => (
+                      <button
+                        key={p.id}
+                        className="people-panel-member-chip"
+                        onClick={() => selectResource({ kind: 'person', id: p.id })}
+                        title="Open person"
+                      >
+                        <span className="env-panel-tab-dot" style={{ background: p.color }} />
+                        {p.name}{p.role ? ` · ${p.role}` : ''}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Allocated bars */}
+            <div className="people-detail-section">
+              <h4>Allocated bars ({barsForActive.length})</h4>
+              {barsForActive.length === 0 ? (
                 <div className="env-panel-section-empty">
-                  No members. Open a person and set their Team to add them.
+                  Nothing allocated. Click the people chip on a timeline bar to assign {activeTeam ? 'this team' : 'this person'}.
                 </div>
               ) : (
-                <div className="people-panel-members">
-                  {teamMembers.map(p => (
-                    <button
-                      key={p.id}
-                      className="people-panel-member-chip"
-                      onClick={() => setActive({ kind: 'person', id: p.id })}
-                      title="Open person"
-                    >
-                      <span className="env-panel-tab-dot" style={{ background: p.color }} />
-                      {p.name}{p.role ? ` · ${p.role}` : ''}
-                    </button>
-                  ))}
-                </div>
+                <ul className="env-panel-list">
+                  {barsForActive.map(bar => {
+                    const def = phaseTypes.find(t => t.id === bar.phaseType);
+                    return (
+                      <li key={bar.id}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flex: 1 }}>
+                          <span
+                            className="env-panel-phase-swatch"
+                            style={{ background: def?.fill ?? '#ccc', borderColor: def?.stroke ?? '#888' }}
+                          />
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <strong>{swimlaneNameById(bar.swimlaneId)}</strong>
+                            <span className="env-panel-contention-mid"> {bar.label || def?.label || bar.phaseType} </span>
+                          </span>
+                          <span className="env-panel-contention-week">
+                            wk {bar.startWeek.toFixed(1)}–{(bar.startWeek + bar.durationWeeks).toFixed(1)}
+                          </span>
+                        </span>
+                        <button
+                          onClick={() => handleUnassignBar(bar.id)}
+                          title={`Remove ${activeName} from this bar`}
+                          aria-label="Unassign"
+                        >
+                          &times;
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
               )}
             </div>
-          )}
 
-          <div className="env-panel-status">
-            {activeContentions.length} contention{activeContentions.length === 1 ? '' : 's'}
-            <span className="env-panel-status-sep">·</span>
-            {barsForActive.length} bar{barsForActive.length === 1 ? '' : 's'} allocated
-          </div>
-
-          {/* Bars allocated to this resource */}
-          <div className="env-panel-section">
-            <div className="env-panel-section-header">
-              <h4>Allocated bars ({barsForActive.length})</h4>
-            </div>
-            {barsForActive.length === 0 ? (
-              <div className="env-panel-section-empty">
-                Nothing allocated. Click the people chip on a timeline bar to assign {activeTeam ? 'this team' : 'this person'}.
-              </div>
-            ) : (
-              <ul className="env-panel-list">
-                {barsForActive.map(bar => {
-                  const def = phaseTypes.find(t => t.id === bar.phaseType);
-                  return (
-                    <li key={bar.id}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flex: 1 }}>
-                        <span
-                          className="env-panel-phase-swatch"
-                          style={{ background: def?.fill ?? '#ccc', borderColor: def?.stroke ?? '#888' }}
-                        />
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          <strong>{swimlaneNameById(bar.swimlaneId)}</strong>
-                          <span className="env-panel-contention-mid"> {bar.label || def?.label || bar.phaseType} </span>
-                        </span>
-                        <span className="env-panel-contention-week">
-                          wk {bar.startWeek.toFixed(1)}–{(bar.startWeek + bar.durationWeeks).toFixed(1)}
-                        </span>
+            {/* Contentions */}
+            <div className="people-detail-section">
+              <h4>Double-bookings ({activeContentions.length})</h4>
+              {activeContentions.length === 0 ? (
+                <div className="env-panel-section-empty">
+                  No double-bookings for {activeName}.
+                </div>
+              ) : (
+                <ul className="env-panel-contention-list">
+                  {activeContentions.map((c, i) => (
+                    <li
+                      key={i}
+                      onClick={() => handleScrollToContention(c.barAId)}
+                      title="Click to select first bar"
+                    >
+                      <strong>{swimlaneNameById(c.swimlaneAId)}</strong>
+                      <span className="env-panel-contention-mid"> {phaseLabel(c.phaseTypeA)} </span>
+                      vs
+                      <strong> {swimlaneNameById(c.swimlaneBId)}</strong>
+                      <span className="env-panel-contention-mid"> {phaseLabel(c.phaseTypeB)} </span>
+                      <span className="env-panel-contention-week">
+                        wk {c.weekRange[0].toFixed(1)}–{c.weekRange[1].toFixed(1)}
                       </span>
-                      <button
-                        onClick={() => handleUnassignBar(bar.id)}
-                        title={`Remove ${activeName} from this bar`}
-                        aria-label="Unassign"
-                      >
-                        &times;
-                      </button>
                     </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-
-          {/* Contentions */}
-          <div className="env-panel-section">
-            <div className="env-panel-section-header">
-              <h4>Contentions ({activeContentions.length})</h4>
+                  ))}
+                </ul>
+              )}
             </div>
-            {activeContentions.length === 0 ? (
-              <div className="env-panel-section-empty">
-                No double-bookings for {activeName}.
-              </div>
-            ) : (
-              <ul className="env-panel-contention-list">
-                {activeContentions.map((c, i) => (
-                  <li
-                    key={i}
-                    onClick={() => handleScrollToContention(c.barAId)}
-                    title="Click to select first bar"
-                  >
-                    <strong>{swimlaneNameById(c.swimlaneAId)}</strong>
-                    <span className="env-panel-contention-mid"> {phaseLabel(c.phaseTypeA)} </span>
-                    vs
-                    <strong> {swimlaneNameById(c.swimlaneBId)}</strong>
-                    <span className="env-panel-contention-mid"> {phaseLabel(c.phaseTypeB)} </span>
-                    <span className="env-panel-contention-week">
-                      wk {c.weekRange[0].toFixed(1)}–{c.weekRange[1].toFixed(1)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
 
-          {/* Footer */}
-          <div className="env-panel-footer">
-            <button
-              className={`env-panel-delete${confirmDelete ? ' confirm' : ''}`}
-              onClick={handleDelete}
-            >
-              {confirmDelete
-                ? `Click to confirm${barsForActive.length > 0 ? ` — removed from ${barsForActive.length} bar${barsForActive.length === 1 ? '' : 's'}` : ''}`
-                : `Delete ${active.kind}`}
-            </button>
+            {/* Delete */}
+            <div className="people-detail-footer">
+              <button
+                className={`env-panel-delete${confirmDelete ? ' confirm' : ''}`}
+                onClick={handleDelete}
+              >
+                {confirmDelete
+                  ? `Click to confirm${barsForActive.length > 0 ? ` — removed from ${barsForActive.length} bar${barsForActive.length === 1 ? '' : 's'}` : ''}`
+                  : `Delete ${active.kind}`}
+              </button>
+            </div>
           </div>
-        </div>
+        )
       )}
     </div>,
     document.body
