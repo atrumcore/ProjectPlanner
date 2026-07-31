@@ -9,6 +9,10 @@ import Toolbar from './Toolbar';
 import NotesPanel from './NotesPanel';
 import EnvironmentsPanel from './EnvironmentsPanel';
 import PeoplePanel from './PeoplePanel';
+import FileUpdateBanner from './FileUpdateBanner';
+import SaveConflictModal from './SaveConflictModal';
+import DisplayNameModal from './DisplayNameModal';
+import { wasNameAsked } from '../utils/userName';
 import ManagePhaseTypesModal from './ManagePhaseTypesModal';
 import { useGanttStore } from '../store/useGanttStore';
 import { getTodayWeekOffset } from '../utils/dateUtils';
@@ -38,6 +42,8 @@ export default function GanttChart() {
   const [scrollLeft, setScrollLeft] = useState(0);
   // True only while capturing an export, so the chart renders expanded/unclipped.
   const [isExporting, setIsExporting] = useState(false);
+  // Display-name prompt: once on first launch, and on demand from File menu.
+  const [showNameModal, setShowNameModal] = useState(() => !wasNameAsked());
 
   // Resizable panel widths
   const [leftWidth, setLeftWidth] = useState(LEFT_DEFAULT);
@@ -201,6 +207,20 @@ export default function GanttChart() {
   // Load from localStorage on mount
   const loadFromStorage = useGanttStore(s => s.loadFromStorage);
   useEffect(() => { loadFromStorage(); }, [loadFromStorage]);
+
+  // Shared-file freshness: notice when someone else saves the open file.
+  // Checked when the window regains focus (the common "switch back after a
+  // teammate pinged you" moment) plus a slow poll for long-lived sessions.
+  const checkFileFreshness = useGanttStore(s => s.checkFileFreshness);
+  useEffect(() => {
+    const onFocus = () => { void checkFileFreshness(); };
+    window.addEventListener('focus', onFocus);
+    const interval = setInterval(onFocus, 10_000);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      clearInterval(interval);
+    };
+  }, [checkFileFreshness]);
 
   // Space+drag pan
   const spaceHeld = useRef(false);
@@ -502,7 +522,8 @@ export default function GanttChart() {
 
   return (
     <ExportLayoutContext.Provider value={{ rowHeight: isExporting ? EXPORT_ROW_HEIGHT : ROW_HEIGHT, isExporting }}>
-    <Toolbar onScrollToToday={scrollToToday} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} onExportPNG={exportPNG} onExportPDF={exportPDF} onExportSwimlanes={exportSwimlanes} onEmailNotes={emailNotes} onAddFloatingNote={handleAddFloatingNote} />
+    <Toolbar onScrollToToday={scrollToToday} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} onExportPNG={exportPNG} onExportPDF={exportPDF} onExportSwimlanes={exportSwimlanes} onEmailNotes={emailNotes} onAddFloatingNote={handleAddFloatingNote} onSetDisplayName={() => setShowNameModal(true)} />
+    <FileUpdateBanner />
     <div className={`gantt-container${isExporting ? ' is-exporting' : ''}`} ref={ganttRef}>
       {/* Left panel */}
       {!leftCollapsed && (
@@ -583,6 +604,8 @@ export default function GanttChart() {
     {environmentsPanelOpen && <EnvironmentsPanel />}
     {peoplePanelOpen && <PeoplePanel />}
     {phaseTypesModalOpen && <ManagePhaseTypesModal />}
+    <SaveConflictModal />
+    {showNameModal && <DisplayNameModal onClose={() => setShowNameModal(false)} />}
     </ExportLayoutContext.Provider>
   );
 }

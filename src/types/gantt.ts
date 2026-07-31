@@ -238,6 +238,30 @@ export interface GanttState {
   currentFileName: string | null;
   currentFileHandle: FileSystemFileHandle | null;
   isDirty: boolean;
+  // Shared-file collaboration state (all session-scoped, never persisted).
+  /** Provenance of the open file — who last saved it and when (from the
+   * file's `meta` block; null when unknown or no file is open). */
+  fileMeta: FileMeta | null;
+  /** Disk lastModified (ms) that this session considers "ours" — set on open
+   * and after each successful save. A newer value on disk means someone else
+   * saved the file. null = no baseline (no handle). */
+  fileBaselineMs: number | null;
+  /** Set when a newer version was detected on disk (poll/focus check).
+   * Renders the non-blocking update banner. */
+  externalUpdate: (FileMeta & { diskMs: number }) | null;
+  /** Newest diskMs the user chose to ignore via "Keep mine" — suppresses the
+   * banner until an even newer save appears on disk. */
+  externalUpdateDismissedMs: number | null;
+  /** Set when Save found the file changed on disk since our baseline.
+   * Renders the Overwrite / Reload / Save-a-copy conflict dialog. */
+  saveConflict: FileMeta | null;
+}
+
+/** Save-attribution block stamped into exported plan files (schema v7+).
+ * Self-declared display name — provenance, not authentication. */
+export interface FileMeta {
+  savedBy: string | null;
+  savedAtIso: string | null;
 }
 
 // Environment palette — 8 hues spaced ~45° apart on the colour wheel with

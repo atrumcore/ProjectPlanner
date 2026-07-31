@@ -260,3 +260,16 @@ export function getCumulativeWeeks(
   }
   return days / 7;
 }
+
+/** Compact save-time label: "HH:MM" for today's timestamps, "12 Aug 14:32"
+ *  otherwise. null for missing/invalid input. */
+export function formatSavedAt(iso: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return null;
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  const time = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  if (sameDay) return time;
+  return `${d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} ${time}`;
+}
