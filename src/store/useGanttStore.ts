@@ -44,6 +44,7 @@ import {
   getFileLastModified,
 } from '../utils/fileSystemAccess';
 import { getUserName } from '../utils/userName';
+import { useAuthStore } from '../auth/useAuthStore';
 
 const uid = () => crypto.randomUUID();
 
@@ -277,11 +278,23 @@ function parseFileMeta(text: string): FileMeta {
     const d = JSON.parse(text);
     return {
       savedBy: typeof d?.meta?.savedBy === 'string' ? d.meta.savedBy : null,
+      savedById: typeof d?.meta?.savedById === 'string' ? d.meta.savedById : null,
       savedAtIso: typeof d?.meta?.savedAtIso === 'string' ? d.meta.savedAtIso : null,
     };
   } catch {
-    return { savedBy: null, savedAtIso: null };
+    return { savedBy: null, savedById: null, savedAtIso: null };
   }
+}
+
+/** Who to credit for a save right now — the signed-in Microsoft account when
+ *  there is one, otherwise the locally-entered display name. */
+function currentSaveIdentity(): FileMeta {
+  const account = useAuthStore.getState().account;
+  return {
+    savedBy: account?.name ?? getUserName(),
+    savedById: account?.id ?? null,
+    savedAtIso: new Date().toISOString(),
+  };
 }
 
 // History stacks stored outside zustand to avoid serialization issues
@@ -1367,12 +1380,10 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
       showPeopleIndicators: state.showPeopleIndicators,
       showPeopleContention: state.showPeopleContention,
       barStyle: state.barStyle,
-      // Save attribution for shared files — self-declared display name, so
-      // other editors can see who last saved. Not authentication.
-      meta: {
-        savedBy: getUserName(),
-        savedAtIso: new Date().toISOString(),
-      },
+      // Save attribution. When signed in this is the real Microsoft account
+      // (name + object id); signed out it falls back to the self-declared
+      // local display name, which is provenance only, not authentication.
+      meta: currentSaveIdentity(),
       // Format marker (so downstream loaders can detect legacy data)
       calendarModelVersion: SCHEMA_VERSION,
     }, null, 2);
@@ -1424,6 +1435,7 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         isDirty: false,
         fileMeta: {
           savedBy: typeof data?.meta?.savedBy === 'string' ? data.meta.savedBy : null,
+          savedById: typeof data?.meta?.savedById === 'string' ? data.meta.savedById : null,
           savedAtIso: typeof data?.meta?.savedAtIso === 'string' ? data.meta.savedAtIso : null,
         },
       });
@@ -1466,6 +1478,7 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
             set({
               saveConflict: {
                 savedBy: e.meta.lastModifiedBy,
+                savedById: null,
                 savedAtIso: e.meta.lastModifiedIso || null,
               },
             });
@@ -1625,7 +1638,7 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
       if (planSource.kind === 'graph') {
         const itemMeta = await graph.getItemMeta(planSource.driveId, planSource.itemId);
         marker = itemMeta.eTag;
-        meta = { savedBy: itemMeta.lastModifiedBy, savedAtIso: itemMeta.lastModifiedIso || null };
+        meta = { savedBy: itemMeta.lastModifiedBy, savedById: null, savedAtIso: itemMeta.lastModifiedIso || null };
         if (baseline.kind !== 'graph' || itemMeta.eTag === baseline.eTag) {
           if (get().externalUpdate) set({ externalUpdate: null });
           return;

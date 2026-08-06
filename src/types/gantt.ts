@@ -264,9 +264,12 @@ export interface GanttState {
 }
 
 /** Save-attribution block stamped into exported plan files (schema v7+).
- * Self-declared display name — provenance, not authentication. */
+ * `savedById` is the signer's Entra object id when they were signed in to
+ * Microsoft 365; a bare `savedBy` is a self-declared name — provenance,
+ * not authentication. */
 export interface FileMeta {
   savedBy: string | null;
+  savedById: string | null;
   savedAtIso: string | null;
 }
 
