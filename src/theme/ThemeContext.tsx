@@ -10,7 +10,7 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-const STORAGE_KEY = 'dha-theme';
+const STORAGE_KEY = 'bbd-planner-theme';
 
 /** Apply the theme to <html data-theme> and persist the choice. */
 function applyTheme(theme: ThemeName) {

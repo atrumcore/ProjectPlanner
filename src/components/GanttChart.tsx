@@ -492,11 +492,11 @@ export default function GanttChart() {
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.download = 'dha-swimlanes.csv';
+    link.download = `${exportBaseName()} - swimlanes.csv`;
     link.href = url;
     link.click();
     URL.revokeObjectURL(url);
-  }, [swimlanes, sections, phaseBars, phaseTypes, timeline, people, teams]);
+  }, [swimlanes, sections, phaseBars, phaseTypes, timeline, people, teams, exportBaseName]);
 
   // Drop a new floating note into the visible center of the timeline so the
   // user always sees it appear, no matter where they've scrolled.

@@ -27,9 +27,13 @@
   --note-ink: #2a2620;
 }
 
-/* ===== DHA Dark (default) ===== */
+/* ===== Dark (default) ===== */
 :root,
 [data-theme='dark'] {
+  /* BBD brand red — logo mark / brand moments only. Never used for
+     interactive state: red already means conflict or danger here. */
+  --brand-accent: #ce181e;
+
   /* Surfaces */
   --bg-app: #0b1426;          /* Midnight Express — deepest canvas */
   --bg-header: #0d203c;       /* Dark Navy — toolbar / sticky headers */
@@ -44,16 +48,16 @@
   --text-muted: #6e8299;
   --text-header: #eeeeee;
 
-  /* Accents (DHA palette) */
-  --accent-primary: #31bf69;        /* DHA Green */
-  --accent-primary-hover: #43d27c;
-  --accent-secondary: #0098cc;      /* Morpho Blue */
-  --success: #009991;               /* Deep Cyan */
-  --warning: #cb6600;               /* Dark Washed Orange */
-  --error: #99001b;                 /* Crimson */
+  /* Accents — BBD brand navy, lightened to read on the dark navy canvas */
+  --accent-primary: #8f87f1;
+  --accent-primary-hover: #a49df5;
+  --accent-secondary: #0098cc;      /* interactive blue */
+  --success: #009991;
+  --warning: #cb6600;
+  --error: #99001b;
   --error-bright: #e0556b;
   --contention: #c0466a;
-  --on-accent: #07140b;             /* text/icon on a primary (green) surface */
+  --on-accent: #0b0a2a;             /* text/icon on a primary surface */
 
   /* Lines / borders (low-alpha light so they read on navy) */
   --grid-weekly: rgba(255, 255, 255, 0.06);
@@ -75,8 +79,10 @@
   --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
-/* ===== DHA Light ===== */
+/* ===== Light ===== */
 [data-theme='light'] {
+  --brand-accent: #ce181e;
+
   /* Surfaces */
   --bg-app: #e8e4dd;
   --bg-header: #ffffff;       /* light toolbar / sticky headers, like the live site nav */
@@ -89,11 +95,11 @@
   --text-primary: #1a1814;
   --text-secondary: #5c5a54;
   --text-muted: #888078;
-  --text-header: #0d203c;     /* dark navy text on the light header */
+  --text-header: #1b1846;     /* BBD brand navy text on the light header */
 
-  /* Accents (DHA palette, tuned for light surfaces) */
-  --accent-primary: #2a9d54;
-  --accent-primary-hover: #36b966;
+  /* Accents — BBD brand navy on light surfaces */
+  --accent-primary: #1b1846;
+  --accent-primary-hover: #2d2a63;
   --accent-secondary: #0277a3;
   --success: #00897e;
   --warning: #cb6600;
@@ -167,6 +173,20 @@ select option {
   letter-spacing: 0.3px;
   margin-right: 16px;
   white-space: nowrap;
+}
+
+/* Product name with the BBD red brand mark. */
+.toolbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.toolbar-brand-mark {
+  width: 4px;
+  height: 15px;
+  border-radius: 2px;
+  background: var(--brand-accent);
+  flex-shrink: 0;
 }
 
 .toolbar-filename {

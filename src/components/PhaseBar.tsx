@@ -230,7 +230,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
   const tooltipText = `${bar.label}\n${colors.label || bar.phaseType}${env ? `\nEnvironment: ${env.name}` : ''}\n${formatDayMonth(startDate)} – ${formatDayMonth(endDate)} (${durationDays} day${durationDays !== 1 ? 's' : ''})\nDouble-click to edit · Right-click for options`;
 
   // Tagged-bar rendering: long bars (>= SHORT_BAR_THRESHOLD wide) render as a
-  // neutral card with a coloured left-edge "tag" carrying the DHA brand colour.
+  // neutral card with a coloured left-edge "tag" carrying the phase colour.
   // Short bars fall back to a solid coloured pill so the phase is still
   // identifiable when the label is hidden.
   // In "legacy" bar style the user opts back into solid coloured pills for

@@ -81,7 +81,10 @@ export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomRe
     <>
       <div className="toolbar">
         <h1>
-          DHA Priority Roadmap
+          <span className="toolbar-brand">
+            <span className="toolbar-brand-mark" aria-hidden="true" />
+            BBD Project Planner
+          </span>
           <span className="toolbar-filename">
             {' \u2014 '}{currentFileName || 'Untitled'}
             {isDirty && <span className="toolbar-filename-dirty" title="Unsaved changes">&nbsp;&bull;</span>}
