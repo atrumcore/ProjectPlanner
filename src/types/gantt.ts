@@ -1,3 +1,5 @@
+import type { PlanSource, PlanBaseline, PlanMarker } from './planSource';
+
 /** PhaseType is now a string id referring to a user-defined PhaseTypeDef.
  * The 7 built-ins ('analysis', 'development', 'sit', 'uat', 'live', 'concept',
  * 'custom') are seeded on first run with stable ids so legacy data loads
@@ -236,25 +238,29 @@ export interface GanttState {
   // File session state (not persisted — handles are session-scoped and
   // localStorage is a crash-recovery backstop, not the source of truth)
   currentFileName: string | null;
-  currentFileHandle: FileSystemFileHandle | null;
+  /** Where the open plan lives (local file or Microsoft 365), or null for an
+   * unsaved document. Replaces the old handle-only field. */
+  planSource: PlanSource | null;
   isDirty: boolean;
   // Shared-file collaboration state (all session-scoped, never persisted).
   /** Provenance of the open file — who last saved it and when (from the
    * file's `meta` block; null when unknown or no file is open). */
   fileMeta: FileMeta | null;
-  /** Disk lastModified (ms) that this session considers "ours" — set on open
-   * and after each successful save. A newer value on disk means someone else
-   * saved the file. null = no baseline (no handle). */
-  fileBaselineMs: number | null;
-  /** Set when a newer version was detected on disk (poll/focus check).
+  /** The version this session considers "ours" — set on open and after each
+   * successful save. A newer version at the source means someone else saved.
+   * null = no baseline (nothing open). */
+  baseline: PlanBaseline | null;
+  /** Set when a newer version was detected at the source (poll/focus check).
    * Renders the non-blocking update banner. */
-  externalUpdate: (FileMeta & { diskMs: number }) | null;
-  /** Newest diskMs the user chose to ignore via "Keep mine" — suppresses the
-   * banner until an even newer save appears on disk. */
-  externalUpdateDismissedMs: number | null;
-  /** Set when Save found the file changed on disk since our baseline.
+  externalUpdate: (FileMeta & { marker: PlanMarker }) | null;
+  /** Newest marker the user chose to ignore via "Keep mine" — suppresses the
+   * banner until an even newer version appears. */
+  externalUpdateDismissedMarker: PlanMarker | null;
+  /** Set when Save found the file changed since our baseline.
    * Renders the Overwrite / Reload / Save-a-copy conflict dialog. */
   saveConflict: FileMeta | null;
+  /** Which screen is showing. The launcher only exists when signed in. */
+  appView: 'launcher' | 'plan';
 }
 
 /** Save-attribution block stamped into exported plan files (schema v7+).
