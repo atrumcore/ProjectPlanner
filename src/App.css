@@ -1673,6 +1673,97 @@ select option {
   font-size: 11px;
 }
 
+/* ── Microsoft 365 account control (toolbar right) ───────────────────────── */
+
+.account-signin-btn {
+  margin-left: 4px;
+  white-space: nowrap;
+}
+
+.account-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: 4px;
+  max-width: 190px;
+  padding-left: 4px !important;
+}
+.account-chip-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent-secondary);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  letter-spacing: 0.3px;
+}
+.account-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.account-menu {
+  position: fixed;
+  transform: translateX(-100%);
+  z-index: 2100;
+  min-width: 210px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  padding: 4px;
+  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+}
+.account-menu-identity {
+  padding: 8px 10px 6px;
+}
+.account-menu-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.account-menu-email {
+  font-size: 11px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.account-menu-mock {
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.account-menu-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+.account-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  padding: 7px 10px;
+  font-size: 12px;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: inherit;
+}
+.account-menu-item:hover {
+  background: var(--hover);
+}
+
 /* Rich-text editor (shared base) */
 .rich-text-editor {
   width: 100%;

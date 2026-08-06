@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useGanttStore } from '../store/useGanttStore';
 import { getContentions, getPeopleContentions } from '../utils/contention';
 import { formatSavedAt } from '../utils/dateUtils';
+import AccountChip from './AccountChip';
 import FileMenu from './FileMenu';
 import InsertMenu from './InsertMenu';
 import ViewMenu from './ViewMenu';
@@ -145,6 +146,8 @@ export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomRe
 
         <button onClick={undo} disabled={!canUndo()} title="Undo (Ctrl+Z)">Undo</button>
         <button onClick={redo} disabled={!canRedo()} title="Redo (Ctrl+Y)">Redo</button>
+
+        <AccountChip />
       </div>
 
       {openMenu === 'file' && menuAnchor && (
