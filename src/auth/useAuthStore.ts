@@ -16,7 +16,7 @@ const MOCK_ACCOUNT: AuthAccount = {
   email: 'mock.user@example.com',
 };
 
-const MOCK_SESSION_KEY = 'dha-mock-signed-in';
+const MOCK_SESSION_KEY = 'bbd-planner-mock-signed-in';
 
 interface AuthState {
   /** Whether a sign-in path exists at all (real registration or mock mode). */
