@@ -9,6 +9,7 @@
 A browser-based roadmap/Gantt planning tool used by BBD staff for project and delivery planning. It is a **static single-page application** (React) hosted on Cloudflare — there is **no backend server and no database**; today all data lives in local files. We want users to sign in with their Microsoft 365 accounts so plans can be stored in the team's own SharePoint/Teams files instead of loose local copies, with access controlled by existing Team membership.
 
 - Current URL: `https://ganttplanner.atrum-core.workers.dev`
+- **Hosting:** the app is currently deployed to a personal Cloudflare account (`atrum-core`), not BBD infrastructure. It is static files only — no server-side code, no database, no tenant data at rest. Happy to move it to BBD-owned hosting if that is preferred; nothing in this request depends on where the static files live.
 - All Microsoft data stays inside the tenant (SharePoint/OneDrive). The app talks directly from the user's browser to Microsoft Graph. We never store, proxy, or host any tenant data ourselves.
 
 ## Registration details requested
@@ -52,4 +53,4 @@ We ask for tenant-wide admin consent for all five so individual users are not pr
 
 ## Contact
 
-Questions / demo: Streicher Stegmann — streicher.stegmann@gmail.com (or Teams).
+Questions / demo: Streicher Stegmann — streicher@bbd.co.za (or Teams).
