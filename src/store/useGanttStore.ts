@@ -44,7 +44,7 @@ import { getUserName } from '../utils/userName';
 
 const uid = () => crypto.randomUUID();
 
-const STORAGE_KEY = 'dha-gantt-state';
+const STORAGE_KEY = 'bbd-planner-state';
 const MAX_HISTORY = 50;
 
 // Single version stamp written by BOTH localStorage autosave and file export.

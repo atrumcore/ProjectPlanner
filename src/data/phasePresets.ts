@@ -4,9 +4,10 @@ import { getActiveThemeName, type ThemeName } from '../theme/colors';
 type PresetMap = Record<string, PhaseColorScheme>;
 
 /**
- * Phase-type colours from the DHA design-system palette:
- *   analysis/concept → Morpho Blue  · development → Dark Washed Orange
- *   sit → Deep Cyan · uat → DHA Green · live → Crimson · custom → slate
+ * Default phase-type colours — a categorical palette chosen so adjacent
+ * phases stay distinguishable on both themes (users can recolour any type):
+ *   analysis/concept → blue · development → orange
+ *   sit → teal · uat → green · live → crimson · custom → slate
  *
  * In the tagged-bar render, `fill` is the **tag colour** (the small coloured
  * left-edge stripe and the body colour for the short-bar fallback). `text` is

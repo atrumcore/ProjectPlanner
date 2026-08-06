@@ -66,7 +66,7 @@ export default function ViewMenu({ anchor, onClose }: Props) {
       <label className="view-menu-item">
         <input
           type="radio"
-          name="dha-theme"
+          name="bbd-planner-theme"
           checked={theme === 'dark'}
           onChange={() => setTheme('dark')}
         />
@@ -75,7 +75,7 @@ export default function ViewMenu({ anchor, onClose }: Props) {
       <label className="view-menu-item">
         <input
           type="radio"
-          name="dha-theme"
+          name="bbd-planner-theme"
           checked={theme === 'light'}
           onChange={() => setTheme('light')}
         />
@@ -85,7 +85,7 @@ export default function ViewMenu({ anchor, onClose }: Props) {
       <label className="view-menu-item">
         <input
           type="radio"
-          name="dha-bar-style"
+          name="bbd-planner-bar-style"
           checked={barStyle === 'tagged'}
           onChange={() => setBarStyle('tagged')}
         />
@@ -94,7 +94,7 @@ export default function ViewMenu({ anchor, onClose }: Props) {
       <label className="view-menu-item">
         <input
           type="radio"
-          name="dha-bar-style"
+          name="bbd-planner-bar-style"
           checked={barStyle === 'legacy'}
           onChange={() => setBarStyle('legacy')}
         />

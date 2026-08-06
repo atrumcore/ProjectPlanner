@@ -17,7 +17,7 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   handleReset = () => {
-    try { localStorage.removeItem('dha-gantt-state'); } catch {}
+    try { localStorage.removeItem('bbd-planner-state'); } catch {}
     window.location.reload();
   };
 

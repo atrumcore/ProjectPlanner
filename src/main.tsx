@@ -4,6 +4,10 @@ import './index.css'
 import App from './App.tsx'
 import { ThemeProvider } from './theme/ThemeContext.tsx'
 import { getActiveThemeName } from './theme/colors.ts'
+import { migrateLegacyStorageKeys } from './utils/legacyStorage.ts'
+
+// Carry any pre-rename `dha-*` storage across before anything reads it.
+migrateLegacyStorageKeys()
 
 // Set the theme attribute synchronously before first paint to avoid a flash.
 document.documentElement.setAttribute('data-theme', getActiveThemeName())

@@ -4,8 +4,8 @@
 // honour-system provenance label, not authentication. The real access boundary
 // for a shared file is the file share's own permissions.
 
-const NAME_KEY = 'dha-user-name';
-const ASKED_KEY = 'dha-user-name-asked';
+const NAME_KEY = 'bbd-planner-user-name';
+const ASKED_KEY = 'bbd-planner-user-name-asked';
 
 /** The stored display name, or null if unset. */
 export function getUserName(): string | null {

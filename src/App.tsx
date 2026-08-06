@@ -32,7 +32,7 @@ function App() {
   // Reflect current file + dirty state in the browser tab title.
   useEffect(() => {
     const name = currentFileName || 'Untitled';
-    document.title = `${isDirty ? '\u2022 ' : ''}${name} \u2014 DHA Priority Roadmap`;
+    document.title = `${isDirty ? '\u2022 ' : ''}${name} \u2014 BBD Project Planner`;
   }, [currentFileName, isDirty]);
 
   return (

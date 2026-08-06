@@ -11,6 +11,10 @@
  * `[data-theme='<name>']` block in App.css, then extend `ThemeName`.
  */
 
+/** BBD brand red (logo mark). Reserved for brand moments only — never for
+ *  interactive state, since red already signals conflict/danger here. */
+export const BRAND_ACCENT = '#CE181E';
+
 export type ThemeName = 'dark' | 'light';
 
 export const DEFAULT_THEME: ThemeName = 'dark';
@@ -100,17 +104,18 @@ const dark: ThemeColors = {
 
   HOLIDAY_MARK: '#E0556B',
 
-  ACCENT_PRIMARY: '#31BF69', // DHA Green
-  ACCENT_SECONDARY: '#0098CC', // Morpho Blue
-  SUCCESS: '#009991', // Deep Cyan
-  WARNING: '#CB6600', // Dark Washed Orange
-  ERROR: '#99001B', // Crimson
-  ON_ACCENT: '#07140B', // text/icon on a primary (green) surface
+  // BBD brand navy lightened so it reads against the dark navy canvas.
+  ACCENT_PRIMARY: '#8F87F1',
+  ACCENT_SECONDARY: '#0098CC', // interactive blue (active panels/toggles)
+  SUCCESS: '#009991',
+  WARNING: '#CB6600',
+  ERROR: '#99001B',
+  ON_ACCENT: '#0B0A2A', // text/icon on a primary surface
 };
 
 const light: ThemeColors = {
   BG_APP: '#E8E4DD',
-  BG_HEADER: '#FFFFFF', // light toolbar / sticky headers (DHA-light, like the live site nav)
+  BG_HEADER: '#FFFFFF', // light toolbar / sticky headers
   BG_SURFACE: '#FFFAF3', // cards / menus / popovers / inputs / panels
   BG_SURFACE_2: '#F5F2EC',
   ROW_EVEN: '#FAF9F6',
@@ -119,7 +124,7 @@ const light: ThemeColors = {
   SECTION_BAND: '#E2DED6',
 
   TEXT_PRIMARY: '#1A1814',
-  TEXT_HEADER: '#0D203C', // dark navy text on the light header
+  TEXT_HEADER: '#1B1846', // BBD brand navy text on the light header
   TEXT_SECONDARY: '#5C5A54',
   WEEK_LABEL_COLOR: '#888078',
 
@@ -146,8 +151,8 @@ const light: ThemeColors = {
 
   HOLIDAY_MARK: '#CC4444',
 
-  ACCENT_PRIMARY: '#2A9D54', // DHA Green tuned for white text on light
-  ACCENT_SECONDARY: '#0277A3', // Morpho Blue tuned for light
+  ACCENT_PRIMARY: '#1B1846', // BBD brand navy
+  ACCENT_SECONDARY: '#0277A3', // interactive blue tuned for light
   SUCCESS: '#00897E',
   WARNING: '#CB6600',
   ERROR: '#99001B',
@@ -194,7 +199,7 @@ export function hexToRgba(hex: string, alpha: number): string {
 /** Read the active theme without React (for use in the Zustand store). */
 export function getActiveThemeName(): ThemeName {
   try {
-    const v = localStorage.getItem('dha-theme');
+    const v = localStorage.getItem('bbd-planner-theme');
     if (v === 'dark' || v === 'light') return v;
   } catch {
     /* ignore */
