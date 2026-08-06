@@ -1,4 +1,4 @@
-# Request: Entra ID app registration — "DHA Roadmap Planner"
+# Request: Entra ID app registration — "BBD Project Planner"
 
 **Requested by:** Streicher Stegmann
 **Date:** 2026-08-06
@@ -6,7 +6,7 @@
 
 ## What the app is
 
-A browser-based roadmap/Gantt planning tool used for DHA programme planning. It is a **static single-page application** (React) hosted on Cloudflare — there is **no backend server and no database**; today all data lives in local files. We want users to sign in with their Microsoft 365 accounts so plans can be stored in the team's own SharePoint/Teams files instead of loose local copies, with access controlled by existing Team membership.
+A browser-based roadmap/Gantt planning tool used by BBD staff for project and delivery planning. It is a **static single-page application** (React) hosted on Cloudflare — there is **no backend server and no database**; today all data lives in local files. We want users to sign in with their Microsoft 365 accounts so plans can be stored in the team's own SharePoint/Teams files instead of loose local copies, with access controlled by existing Team membership.
 
 - Current URL: `https://ganttplanner.atrum-core.workers.dev`
 - All Microsoft data stays inside the tenant (SharePoint/OneDrive). The app talks directly from the user's browser to Microsoft Graph. We never store, proxy, or host any tenant data ourselves.
@@ -15,7 +15,7 @@ A browser-based roadmap/Gantt planning tool used for DHA programme planning. It 
 
 | Setting | Value |
 |---|---|
-| Name | DHA Roadmap Planner |
+| Name | BBD Project Planner |
 | Supported account types | Single tenant (this organisational directory only) |
 | Platform | **Single-page application (SPA)** |
 | Redirect URIs | `https://ganttplanner.atrum-core.workers.dev` and `http://localhost:5173` (development) |
