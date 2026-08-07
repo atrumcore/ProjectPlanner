@@ -18,6 +18,16 @@ const MOCK_ACCOUNT: AuthAccount = {
 
 const MOCK_SESSION_KEY = 'bbd-planner-mock-signed-in';
 
+/** After a fresh sign-in, land on the launcher so the user can pick a plan.
+ *  Restoring an existing session (initAuth) deliberately doesn't do this — a
+ *  page refresh should leave you where you were working. Imported lazily to
+ *  keep the auth store free of a hard dependency on the document store. */
+function showLauncher(): void {
+  void import('../store/useGanttStore').then(({ useGanttStore }) => {
+    useGanttStore.getState().setAppView('launcher');
+  });
+}
+
 interface AuthState {
   /** Whether a sign-in path exists at all (real registration or mock mode). */
   available: boolean;
@@ -37,6 +47,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     if (isMockMode) {
       try { sessionStorage.setItem(MOCK_SESSION_KEY, '1'); } catch { /* ignore */ }
       set({ account: MOCK_ACCOUNT });
+      showLauncher();
       return;
     }
     set({ busy: true });

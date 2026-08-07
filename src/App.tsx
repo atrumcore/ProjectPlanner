@@ -2,12 +2,16 @@ import { useEffect } from 'react';
 import './App.css';
 import GanttChart from './components/GanttChart';
 import ErrorBoundary from './components/ErrorBoundary';
+import LauncherScreen from './components/launcher/LauncherScreen';
 import { useGanttStore } from './store/useGanttStore';
+import { useAuthStore } from './auth/useAuthStore';
 import { useTheme } from './theme/ThemeContext';
 
 function App() {
   const isDirty = useGanttStore(s => s.isDirty);
   const currentFileName = useGanttStore(s => s.currentFileName);
+  const appView = useGanttStore(s => s.appView);
+  const signedIn = useAuthStore(s => s.account !== null);
   const { theme } = useTheme();
   const syncBuiltinPhaseColorsToTheme = useGanttStore(s => s.syncBuiltinPhaseColorsToTheme);
 
@@ -35,9 +39,11 @@ function App() {
     document.title = `${isDirty ? '\u2022 ' : ''}${name} \u2014 BBD Project Planner`;
   }, [currentFileName, isDirty]);
 
+  // The launcher only exists for signed-in users; signed out, the app opens
+  // straight into the plan exactly as it always has.
   return (
     <ErrorBoundary>
-      <GanttChart />
+      {signedIn && appView === 'launcher' ? <LauncherScreen /> : <GanttChart />}
     </ErrorBoundary>
   );
 }

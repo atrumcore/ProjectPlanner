@@ -14,6 +14,9 @@ import type {
   FloatingNote,
   FileMeta,
 } from '../types/gantt';
+import type { PlanSource, PlanContainer, PlanMarker } from '../types/planSource';
+import { graph, GraphConflictError, type GraphPlanFile } from '../graph';
+import { rememberPlan } from '../utils/mru';
 // PhaseBar imported above; alias for the migration helper signature.
 import {
   DEFAULT_SECTIONS,
@@ -41,6 +44,7 @@ import {
   getFileLastModified,
 } from '../utils/fileSystemAccess';
 import { getUserName } from '../utils/userName';
+import { useAuthStore } from '../auth/useAuthStore';
 
 const uid = () => crypto.randomUUID();
 
@@ -198,6 +202,12 @@ interface GanttActions {
   reloadFromDisk: () => Promise<boolean>;
   dismissExternalUpdate: () => void;
   clearSaveConflict: () => void;
+  /** Open a plan stored in Microsoft 365 (a Team's Roadmaps folder or drafts). */
+  openGraphPlan: (file: GraphPlanFile & { container: PlanContainer }) => Promise<boolean>;
+  /** Create a blank plan in a Team (creating its Roadmaps folder if needed)
+   * or in the user's drafts, then open it. */
+  createGraphPlan: (container: PlanContainer, name: string) => Promise<boolean>;
+  setAppView: (view: 'launcher' | 'plan') => void;
 
   // History
   undo: () => void;
@@ -252,13 +262,14 @@ const defaultState: GanttState = {
   hoveredBarId: null,
   phaseTypesModalOpen: false,
   currentFileName: null,
-  currentFileHandle: null,
+  planSource: null,
   isDirty: false,
   fileMeta: null,
-  fileBaselineMs: null,
+  baseline: null,
   externalUpdate: null,
-  externalUpdateDismissedMs: null,
+  externalUpdateDismissedMarker: null,
   saveConflict: null,
+  appView: 'plan',
 };
 
 /** Extract the save-attribution meta block from a plan file's JSON text. */
@@ -267,11 +278,23 @@ function parseFileMeta(text: string): FileMeta {
     const d = JSON.parse(text);
     return {
       savedBy: typeof d?.meta?.savedBy === 'string' ? d.meta.savedBy : null,
+      savedById: typeof d?.meta?.savedById === 'string' ? d.meta.savedById : null,
       savedAtIso: typeof d?.meta?.savedAtIso === 'string' ? d.meta.savedAtIso : null,
     };
   } catch {
-    return { savedBy: null, savedAtIso: null };
+    return { savedBy: null, savedById: null, savedAtIso: null };
   }
+}
+
+/** Who to credit for a save right now — the signed-in Microsoft account when
+ *  there is one, otherwise the locally-entered display name. */
+function currentSaveIdentity(): FileMeta {
+  const account = useAuthStore.getState().account;
+  return {
+    savedBy: account?.name ?? getUserName(),
+    savedById: account?.id ?? null,
+    savedAtIso: new Date().toISOString(),
+  };
 }
 
 // History stacks stored outside zustand to avoid serialization issues
@@ -1357,12 +1380,10 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
       showPeopleIndicators: state.showPeopleIndicators,
       showPeopleContention: state.showPeopleContention,
       barStyle: state.barStyle,
-      // Save attribution for shared files — self-declared display name, so
-      // other editors can see who last saved. Not authentication.
-      meta: {
-        savedBy: getUserName(),
-        savedAtIso: new Date().toISOString(),
-      },
+      // Save attribution. When signed in this is the real Microsoft account
+      // (name + object id); signed out it falls back to the self-declared
+      // local display name, which is provenance only, not authentication.
+      meta: currentSaveIdentity(),
       // Format marker (so downstream loaders can detect legacy data)
       calendarModelVersion: SCHEMA_VERSION,
     }, null, 2);
@@ -1414,6 +1435,7 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         isDirty: false,
         fileMeta: {
           savedBy: typeof data?.meta?.savedBy === 'string' ? data.meta.savedBy : null,
+          savedById: typeof data?.meta?.savedById === 'string' ? data.meta.savedById : null,
           savedAtIso: typeof data?.meta?.savedAtIso === 'string' ? data.meta.savedAtIso : null,
         },
       });
@@ -1424,36 +1446,71 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
   },
 
   saveFile: async (opts) => {
-    const { currentFileHandle, exportToJSON, saveFileAs, fileBaselineMs } = get();
-    if (!currentFileHandle) {
+    const { planSource, exportToJSON, saveFileAs, baseline } = get();
+    if (!planSource) {
       return saveFileAs();
     }
     try {
       // Flush any pending contentEditable edits before snapshotting state.
       (document.activeElement as HTMLElement | null)?.blur();
 
+      // ── Microsoft 365 ────────────────────────────────────────────────
+      if (planSource.kind === 'graph') {
+        const json = exportToJSON();
+        // If-Match carries our baseline eTag so the server rejects the write
+        // when someone else saved first. `force` (from the conflict dialog)
+        // drops the header and overwrites deliberately.
+        const guardTag = opts?.force ? null
+          : baseline?.kind === 'graph' ? baseline.eTag : null;
+        try {
+          const { eTag } = await graph.uploadPlan(planSource.driveId, planSource.itemId, json, guardTag);
+          set({
+            isDirty: false,
+            fileMeta: parseFileMeta(json),
+            baseline: { kind: 'graph', eTag },
+            saveConflict: null,
+            externalUpdate: null,
+            externalUpdateDismissedMarker: null,
+          });
+          return true;
+        } catch (e) {
+          if (e instanceof GraphConflictError) {
+            set({
+              saveConflict: {
+                savedBy: e.meta.lastModifiedBy,
+                savedById: null,
+                savedAtIso: e.meta.lastModifiedIso || null,
+              },
+            });
+            return false;
+          }
+          throw e;
+        }
+      }
+
+      // ── Local file ───────────────────────────────────────────────────
       // Overwrite guard: if the file on disk is newer than the version this
       // session opened/last saved, someone else saved in between — surface
       // the conflict dialog instead of silently clobbering their work.
-      if (!opts?.force && fileBaselineMs !== null) {
-        const diskMs = await getFileLastModified(currentFileHandle);
-        if (diskMs > fileBaselineMs) {
-          const diskMeta = parseFileMeta(await readFileAsText(currentFileHandle));
+      if (!opts?.force && baseline?.kind === 'local') {
+        const diskMs = await getFileLastModified(planSource.handle);
+        if (diskMs > baseline.lastModifiedMs) {
+          const diskMeta = parseFileMeta(await readFileAsText(planSource.handle));
           set({ saveConflict: diskMeta });
           return false;
         }
       }
 
       const json = exportToJSON();
-      await writeFileText(currentFileHandle, json);
-      const newBaseline = await getFileLastModified(currentFileHandle);
+      await writeFileText(planSource.handle, json);
+      const newBaseline = await getFileLastModified(planSource.handle);
       set({
         isDirty: false,
         fileMeta: parseFileMeta(json),
-        fileBaselineMs: newBaseline,
+        baseline: { kind: 'local', lastModifiedMs: newBaseline },
         saveConflict: null,
         externalUpdate: null,
-        externalUpdateDismissedMs: null,
+        externalUpdateDismissedMarker: null,
       });
       return true;
     } catch (e) {
@@ -1479,16 +1536,16 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
       if (!handle) return false; // user cancelled
       const json = get().exportToJSON();
       await writeFileText(handle, json);
-      const baseline = await getFileLastModified(handle);
+      const lastModifiedMs = await getFileLastModified(handle);
       set({
-        currentFileHandle: handle,
+        planSource: { kind: 'local', handle },
         currentFileName: handle.name,
         isDirty: false,
         fileMeta: parseFileMeta(json),
-        fileBaselineMs: baseline,
+        baseline: { kind: 'local', lastModifiedMs },
         saveConflict: null,
         externalUpdate: null,
-        externalUpdateDismissedMs: null,
+        externalUpdateDismissedMarker: null,
       });
       return true;
     } catch (e) {
@@ -1510,31 +1567,33 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         if (!picked) return false; // user cancelled
         get().importFromJSON(picked.text);
         set({
-          currentFileHandle: null,
+          planSource: null,
           currentFileName: picked.name,
           isDirty: false,
-          fileBaselineMs: null,
+          baseline: null,
           saveConflict: null,
           externalUpdate: null,
-          externalUpdateDismissedMs: null,
+          externalUpdateDismissedMarker: null,
+          appView: 'plan',
         });
         return true;
       }
       const handle = await pickOpenFile();
       if (!handle) return false; // user cancelled
       const text = await readFileAsText(handle);
-      const baseline = await getFileLastModified(handle);
+      const lastModifiedMs = await getFileLastModified(handle);
       // importFromJSON handles parse, validation, migration, and clears
       // isDirty at the end. Then we layer on the file identity.
       get().importFromJSON(text);
       set({
-        currentFileHandle: handle,
+        planSource: { kind: 'local', handle },
         currentFileName: handle.name,
         isDirty: false,
-        fileBaselineMs: baseline,
+        baseline: { kind: 'local', lastModifiedMs },
         saveConflict: null,
         externalUpdate: null,
-        externalUpdateDismissedMs: null,
+        externalUpdateDismissedMarker: null,
+        appView: 'plan',
       });
       return true;
     } catch (e) {
@@ -1554,13 +1613,14 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
     set({
       ...defaultState,
       currentFileName: null,
-      currentFileHandle: null,
+      planSource: null,
       isDirty: false,
       fileMeta: null,
-      fileBaselineMs: null,
+      baseline: null,
       saveConflict: null,
       externalUpdate: null,
-      externalUpdateDismissedMs: null,
+      externalUpdateDismissedMarker: null,
+      appView: get().appView,
     });
     ensureTodayVisible(get, set);
     get().saveToStorage();
@@ -1569,38 +1629,70 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
   },
 
   checkFileFreshness: async () => {
-    const { currentFileHandle, fileBaselineMs, externalUpdateDismissedMs } = get();
-    if (!currentFileHandle || fileBaselineMs === null) return;
+    const { planSource, baseline, externalUpdateDismissedMarker } = get();
+    if (!planSource || !baseline) return;
     try {
-      const diskMs = await getFileLastModified(currentFileHandle);
-      if (diskMs <= fileBaselineMs) {
-        // Disk matches (or predates) what we have — clear any stale banner.
-        if (get().externalUpdate) set({ externalUpdate: null });
-        return;
+      // Ask the source for its current version + who last touched it.
+      let marker: PlanMarker;
+      let meta: FileMeta;
+      if (planSource.kind === 'graph') {
+        const itemMeta = await graph.getItemMeta(planSource.driveId, planSource.itemId);
+        marker = itemMeta.eTag;
+        meta = { savedBy: itemMeta.lastModifiedBy, savedById: null, savedAtIso: itemMeta.lastModifiedIso || null };
+        if (baseline.kind !== 'graph' || itemMeta.eTag === baseline.eTag) {
+          if (get().externalUpdate) set({ externalUpdate: null });
+          return;
+        }
+      } else {
+        const diskMs = await getFileLastModified(planSource.handle);
+        if (baseline.kind !== 'local' || diskMs <= baseline.lastModifiedMs) {
+          // Source matches (or predates) what we have — clear any stale banner.
+          if (get().externalUpdate) set({ externalUpdate: null });
+          return;
+        }
+        marker = diskMs;
+        meta = parseFileMeta(await readFileAsText(planSource.handle));
       }
+
       // Someone saved after us. Respect a "Keep mine" dismissal until an
       // even newer save shows up.
-      if (externalUpdateDismissedMs !== null && diskMs <= externalUpdateDismissedMs) return;
-      const meta = parseFileMeta(await readFileAsText(currentFileHandle));
-      set({ externalUpdate: { ...meta, diskMs } });
+      if (externalUpdateDismissedMarker !== null && externalUpdateDismissedMarker === marker) return;
+      if (
+        typeof marker === 'number' && typeof externalUpdateDismissedMarker === 'number'
+        && marker <= externalUpdateDismissedMarker
+      ) return;
+
+      set({ externalUpdate: { ...meta, marker } });
     } catch {
-      // Transient read failures (file locked mid-sync on OneDrive etc.) are
-      // ignored — the next poll retries.
+      // Transient failures (file locked mid-sync, a blip talking to Graph)
+      // are ignored — the next poll retries.
     }
   },
 
   reloadFromDisk: async () => {
-    const { currentFileHandle } = get();
-    if (!currentFileHandle) return false;
+    const { planSource } = get();
+    if (!planSource) return false;
     try {
-      const text = await readFileAsText(currentFileHandle);
-      const baseline = await getFileLastModified(currentFileHandle);
+      if (planSource.kind === 'graph') {
+        const { text, eTag } = await graph.downloadPlan(planSource.driveId, planSource.itemId);
+        get().importFromJSON(text);
+        set({
+          isDirty: false,
+          baseline: { kind: 'graph', eTag },
+          externalUpdate: null,
+          externalUpdateDismissedMarker: null,
+          saveConflict: null,
+        });
+        return true;
+      }
+      const text = await readFileAsText(planSource.handle);
+      const lastModifiedMs = await getFileLastModified(planSource.handle);
       get().importFromJSON(text);
       set({
         isDirty: false,
-        fileBaselineMs: baseline,
+        baseline: { kind: 'local', lastModifiedMs },
         externalUpdate: null,
-        externalUpdateDismissedMs: null,
+        externalUpdateDismissedMarker: null,
         saveConflict: null,
       });
       return true;
@@ -1614,10 +1706,87 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
   dismissExternalUpdate: () => {
     const { externalUpdate } = get();
     if (!externalUpdate) return;
-    set({ externalUpdateDismissedMs: externalUpdate.diskMs, externalUpdate: null });
+    set({ externalUpdateDismissedMarker: externalUpdate.marker, externalUpdate: null });
   },
 
   clearSaveConflict: () => set({ saveConflict: null }),
+
+  // === Microsoft 365 plans ===
+  openGraphPlan: async (file) => {
+    if (get().isDirty && !window.confirm('Discard unsaved changes?')) return false;
+    try {
+      const { text, eTag } = await graph.downloadPlan(file.driveId, file.itemId);
+      get().importFromJSON(text);
+      const source: PlanSource = {
+        kind: 'graph',
+        driveId: file.driveId,
+        itemId: file.itemId,
+        name: file.name,
+        webUrl: file.webUrl,
+        container: file.container,
+      };
+      set({
+        planSource: source,
+        currentFileName: file.name,
+        isDirty: false,
+        baseline: { kind: 'graph', eTag },
+        saveConflict: null,
+        externalUpdate: null,
+        externalUpdateDismissedMarker: null,
+        appView: 'plan',
+      });
+      rememberPlan(source);
+      return true;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Unknown error';
+      alert(`Could not open plan: ${msg}`);
+      return false;
+    }
+  },
+
+  createGraphPlan: async (container, name) => {
+    try {
+      const folder = container.type === 'team'
+        ? await graph.ensureRoadmapsFolder(container.teamId)
+        : await graph.getDraftsFolder();
+
+      // Start from a blank document so the new plan isn't a copy of whatever
+      // happened to be open.
+      set({ ...defaultState, currentFileName: null, planSource: null, appView: get().appView });
+      ensureTodayVisible(get, set);
+
+      const created = await graph.createPlan(folder, name, get().exportToJSON());
+      const source: PlanSource = {
+        kind: 'graph',
+        driveId: created.driveId,
+        itemId: created.itemId,
+        name: created.name,
+        webUrl: created.webUrl,
+        container,
+      };
+      set({
+        planSource: source,
+        currentFileName: created.name,
+        isDirty: false,
+        fileMeta: parseFileMeta(get().exportToJSON()),
+        baseline: { kind: 'graph', eTag: created.eTag },
+        saveConflict: null,
+        externalUpdate: null,
+        externalUpdateDismissedMarker: null,
+        appView: 'plan',
+      });
+      rememberPlan(source);
+      get().saveToStorage();
+      set({ isDirty: false });
+      return true;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Unknown error';
+      alert(`Could not create plan: ${msg}`);
+      return false;
+    }
+  },
+
+  setAppView: (view) => set({ appView: view }),
 
   // === History ===
   undo: () => {

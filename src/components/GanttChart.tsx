@@ -13,6 +13,7 @@ import FileUpdateBanner from './FileUpdateBanner';
 import SaveConflictModal from './SaveConflictModal';
 import DisplayNameModal from './DisplayNameModal';
 import { wasNameAsked } from '../utils/userName';
+import { useAuthStore } from '../auth/useAuthStore';
 import ManagePhaseTypesModal from './ManagePhaseTypesModal';
 import { useGanttStore } from '../store/useGanttStore';
 import { getTodayWeekOffset } from '../utils/dateUtils';
@@ -43,7 +44,10 @@ export default function GanttChart() {
   // True only while capturing an export, so the chart renders expanded/unclipped.
   const [isExporting, setIsExporting] = useState(false);
   // Display-name prompt: once on first launch, and on demand from File menu.
-  const [showNameModal, setShowNameModal] = useState(() => !wasNameAsked());
+  // The local display name is only needed when there's no Microsoft account to
+  // attribute saves to — signed-in users are never asked.
+  const signedIn = useAuthStore(s => s.account !== null);
+  const [showNameModal, setShowNameModal] = useState(() => !wasNameAsked() && !useAuthStore.getState().account);
 
   // Resizable panel widths
   const [leftWidth, setLeftWidth] = useState(LEFT_DEFAULT);
@@ -605,7 +609,7 @@ export default function GanttChart() {
     {peoplePanelOpen && <PeoplePanel />}
     {phaseTypesModalOpen && <ManagePhaseTypesModal />}
     <SaveConflictModal />
-    {showNameModal && <DisplayNameModal onClose={() => setShowNameModal(false)} />}
+    {showNameModal && !signedIn && <DisplayNameModal onClose={() => setShowNameModal(false)} />}
     </ExportLayoutContext.Provider>
   );
 }

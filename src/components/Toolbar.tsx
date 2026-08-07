@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useGanttStore } from '../store/useGanttStore';
 import { getContentions, getPeopleContentions } from '../utils/contention';
 import { formatSavedAt } from '../utils/dateUtils';
+import { useAuthStore } from '../auth/useAuthStore';
 import AccountChip from './AccountChip';
 import FileMenu from './FileMenu';
 import InsertMenu from './InsertMenu';
@@ -31,6 +32,8 @@ export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomRe
   const currentFileName = useGanttStore(s => s.currentFileName);
   const isDirty = useGanttStore(s => s.isDirty);
   const fileMeta = useGanttStore(s => s.fileMeta);
+  const setAppView = useGanttStore(s => s.setAppView);
+  const signedIn = useAuthStore(s => s.account !== null);
   const undo = useGanttStore(s => s.undo);
   const redo = useGanttStore(s => s.redo);
   const canUndo = useGanttStore(s => s.canUndo);
@@ -109,6 +112,12 @@ export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomRe
         </button>
 
         <span className="toolbar-divider" />
+
+        {signedIn && (
+          <button onClick={() => setAppView('launcher')} title="Back to your plans">
+            Home
+          </button>
+        )}
 
         {onScrollToToday && <button onClick={onScrollToToday}>Today</button>}
 
