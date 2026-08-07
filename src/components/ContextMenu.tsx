@@ -48,7 +48,7 @@ export default function ContextMenu({ x, y, barId, currentEnvId, onChangePhase, 
   return (
     <div ref={ref} className="context-menu" style={{ left: pos.left, top: pos.top }}>
       <div className="context-menu-item" onClick={onEditLabel}>
-        Edit Label
+        Edit label
       </div>
       <div className="context-menu-divider" />
       {phaseTypes.map(t => (
@@ -72,7 +72,7 @@ export default function ContextMenu({ x, y, barId, currentEnvId, onChangePhase, 
         + Manage phase types…
       </div>
       <div className="context-menu-divider" />
-      <div className="context-menu-label">Environment</div>
+      <div className="context-menu-label eyebrow">Environment</div>
       <div
         className="context-menu-item"
         onClick={() => {

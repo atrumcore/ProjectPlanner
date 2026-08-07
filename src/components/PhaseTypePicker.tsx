@@ -91,7 +91,7 @@ export default function PhaseTypePicker({ barId, svgRef, barX, barY, barWidth }:
         ))}
         <button
           className="phase-type-edit-btn"
-          title="Edit phase types..."
+          title="Edit phase types…"
           onClick={() => {
             clearCreatingBar();
             togglePhaseTypesModal();
@@ -128,7 +128,7 @@ export default function PhaseTypePicker({ barId, svgRef, barX, barY, barWidth }:
         <div className="phase-type-picker-row">
           <button
             className="phase-type-edit-btn phase-type-edit-btn-wide"
-            title="Create environments..."
+            title="Create environments…"
             onClick={() => {
               clearCreatingBar();
               setRailTab('environments');

@@ -27,7 +27,7 @@ export default function DisplayNameModal({ onClose }: Props) {
     <div className="modal-overlay" onClick={skip}>
       <div className="modal" onClick={e => e.stopPropagation()}>
         <h2>Your name for shared plans</h2>
-        <p className="display-name-text">
+        <p className="modal-copy">
           When you save a plan file, your name is stamped into it so teammates
           on a shared drive can see who last saved. Stored only in this
           browser — leave blank to stay unattributed.

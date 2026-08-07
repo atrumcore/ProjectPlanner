@@ -26,8 +26,8 @@ export default function AddSwimlaneModal({ onClose, initialSectionId }: Props) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
-        <h2>Add Swimlane</h2>
-        <label>Project Name</label>
+        <h2>Add swimlane</h2>
+        <label>Project name</label>
         <input
           autoFocus
           value={name}

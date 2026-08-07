@@ -334,7 +334,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
           Project
         </div>
         <div className="left-panel-header-cell" style={{ flex: 1 }}>
-          Key Features
+          Key features
         </div>
       </div>
       <div className="left-panel-week-row" />
@@ -362,8 +362,11 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
                 autoFocus
                 defaultValue={section.label}
                 style={{
-                  border: 'none', background: 'transparent', textAlign: 'center',
-                  fontSize: 16, fontWeight: 700, outline: '1px solid var(--border)',
+                  border: 'none', background: 'transparent', textAlign: 'left',
+                  fontFamily: 'var(--font-display)', fontSize: 11, fontWeight: 700,
+                  letterSpacing: '0.12em', textTransform: 'uppercase',
+                  color: 'var(--text-primary)',
+                  outline: '1px solid var(--accent-secondary)',
                   borderRadius: 4, padding: '2px 8px', width: '60%',
                 }}
                 onBlur={e => {
@@ -415,7 +418,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
               setCtxMenu(null);
             }}
           >
-            Add Phase Bar
+            Add phase bar
           </div>
           <div
             className="context-menu-item"
@@ -438,7 +441,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
               setCtxMenu(null);
             }}
           >
-            Assign Owners…
+            Assign owners…
           </div>
           <div className="context-menu-divider" />
           {sections
@@ -459,7 +462,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
             ))
           }
           <div className="context-menu-divider" />
-          <div className="context-menu-label">Row Colour</div>
+          <div className="context-menu-label eyebrow">Row colour</div>
           <div className="swimlane-color-swatches">
             <button
               className={`swimlane-color-swatch swimlane-color-clear${
@@ -500,7 +503,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
               }
             }}
           >
-            {confirmDelete ? 'Click again to confirm' : 'Delete Swimlane'}
+            {confirmDelete ? 'Click again to confirm' : 'Delete swimlane'}
           </div>
         </div>
       )}
@@ -519,7 +522,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
               setSecCtxMenu(null);
             }}
           >
-            Add Swimlane
+            Add swimlane
           </div>
           <div
             className="context-menu-item"
@@ -528,7 +531,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
               setSecCtxMenu(null);
             }}
           >
-            Rename Section
+            Rename section
           </div>
           <div
             className="context-menu-item"
@@ -537,10 +540,10 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
               setSecCtxMenu(null);
             }}
           >
-            Add Section Below
+            Add section below
           </div>
           <div className="context-menu-divider" />
-          <div className="context-menu-label">Section Colour</div>
+          <div className="context-menu-label eyebrow">Section colour</div>
           <div className="swimlane-color-swatches">
             <button
               className={`swimlane-color-swatch swimlane-color-clear${
@@ -583,7 +586,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
                   }
                 }}
               >
-                {confirmDeleteSection ? 'Click again to confirm' : 'Delete Section'}
+                {confirmDeleteSection ? 'Click again to confirm' : 'Delete section'}
               </div>
             </>
           )}

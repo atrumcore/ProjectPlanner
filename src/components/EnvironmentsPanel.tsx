@@ -136,10 +136,10 @@ export default function EnvironmentsPanel() {
 
       {/* Body */}
       {!activeEnv ? (
-        <div className="env-panel-empty">
-          <p>No environments yet.</p>
-          <p>Create one for each shared infrastructure (Dev, QA, PREPROD, …) and then map phase types to them.</p>
-          <button onClick={handleAddEnv} className="env-panel-primary-btn">Create environment</button>
+        <div className="teach-state">
+          <div className="kicker">Environments</div>
+          <p>Give each shared environment (Dev, QA, PREPROD…) a lane claim, and overlapping bookings get flagged automatically.</p>
+          <button onClick={handleAddEnv} className="btn-primary">Create environment</button>
         </div>
       ) : (
         <div className="env-panel-body">

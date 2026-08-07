@@ -214,33 +214,36 @@ export default function PeoplePanel() {
 
   return (
     <>
-      {/* Search / filter / add row */}
-      <div className="people-roster-toolbar">
-        <input
-          className="people-roster-search"
-          type="search"
-          placeholder="Search people, roles, teams…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-        <button
-          className={`people-roster-filter${conflictsOnly ? ' active' : ''}`}
-          onClick={() => setConflictsOnly(v => !v)}
-          title="Show only people/teams with double-bookings"
-        >
-          &#x26A0; {contentions.length > 0 ? contentions.length : ''}
-        </button>
-        <button className="people-roster-add" onClick={handleAddPerson} title="Add person">+ Person</button>
-        <button className="people-roster-add" onClick={handleAddTeam} title="Add team">+ Team</button>
-      </div>
+      {/* Search / filter / add row — hidden while the roster is empty so the
+          teach state's single primary action is the only affordance. */}
+      {!rosterEmpty && (
+        <div className="people-roster-toolbar">
+          <input
+            className="people-roster-search"
+            type="search"
+            placeholder="Search people, roles, teams…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          <button
+            className={`people-roster-filter${conflictsOnly ? ' active' : ''}`}
+            onClick={() => setConflictsOnly(v => !v)}
+            title="Show only people/teams with double-bookings"
+          >
+            &#x26A0; {contentions.length > 0 ? contentions.length : ''}
+          </button>
+          <button className="people-roster-add" onClick={handleAddPerson} title="Add person">+ Person</button>
+          <button className="people-roster-add" onClick={handleAddTeam} title="Add team">+ Team</button>
+        </div>
+      )}
 
       {/* Roster list */}
       {rosterEmpty ? (
-        <div className="env-panel-empty">
-          <p>No people or teams yet.</p>
-          <p>Add the teams and people who execute the planned work, then allocate them to phase bars. Double-bookings across projects are flagged automatically.</p>
-          <button onClick={handleAddPerson} className="env-panel-primary-btn">Add person</button>
-          <button onClick={handleAddTeam} className="env-panel-primary-btn">Create team</button>
+        <div className="teach-state">
+          <div className="kicker">People &amp; teams</div>
+          <p>Assign people to phase bars and double-bookings across projects get flagged automatically.</p>
+          <button onClick={handleAddPerson} className="btn-primary">Add person</button>
+          <button onClick={handleAddTeam} className="btn-quiet">or create a team</button>
         </div>
       ) : (
         <div className="people-roster">

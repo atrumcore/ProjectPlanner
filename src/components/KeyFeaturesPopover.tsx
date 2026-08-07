@@ -31,7 +31,7 @@ const MIN_HEIGHT = 200;
  *
  * Dismiss paths: Esc · backdrop click · close button.
  */
-export default function KeyFeaturesPopover({ anchor, projectName, title = 'Key Features', value, onSave, onClose }: Props) {
+export default function KeyFeaturesPopover({ anchor, projectName, title = 'Key features', value, onSave, onClose }: Props) {
   const popoverRef = useRef<HTMLDivElement>(null);
 
   // Position the popover by mutating its inline style after measuring its

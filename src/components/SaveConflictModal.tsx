@@ -22,7 +22,7 @@ export default function SaveConflictModal() {
     <div className="modal-overlay" onClick={clearSaveConflict}>
       <div className="modal" onClick={e => e.stopPropagation()}>
         <h2>File changed on disk</h2>
-        <p className="save-conflict-text">
+        <p className="modal-copy">
           <strong>{who}</strong> saved this file{when ? ` at ${when}` : ''}, after you opened it.
           Saving now would overwrite their changes.
         </p>

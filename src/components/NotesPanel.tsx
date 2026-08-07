@@ -66,7 +66,7 @@ function ActionItemRow({ item }: { item: ActionItem }) {
                 setEditingSwimlane(false);
               }}
               onBlur={() => setEditingSwimlane(false)}
-              style={{ fontSize: 10, maxWidth: 110 }}
+              style={{ fontSize: 12, maxWidth: 110 }}
             >
               <option value="">General</option>
               {swimlanes.map(s => (
@@ -239,8 +239,13 @@ export default function NotesPanel() {
           <ActionItemRow key={item.id} item={item} />
         ))}
         {filtered.length === 0 && (
-          <div style={{ padding: '20px 14px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: 12 }}>
-            {notesPanelFilterId ? 'No items matching this filter.' : 'No action items yet. Add one above.'}
+          <div className="teach-state">
+            <div className="kicker">Notes</div>
+            <p>
+              {notesPanelFilterId
+                ? 'No items match this filter.'
+                : 'Capture action items here and link them to projects — open counts show on the rail and in the left panel.'}
+            </p>
           </div>
         )}
       </div>

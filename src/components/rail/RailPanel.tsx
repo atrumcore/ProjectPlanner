@@ -48,7 +48,7 @@ export default function RailPanel({ title, onClose, headerActions, children }: P
         }}
       />
       <div className="rail-panel-header">
-        <span className="rail-panel-title">{title}</span>
+        <span className="rail-panel-title kicker">{title}</span>
         <div className="rail-panel-header-actions">
           {headerActions}
           <button onClick={onClose} title="Close (Esc)" aria-label="Close">&times;</button>

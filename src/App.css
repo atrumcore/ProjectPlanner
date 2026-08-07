@@ -338,11 +338,12 @@ select option {
 }
 
 /* Document chip — filename + dirty dot + caret; opens the File menu */
-.toolbar-doc-chip {
+/* Two classes so the size beats the generic `.toolbar button` rule. */
+.toolbar .toolbar-doc-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 13px; /* the type card's plan-name step */
   font-weight: 600;
   padding: 5px 12px !important;
   background: transparent !important;
@@ -496,6 +497,7 @@ select option {
   background: var(--hover);
   color: var(--text-header);
   font-size: 11px;
+  font-weight: 600;
   font-family: var(--font-body);
   cursor: pointer;
   white-space: nowrap;
@@ -630,8 +632,11 @@ select option {
   align-items: center;
   justify-content: center;
   color: var(--text-header);
-  font-size: 9px;
+  font-family: var(--font-display);
+  font-size: 10px;
   font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .left-panel-week-row {
@@ -761,7 +766,7 @@ select option {
   position: absolute;
   right: 6px;
   bottom: 3px;
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.4px;
   text-transform: uppercase;
@@ -819,8 +824,11 @@ select option {
   align-items: center;
   justify-content: center;
   color: var(--text-header);
-  font-size: 9px;
+  font-family: var(--font-display);
+  font-size: 10px;
   font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -913,14 +921,19 @@ select option {
   border-radius: 4px;
 }
 
-/* Section header */
+/* Section header — eyebrow-style band with the section accent edge
+   (v2 left-panel card: uppercase Montserrat, left-aligned). */
 .section-header {
   height: var(--section-header-height);
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 14px;
+  justify-content: flex-start;
+  padding: 0 10px;
+  font-family: var(--font-display);
+  font-size: 11px;
   font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   /* Optional section tint composited over the surface, mirroring swimlane rows.
      --section-tint defaults to transparent (no-op) when no colour is set. */
   background:
@@ -967,6 +980,7 @@ select option {
 
 .modal h2 {
   font-size: 14px;
+  font-weight: 600; /* the type card's panel-detail step */
   margin-bottom: 16px;
   color: var(--text-primary);
 }
@@ -1167,10 +1181,11 @@ select option {
 
 .view-menu-group-label {
   padding: 4px 12px 2px;
+  font-family: var(--font-display);
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.12em;
   color: var(--text-muted);
 }
 
@@ -1306,7 +1321,7 @@ select option {
   border: 1px solid var(--border);
   background: var(--bg-row-even);
   color: var(--text-secondary);
-  font-size: 7px;
+  font-size: 9px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1413,9 +1428,10 @@ select option {
   justify-content: center;
   height: 18px;
   padding: 0 8px;
-  border-radius: 9px;
+  border-radius: 999px;
   border: 1px solid rgba(0, 0, 0, 0.2);
   cursor: pointer;
+  font-family: var(--font-display);
   font-size: 9px;
   font-weight: 700;
   color: #ffffff;
@@ -1461,12 +1477,13 @@ select option {
   font-family: var(--font-body);
 }
 .bar-env-popover-title {
+  font-family: var(--font-display);
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   color: var(--text-secondary);
   padding: 4px 8px 6px;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.12em;
 }
 .bar-env-popover-item {
   display: flex;
@@ -1530,9 +1547,10 @@ select option {
   min-width: 210px;
 }
 .people-picker-group-label {
-  font-size: 9px;
+  font-family: var(--font-display);
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-muted);
   padding: 6px 8px 2px;
@@ -1561,10 +1579,12 @@ select option {
   font-size: 11px;
 }
 .people-panel-person-meta label {
+  font-family: var(--font-display);
   font-size: 10px;
+  font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.12em;
 }
 .people-panel-person-meta input,
 .people-panel-person-meta select {
@@ -1773,10 +1793,11 @@ select option {
 }
 .people-roster-unteamed {
   color: var(--text-muted);
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-weight: 700;
   font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.12em;
 }
 .people-roster-meta {
   font-size: 10px;
@@ -1839,13 +1860,14 @@ select option {
   min-width: 0;
 }
 .people-detail-kind {
+  font-family: var(--font-display);
   font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.12em;
   color: var(--text-muted);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 999px;
   padding: 1px 7px;
   flex-shrink: 0;
 }
@@ -1875,10 +1897,11 @@ select option {
 }
 .people-detail-section h4 {
   margin: 0 0 6px;
+  font-family: var(--font-display);
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.12em;
   color: var(--text-secondary);
 }
 .people-detail-footer {
@@ -1933,8 +1956,8 @@ select option {
 }
 
 /* Save-conflict dialog: stacked full-width choice buttons. */
-.save-conflict-text,
-.display-name-text {
+/* Shared explanatory copy inside modals (one class for all dialogs). */
+.modal-copy {
   font-size: 12px;
   color: var(--text-secondary);
   margin: 0 0 12px;
@@ -2020,9 +2043,10 @@ select option {
 }
 .account-menu-mock {
   margin-top: 4px;
+  font-family: var(--font-display);
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
@@ -2231,15 +2255,15 @@ select option {
 
 .rail-badge {
   position: absolute;
-  top: -3px;
-  right: -3px;
-  min-width: 14px;
-  height: 14px;
+  top: -4px;
+  right: -4px;
+  min-width: 15px;
+  height: 15px;
   padding: 0 3px;
-  border-radius: 7px;
+  border-radius: 8px;
   background: var(--contention);
   color: #ffffff;
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -2283,15 +2307,13 @@ select option {
   opacity: 0.6;
 }
 
+/* The title span carries the .kicker brand device (red rule + eyebrow). */
 .rail-panel-header {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  padding: 10px 14px;
+  padding: 12px 14px 10px;
   border-bottom: 1px solid var(--border);
-  font-size: 13px;
-  font-weight: 700;
-  font-family: var(--font-display);
   flex-shrink: 0;
 }
 
@@ -2322,22 +2344,6 @@ select option {
   display: flex;
   flex-direction: column;
   min-height: 0;
-}
-
-.inspector-placeholder {
-  padding: 18px 16px;
-  font-size: 12px;
-  color: var(--text-secondary);
-  line-height: 1.6;
-}
-
-.inspector-placeholder p {
-  margin: 10px 0 0;
-}
-
-.inspector-placeholder-note {
-  color: var(--text-muted);
-  font-size: 11px;
 }
 
 .notes-panel-filter-bar {
@@ -2604,12 +2610,13 @@ select option {
 
 .notes-panel-divider {
   text-align: center;
+  font-family: var(--font-display);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-secondary);
   padding: 8px 0 4px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.12em;
 }
 
 .notes-panel-footer {
@@ -2812,26 +2819,6 @@ select option {
   background: var(--hover);
 }
 
-.env-panel-empty {
-  padding: 24px 18px;
-  color: var(--text-secondary);
-  font-size: 13px;
-  text-align: center;
-}
-.env-panel-empty p { margin: 0 0 12px; }
-.env-panel-primary-btn {
-  background: var(--accent-primary);
-  color: var(--on-accent);
-  border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  margin-top: 4px;
-}
-.env-panel-primary-btn:hover { background: var(--accent-primary-hover); }
-
 .env-panel-body {
   flex: 1;
   overflow-y: auto;
@@ -2845,9 +2832,11 @@ select option {
   margin-bottom: 6px;
 }
 .env-panel-identity label {
+  font-family: var(--font-display);
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.12em;
   color: var(--text-secondary);
 }
 .env-panel-identity input {
@@ -2931,12 +2920,13 @@ select option {
   margin-bottom: 8px;
 }
 .env-panel-section-header h4 {
-  font-size: 11px;
+  font-family: var(--font-display);
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--text-primary);
+  color: var(--text-secondary);
   margin: 0;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.12em;
 }
 .env-panel-section-empty {
   font-size: 11px;
@@ -3188,12 +3178,13 @@ select option {
 .phase-types-row.dragging { opacity: 0.4; }
 .phase-types-row-header {
   background: transparent;
+  font-family: var(--font-display);
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   color: var(--text-secondary);
   padding: 4px 8px;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.12em;
 }
 .phase-types-drag-handle {
   display: inline-block;
@@ -3243,10 +3234,11 @@ select option {
   border-color: var(--accent-secondary);
 }
 .phase-types-label {
+  font-family: var(--font-display);
   font-weight: 700;
   text-transform: uppercase;
   font-size: 10px;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.12em;
 }
 
 .phase-types-usage {
@@ -3553,10 +3545,12 @@ select option {
 }
 
 .key-features-popover-eyebrow {
-  font-size: 9px;
+  font-family: var(--font-display);
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
+  color: inherit; /* sits on the cyan header, not a muted surface */
   opacity: 0.80;
 }
 
@@ -3572,7 +3566,7 @@ select option {
   background: none;
   border: none;
   color: #ffffff;
-  font-size: 18px;
+  font-size: 14px;
   width: 24px;
   height: 24px;
   border-radius: 4px;
@@ -3699,7 +3693,7 @@ select option {
 }
 .launcher-header h1 {
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.3px;
   margin: 0;
   color: var(--text-header);
@@ -3730,9 +3724,10 @@ select option {
   gap: 2px;
 }
 .launcher-sidebar-label {
+  font-family: var(--font-display);
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-muted);
   padding: 4px 10px;
@@ -3792,7 +3787,7 @@ select option {
   margin-bottom: 16px;
 }
 .launcher-main h2 {
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 700;
   margin: 0 0 2px;
 }
