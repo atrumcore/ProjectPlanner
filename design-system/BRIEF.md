@@ -20,6 +20,23 @@ You are helping refine the visual design system for an existing product. The car
 - **Notes** — action items attached to lanes, with an open count.
 - **Display presets** — Minimal / Delivery / Workload control how much adornment bars carry (dates, environment dots, people chips, conflict ribbons). Hovering or selecting a bar always reveals its full detail.
 
+## Key features — working today vs planned
+
+**Working today** (the cards in this project cover these; design polishes them):
+
+- Swimlane timeline with phase bars, go-live diamonds, notes/action items.
+- **People & teams allocated to swimlanes and phase bars** — e.g. developers on the Development phase, testers on SIT — with **double-booking contention** detected automatically.
+- **Environment allocation with contention** — two phases claiming the same exclusive environment at overlapping dates get flagged.
+- **Plans tied to Microsoft Teams** — each plan lives in a Team's channel folder ("Roadmaps"); project lanes can be owned by a team or people; save-conflict protection when two people edit.
+- Display presets (Minimal / Delivery / Workload), PNG/PDF/CSV export.
+
+**Planned — design ahead for these** (no cards yet; new cards and explorations welcome):
+
+- **Two levels of view, one plan**: a **high-level Roadmap view** — quarters/months, lanes as summary bars with go-lives, the view you present to stakeholders — and the **detailed Gantt view** (today's canvas: phases, dates, adornments, conflicts). A single switcher between them; same underlying data.
+- **Deeper Teams integration**: people and teams in a plan link to the Team's real M365 roster — assign from the roster, real names and avatars.
+- **Issue links**: attach JIRA or GitLab issue/epic links to lanes and phase bars, shown as small link chips that open the issue. Live status from those tools is best-effort (client-side only, no backend) — the design must degrade gracefully to a plain link.
+- **Burn-down view**: progress toward a go-live by burning down open items (action items and/or linked issues) over time. Open design question: the exact data series — assume open-item counts with completion dates; there are **no task-hour estimates** in this tool, so don't design an hours-based burndown.
+
 ## The redesign (why these cards exist)
 
 The old UI grew feature-by-feature into 13 toolbar controls, three stacking side panels, and actions hidden behind right-click only. The redesign's mental model: **one canvas, one rail, one inspector** —
@@ -45,8 +62,8 @@ The old UI grew feature-by-feature into 13 toolbar controls, three stacking side
 2. PNG/PDF export captures **only the canvas region** — rail, panels, toolbar, floating controls must live outside it.
 3. Keyboard shortcuts and right-click context menus survive exactly; the redesign adds visible paths, it never removes fast ones.
 4. No backend: no realtime cursors, no live co-editing, no server-rendered anything. Collaboration stays file-based.
-5. Don't invent new domain concepts (no new entities, fields, or data the engine doesn't have). New *presentation* of existing concepts is welcome.
+5. Don't invent domain concepts beyond the model above **and the planned-features list**. Designing the planned features (Roadmap view, issue links, burn-down, roster linking) is explicitly in scope; inventing others is not.
 
 ## What good feedback/iteration looks like
 
-Improve: visual hierarchy, spacing rhythm, colour balance, component polish, empty states, the composition of the four screens, accessibility of contrast. Keep the information density — this is a power tool, not a marketing site. If a change would require the engine to compute something it doesn't (see constraints), flag it instead of designing it in.
+Improve: visual hierarchy, spacing rhythm, colour balance, component polish, empty states, the composition of the four screens, accessibility of contrast. Explore new cards for the planned features — especially the Roadmap view, the Roadmap↔Gantt switcher, issue-link chips, and the burn-down view. Keep the information density — this is a power tool, not a marketing site. If a change would require the engine to compute something it doesn't (see constraints), flag it instead of designing it in.
