@@ -5,6 +5,8 @@ import { graph, type GraphPlanFile, type GraphTeam } from '../../graph';
 import type { PlanContainer, PlanRef } from '../../types/planSource';
 import { getRecentPlans, forgetPlan } from '../../utils/mru';
 import { formatSavedAt } from '../../utils/dateUtils';
+import logoWhite from '../../assets/bbd-logo-white.svg';
+import logoBlack from '../../assets/bbd-logo-black.svg';
 
 /** What the middle pane is showing. */
 type Selection = { kind: 'team'; team: GraphTeam } | { kind: 'drafts' };
@@ -133,8 +135,9 @@ export default function LauncherScreen() {
   return (
     <div className="launcher">
       <div className="launcher-header">
-        <span className="launcher-brand-mark" aria-hidden="true" />
-        <h1>BBD Project Planner</h1>
+        <img className="bbd-logo bbd-logo-white" src={logoWhite} alt="BBD" />
+        <img className="bbd-logo bbd-logo-black" src={logoBlack} alt="BBD" />
+        <h1>Project Planner</h1>
         <div className="launcher-header-spacer" />
         {account && <span className="launcher-account">{account.name}</span>}
       </div>

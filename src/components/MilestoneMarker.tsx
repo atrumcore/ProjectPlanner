@@ -115,7 +115,7 @@ export default function MilestoneMarker({ id, week, rowY }: Props) {
         dominantBaseline="middle"
         fontSize={8}
         fontWeight={700}
-        fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
+        fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
         fill={c.MILESTONE_TEXT}
         transform={`rotate(-90, ${cx}, ${cy})`}
         style={{ pointerEvents: 'none', userSelect: 'none' }}

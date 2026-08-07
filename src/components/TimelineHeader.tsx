@@ -72,7 +72,7 @@ export default function TimelineHeader({ totalWeeks, startMonth, startYear, scro
                 fill={c.TEXT_HEADER}
                 fontSize={11}
                 fontWeight={700}
-                fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
+                fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
               >
                 {month.name}
               </text>
@@ -129,7 +129,7 @@ export default function TimelineHeader({ totalWeeks, startMonth, startYear, scro
                 fill="white"
                 fontSize={8}
                 fontWeight={700}
-                fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
+                fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
               >
                 {dateLabel}
               </text>

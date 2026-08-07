@@ -8,6 +8,8 @@ import FileMenu from './FileMenu';
 import InsertMenu from './InsertMenu';
 import ViewMenu from './ViewMenu';
 import AddSwimlaneModal from './AddSwimlaneModal';
+import logoWhite from '../assets/bbd-logo-white.svg';
+import logoBlack from '../assets/bbd-logo-black.svg';
 
 type MenuId = 'file' | 'insert' | 'view';
 
@@ -86,8 +88,9 @@ export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomRe
       <div className="toolbar">
         <h1>
           <span className="toolbar-brand">
-            <span className="toolbar-brand-mark" aria-hidden="true" />
-            BBD Project Planner
+            <img className="bbd-logo bbd-logo-white" src={logoWhite} alt="BBD" />
+            <img className="bbd-logo bbd-logo-black" src={logoBlack} alt="BBD" />
+            Project Planner
           </span>
           <span className="toolbar-filename">
             {' \u2014 '}{currentFileName || 'Untitled'}

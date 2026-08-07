@@ -26,7 +26,7 @@ export default class ErrorBoundary extends Component<Props, State> {
       return (
         <div style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          height: '100vh', fontFamily: "'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif", background: 'var(--bg-app)', color: 'var(--text-primary)',
+          height: '100vh', fontFamily: "'Open Sans', Helvetica, Arial, sans-serif", background: 'var(--bg-app)', color: 'var(--text-primary)',
         }}>
           <h1 style={{ fontSize: 18, marginBottom: 8 }}>Something went wrong</h1>
           <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 16, maxWidth: 400, textAlign: 'center' }}>

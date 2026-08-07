@@ -332,7 +332,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
           fill={labelFill}
           fontSize={8}
           fontWeight={700}
-          fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
+          fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
           transform={`rotate(-90, ${x + (useSolidPill ? 7 : TAG_WIDTH + 6)}, ${y + BAR_HEIGHT / 2})`}
           style={{ pointerEvents: 'none', userSelect: 'none', opacity: 0.85 }}
         >
@@ -349,7 +349,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
           fill={labelFill}
           fontSize={10}
           fontWeight={700}
-          fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
+          fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
           style={{ pointerEvents: 'none', userSelect: 'none' }}
         >
           {bar.label}
@@ -397,7 +397,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
                 fill="#ffffff"
                 fontSize={9}
                 fontWeight={700}
-                fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
+                fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
                 style={{ pointerEvents: 'none', userSelect: 'none', letterSpacing: 0.4 }}
               >
                 {text}
@@ -436,7 +436,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
                 fill={c.TEXT_SECONDARY}
                 fontSize={9}
                 fontWeight={600}
-                fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
+                fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
                 style={{ pointerEvents: 'none', userSelect: 'none', letterSpacing: 0.4 }}
               >
                 + env
@@ -461,7 +461,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
               textAlign: 'center',
               fontSize: 10,
               fontWeight: 700,
-              fontFamily: "'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif",
+              fontFamily: "'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif",
               color: colors.text,
               outline: 'none',
             }}
@@ -657,7 +657,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
                         fontSize={6}
                         fontWeight={700}
                         fill="#ffffff"
-                        fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
+                        fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
                         style={{ userSelect: 'none' }}
                       >
                         {ch.text}
@@ -673,7 +673,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
                     fontSize={7}
                     fontWeight={700}
                     fill={c.TEXT_SECONDARY}
-                    fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
+                    fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
                     style={{ userSelect: 'none', pointerEvents: 'none' }}
                   >
                     +{overflow}

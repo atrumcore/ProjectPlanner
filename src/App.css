@@ -10,6 +10,12 @@
 
 /* Theme-independent tokens (dimensions, radii, fixed inks). */
 :root {
+  /* BBD brand typefaces (bundled via @fontsource, imported in main.tsx).
+     Display = Montserrat: titles, headings, eyebrows, on-bar labels.
+     Body = Open Sans: panels, menus, inputs, captions. */
+  --font-display: 'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif;
+  --font-body: 'Open Sans', Helvetica, Arial, sans-serif;
+
   --row-height: 48px;
   --header-height: 48px;
   --week-label-height: 18px;
@@ -27,39 +33,39 @@
   --note-ink: #2a2620;
 }
 
-/* ===== Dark (default) ===== */
+/* ===== Dark (default) — BBD near-black (design-system v2) ===== */
 :root,
 [data-theme='dark'] {
-  /* BBD brand red — logo mark / brand moments only. Never used for
-     interactive state: red already means conflict or danger here. */
+  /* BBD brand red — logo glyph, kicker rule, brand moments only. Never used
+     for interactive state: red already means conflict or danger here. */
   --brand-accent: #ce181e;
 
   /* Surfaces */
-  --bg-app: #0b1426;          /* Midnight Express — deepest canvas */
-  --bg-header: #0d203c;       /* Dark Navy — toolbar / sticky headers */
-  --bg-surface: #102a4a;      /* cards / menus / popovers / inputs / panels */
-  --bg-surface-2: #16335a;    /* elevated / hover / list rows */
-  --bg-row-even: #0e2543;
-  --bg-row-odd: #0b1f3a;
+  --bg-app: #0b0c0e;          /* near-black canvas */
+  --bg-header: #151719;       /* BBD Process Black — toolbar / sticky headers */
+  --bg-surface: #17191c;      /* cards / menus / popovers / inputs / panels */
+  --bg-surface-2: #212429;    /* elevated / hover / list rows */
+  --bg-row-even: #131518;
+  --bg-row-odd: #101214;
 
   /* Text */
   --text-primary: #eeeeee;    /* Subtle White */
-  --text-secondary: #8aa0b8;
-  --text-muted: #6e8299;
+  --text-secondary: #8a9298;  /* BBD Cool Grey 5C */
+  --text-muted: #71787e;
   --text-header: #eeeeee;
 
-  /* Accents — BBD brand navy, lightened to read on the dark navy canvas */
-  --accent-primary: #8f87f1;
-  --accent-primary-hover: #a49df5;
-  --accent-secondary: #0098cc;      /* interactive blue */
+  /* Accents — BBD extension palette */
+  --accent-primary: #4e44db;        /* violet — primary buttons, focus */
+  --accent-primary-hover: #5d54e3;
+  --accent-secondary: #00b8cc;      /* cyan — selection, active tabs, info */
   --success: #009991;
   --warning: #cb6600;
   --error: #99001b;
-  --error-bright: #e0556b;
+  --error-bright: #d9363c;
   --contention: #c0466a;
-  --on-accent: #0b0a2a;             /* text/icon on a primary surface */
+  --on-accent: #ffffff;             /* text/icon on a primary surface */
 
-  /* Lines / borders (low-alpha light so they read on navy) */
+  /* Lines / borders (low-alpha light — separation by contrast, no shadows) */
   --grid-weekly: rgba(255, 255, 255, 0.06);
   --grid-monthly: rgba(255, 255, 255, 0.12);
   --border: rgba(255, 255, 255, 0.10);
@@ -69,38 +75,38 @@
   --hover: rgba(255, 255, 255, 0.06);
   --hover-strong: rgba(255, 255, 255, 0.12);
 
-  --week-label-color: #7e97b3;
-  --today-line: #ff8a3d;
-  --today-strip: rgba(255, 138, 61, 0.14);
-  --milestone-fill: #31bf69;
-  --milestone-stroke: #a6e9c4;
+  --week-label-color: #7e858c;
+  --today-line: #ffb224;
+  --today-strip: rgba(255, 178, 36, 0.12);
+  --milestone-fill: #46a758;
+  --milestone-stroke: #eaf6ec;
   --highlight-month: #f5a42a;
 
   --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
-/* ===== Light ===== */
+/* ===== Light — BBD light neutrals (design-system v2) ===== */
 [data-theme='light'] {
   --brand-accent: #ce181e;
 
   /* Surfaces */
-  --bg-app: #e8e4dd;
+  --bg-app: #f6f6f7;
   --bg-header: #ffffff;       /* light toolbar / sticky headers, like the live site nav */
-  --bg-surface: #fffaf3;
-  --bg-surface-2: #f5f2ec;
-  --bg-row-even: #faf9f6;
-  --bg-row-odd: #f5f2ec;
+  --bg-surface: #ffffff;
+  --bg-surface-2: #e9eaeb;
+  --bg-row-even: #fafafa;
+  --bg-row-odd: #f1f1f2;
 
   /* Text */
-  --text-primary: #1a1814;
-  --text-secondary: #5c5a54;
-  --text-muted: #888078;
-  --text-header: #1b1846;     /* BBD brand navy text on the light header */
+  --text-primary: #151719;    /* BBD Process Black */
+  --text-secondary: #5a5f64;
+  --text-muted: #8a9298;
+  --text-header: #151719;
 
-  /* Accents — BBD brand navy on light surfaces */
-  --accent-primary: #1b1846;
+  /* Accents — BBD black primary on light surfaces (per v2 buttons card) */
+  --accent-primary: #151719;
   --accent-primary-hover: #2d2a63;
-  --accent-secondary: #0277a3;
+  --accent-secondary: #00929f; /* cyan darkened for light-surface contrast */
   --success: #00897e;
   --warning: #cb6600;
   --error: #99001b;
@@ -108,24 +114,24 @@
   --contention: #7a1f3d;
   --on-accent: #ffffff;
 
-  /* Lines / borders */
-  --grid-weekly: #dedad3;
-  --grid-monthly: #c8c3ba;
-  --border: #dedad3;
-  --border-strong: #b8b1a3;
+  /* Lines / borders — BBD neutral greys */
+  --grid-weekly: #e2e3e4;
+  --grid-monthly: #c3c4c6;
+  --border: #dcddde;
+  --border-strong: #b9bbbd;
 
   /* Hover overlays (dark, for use on light surfaces) */
   --hover: rgba(0, 0, 0, 0.05);
   --hover-strong: rgba(0, 0, 0, 0.10);
 
-  --week-label-color: #888078;
-  --today-line: #ad4e0a;
-  --today-strip: rgba(253, 232, 213, 0.40);
+  --week-label-color: #8a9298;
+  --today-line: #a06700;
+  --today-strip: rgba(255, 178, 36, 0.16);
   --milestone-fill: #d5e8d4;
   --milestone-stroke: #82b366;
   --highlight-month: #f5a42a;
 
-  --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 * {
@@ -135,10 +141,39 @@
 }
 
 body {
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   background: var(--bg-app);
   color: var(--text-primary);
   overflow: hidden;
+}
+
+/* Headings and titles carry the display face (Montserrat); body copy stays
+   Open Sans. Matches the v2 design-system type card. */
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+}
+
+/* BBD kicker device — 28×3px red rule above an uppercase Montserrat label.
+   The brand signature for panel/section headings (v2 typography card). */
+.kicker {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.kicker::before {
+  content: '';
+  display: block;
+  width: 28px;
+  height: 3px;
+  background: var(--brand-accent);
+  border-radius: 1px;
+  margin-bottom: 6px;
 }
 
 /* Native <option> elements are OS-rendered in the open dropdown; force theme
@@ -175,19 +210,21 @@ select option {
   white-space: nowrap;
 }
 
-/* Product name with the BBD red brand mark. */
+/* Product name with the BBD logo (secondary variant — glyph + logotype).
+   White artwork on dark, black artwork on light; both rendered, CSS picks. */
 .toolbar-brand {
   display: inline-flex;
   align-items: center;
   gap: 8px;
 }
-.toolbar-brand-mark {
-  width: 4px;
-  height: 15px;
-  border-radius: 2px;
-  background: var(--brand-accent);
+.bbd-logo {
+  height: 17px;
   flex-shrink: 0;
+  display: block;
 }
+.bbd-logo-black { display: none; }
+[data-theme='light'] .bbd-logo-white { display: none; }
+[data-theme='light'] .bbd-logo-black { display: block; }
 
 .toolbar-filename {
   font-weight: 400;
@@ -202,13 +239,13 @@ select option {
 }
 
 .toolbar button {
-  padding: 5px 12px;
+  padding: 5px 13px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 999px; /* v2: toolbar controls are pills */
   background: var(--hover);
   color: var(--text-header);
   font-size: 11px;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.12s, border-color 0.12s;
@@ -406,7 +443,7 @@ select option {
   background: transparent;
   font-size: 10px;
   font-weight: 700;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   color: var(--text-primary);
   outline: none;
   resize: none;
@@ -515,7 +552,7 @@ select option {
   border: none;
   background: transparent;
   font-size: 9px;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   color: var(--text-primary);
   outline: none;
   resize: none;
@@ -584,7 +621,7 @@ select option {
   border: none;
   background: transparent;
   font-size: 9px;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   color: var(--text-primary);
   outline: none;
   resize: none;
@@ -684,7 +721,7 @@ select option {
   border: 1px solid var(--border);
   border-radius: 4px;
   font-size: 12px;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   margin-bottom: 12px;
   background: var(--bg-surface);
   color: var(--text-primary);
@@ -707,7 +744,7 @@ select option {
   border: 1px solid var(--border);
   border-radius: 4px;
   font-size: 11px;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   cursor: pointer;
 }
 
@@ -814,7 +851,7 @@ select option {
   z-index: 2000;
   min-width: 200px;
   padding: 6px 0;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
 }
 
 /* Clickable action row (non-checkbox) in a dropdown menu */
@@ -861,7 +898,7 @@ select option {
   background: var(--bg-row-even);
   font-size: 11px;
   cursor: pointer;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   color: var(--text-primary);
 }
 
@@ -1139,7 +1176,7 @@ select option {
   color: #ffffff;
   letter-spacing: 0.3px;
   text-transform: uppercase;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   transition: transform 0.1s, box-shadow 0.1s;
 }
 .env-pill-pick:hover {
@@ -1176,7 +1213,7 @@ select option {
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
   min-width: 180px;
   padding: 4px;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
 }
 .bar-env-popover-title {
   font-size: 10px;
@@ -1718,7 +1755,7 @@ select option {
   border-radius: 6px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
   padding: 4px;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
 }
 .account-menu-identity {
   padding: 8px 10px 6px;
@@ -1770,7 +1807,7 @@ select option {
   height: 100%;
   border: none;
   background: transparent;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   color: var(--text-primary);
   outline: none;
   line-height: 1.3;
@@ -1822,7 +1859,7 @@ select option {
   display: flex;
   gap: 2px;
   align-items: center;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
 }
 
 .formatting-toolbar button {
@@ -1833,7 +1870,7 @@ select option {
   border-radius: 3px;
   background: transparent;
   cursor: pointer;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   font-size: 11px;
   color: var(--text-primary);
   display: flex;
@@ -2399,7 +2436,7 @@ select option {
   overflow: hidden;
   max-width: 100%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
 }
 .phase-bar-drag-pill.clear {
   background: #1f7a44;
@@ -2420,7 +2457,7 @@ select option {
   display: flex;
   flex-direction: column;
   z-index: 500;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   animation: env-panel-slide-in 200ms ease-out;
 }
 @keyframes env-panel-slide-in {
@@ -3050,7 +3087,7 @@ select option {
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.06),
     0 8px 18px rgba(0, 0, 0, 0.18);
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   color: var(--note-ink);
   z-index: 20;
   overflow: hidden;
@@ -3260,7 +3297,7 @@ select option {
   overflow: hidden;
   z-index: 2101;
   animation: kfp-pop 160ms ease-out;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
 }
 
 @keyframes kfp-pop {
@@ -3430,7 +3467,7 @@ select option {
   flex-direction: column;
   background: var(--bg-app);
   color: var(--text-primary);
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
 }
 
 .launcher-header {
@@ -3450,12 +3487,8 @@ select option {
   margin: 0;
   color: var(--text-header);
 }
-.launcher-brand-mark {
-  width: 4px;
-  height: 15px;
-  border-radius: 2px;
-  background: var(--brand-accent);
-  flex-shrink: 0;
+.launcher-header .bbd-logo {
+  height: 18px;
 }
 .launcher-header-spacer { flex: 1; }
 .launcher-account {

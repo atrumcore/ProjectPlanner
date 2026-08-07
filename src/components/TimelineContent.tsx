@@ -472,7 +472,7 @@ export default function TimelineContent() {
           x={gridWidth / 2} y={contentHeight / 2}
           textAnchor="middle" dominantBaseline="middle"
           fill={c.TEXT_SECONDARY} fontSize={13}
-          fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
+          fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
           opacity={0.5} style={{ pointerEvents: 'none' }}
         >
           Click and drag to create a phase bar

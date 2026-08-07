@@ -67,19 +67,19 @@ export interface ThemeColors {
 }
 
 const dark: ThemeColors = {
-  BG_APP: '#0B1426', // Midnight Express
-  BG_HEADER: '#0D203C', // Dark Navy — toolbar / sticky headers
-  BG_SURFACE: '#102A4A', // cards / menus / popovers / inputs / panels
-  BG_SURFACE_2: '#16335A', // elevated / hover / list rows
-  ROW_EVEN: '#0E2543',
-  ROW_ODD: '#0B1F3A',
-  MONTH_BAND: '#102A4A',
-  SECTION_BAND: '#16335A',
+  BG_APP: '#0B0C0E', // near-black canvas (BBD v2)
+  BG_HEADER: '#151719', // BBD Process Black — toolbar / sticky headers
+  BG_SURFACE: '#17191C', // cards / menus / popovers / inputs / panels
+  BG_SURFACE_2: '#212429', // elevated / hover / list rows
+  ROW_EVEN: '#131518',
+  ROW_ODD: '#101214',
+  MONTH_BAND: '#17191C',
+  SECTION_BAND: '#212429',
 
   TEXT_PRIMARY: '#EEEEEE', // Subtle White
   TEXT_HEADER: '#EEEEEE',
-  TEXT_SECONDARY: '#8AA0B8',
-  WEEK_LABEL_COLOR: '#7E97B3',
+  TEXT_SECONDARY: '#8A9298', // BBD Cool Grey 5C
+  WEEK_LABEL_COLOR: '#7E858C',
 
   GRID_WEEKLY: 'rgba(255, 255, 255, 0.06)',
   GRID_MONTHLY: 'rgba(255, 255, 255, 0.12)',
@@ -90,55 +90,55 @@ const dark: ThemeColors = {
   WEEKEND_SHADE: 'rgba(255, 255, 255, 0.04)',
   HIGHLIGHT_MONTH: '#F5A42A',
 
-  TODAY_LINE: '#FF8A3D',
-  TODAY_STRIP: 'rgba(255, 138, 61, 0.14)',
+  TODAY_LINE: '#FFB224',
+  TODAY_STRIP: 'rgba(255, 178, 36, 0.12)',
 
-  MILESTONE_FILL: '#31BF69',
-  MILESTONE_STROKE: '#A6E9C4',
-  MILESTONE_TEXT: '#0B1426',
+  MILESTONE_FILL: '#46A758',
+  MILESTONE_STROKE: '#EAF6EC',
+  MILESTONE_TEXT: '#0B0C0E',
 
   SELECTION_STROKE: '#EEEEEE',
   BAR_SHADOW: 'rgba(0, 0, 0, 0.45)',
   BAR_HANDLE_FILL: '#FFFFFF',
-  BAR_HANDLE_STROKE: '#0B1426',
+  BAR_HANDLE_STROKE: '#0B0C0E',
 
-  HOLIDAY_MARK: '#E0556B',
+  HOLIDAY_MARK: '#D9363C',
 
-  // BBD brand navy lightened so it reads against the dark navy canvas.
-  ACCENT_PRIMARY: '#8F87F1',
-  ACCENT_SECONDARY: '#0098CC', // interactive blue (active panels/toggles)
+  // BBD extension palette (violet + cyan).
+  ACCENT_PRIMARY: '#4E44DB',
+  ACCENT_SECONDARY: '#00B8CC', // interactive cyan (active panels/toggles)
   SUCCESS: '#009991',
   WARNING: '#CB6600',
   ERROR: '#99001B',
-  ON_ACCENT: '#0B0A2A', // text/icon on a primary surface
+  ON_ACCENT: '#FFFFFF', // text/icon on a primary surface
 };
 
 const light: ThemeColors = {
-  BG_APP: '#E8E4DD',
+  BG_APP: '#F6F6F7',
   BG_HEADER: '#FFFFFF', // light toolbar / sticky headers
-  BG_SURFACE: '#FFFAF3', // cards / menus / popovers / inputs / panels
-  BG_SURFACE_2: '#F5F2EC',
-  ROW_EVEN: '#FAF9F6',
-  ROW_ODD: '#F5F2EC',
-  MONTH_BAND: '#E2DED6',
-  SECTION_BAND: '#E2DED6',
+  BG_SURFACE: '#FFFFFF', // cards / menus / popovers / inputs / panels
+  BG_SURFACE_2: '#E9EAEB',
+  ROW_EVEN: '#FAFAFA',
+  ROW_ODD: '#F1F1F2',
+  MONTH_BAND: '#E9EAEB',
+  SECTION_BAND: '#E9EAEB',
 
-  TEXT_PRIMARY: '#1A1814',
-  TEXT_HEADER: '#1B1846', // BBD brand navy text on the light header
-  TEXT_SECONDARY: '#5C5A54',
-  WEEK_LABEL_COLOR: '#888078',
+  TEXT_PRIMARY: '#151719', // BBD Process Black
+  TEXT_HEADER: '#151719',
+  TEXT_SECONDARY: '#5A5F64',
+  WEEK_LABEL_COLOR: '#8A9298',
 
-  GRID_WEEKLY: '#DEDAD3',
-  GRID_MONTHLY: '#C8C3BA',
-  BORDER: '#DEDAD3',
-  HEADER_DIVIDER: '#C8C3BA',
+  GRID_WEEKLY: '#E2E3E4',
+  GRID_MONTHLY: '#C3C4C6',
+  BORDER: '#DCDDDE',
+  HEADER_DIVIDER: '#C3C4C6',
 
   MONTH_SHADE: 'rgba(0, 0, 0, 0.045)',
-  WEEKEND_SHADE: 'rgba(46, 125, 50, 0.10)',
+  WEEKEND_SHADE: 'rgba(0, 0, 0, 0.05)',
   HIGHLIGHT_MONTH: '#F5A42A',
 
-  TODAY_LINE: '#AD4E0A',
-  TODAY_STRIP: 'rgba(253, 232, 213, 0.40)',
+  TODAY_LINE: '#A06700',
+  TODAY_STRIP: 'rgba(255, 178, 36, 0.16)',
 
   MILESTONE_FILL: '#D5E8D4',
   MILESTONE_STROKE: '#82B366',
@@ -149,10 +149,10 @@ const light: ThemeColors = {
   BAR_HANDLE_FILL: '#FFFFFF',
   BAR_HANDLE_STROKE: '#7A7264',
 
-  HOLIDAY_MARK: '#CC4444',
+  HOLIDAY_MARK: '#B52222',
 
-  ACCENT_PRIMARY: '#1B1846', // BBD brand navy
-  ACCENT_SECONDARY: '#0277A3', // interactive blue tuned for light
+  ACCENT_PRIMARY: '#151719', // BBD black primary (v2 buttons card)
+  ACCENT_SECONDARY: '#00929F', // cyan darkened for light-surface contrast
   SUCCESS: '#00897E',
   WARNING: '#CB6600',
   ERROR: '#99001B',
