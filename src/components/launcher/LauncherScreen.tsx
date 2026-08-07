@@ -5,6 +5,7 @@ import { graph, type GraphPlanFile, type GraphTeam } from '../../graph';
 import type { PlanContainer, PlanRef } from '../../types/planSource';
 import { getRecentPlans, forgetPlan } from '../../utils/mru';
 import { formatSavedAt } from '../../utils/dateUtils';
+import { useModalDismiss } from '../../hooks/useModalDismiss';
 import logoWhite from '../../assets/bbd-logo-white.svg';
 import logoBlack from '../../assets/bbd-logo-black.svg';
 
@@ -36,6 +37,15 @@ export default function LauncherScreen() {
   const [busy, setBusy] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [recents, setRecents] = useState<PlanRef[]>(() => getRecentPlans());
+  // Name prompt for a new plan (replaces window.prompt).
+  const [newPlanPrompt, setNewPlanPrompt] = useState<{ suggested: string } | null>(null);
+
+  // Armed delete auto-disarms after 3s (v2 buttons card).
+  useEffect(() => {
+    if (!confirmDeleteId) return;
+    const t = setTimeout(() => setConfirmDeleteId(null), 3000);
+    return () => clearTimeout(t);
+  }, [confirmDeleteId]);
 
   // Load the Teams list once.
   useEffect(() => {
@@ -107,15 +117,19 @@ export default function LauncherScreen() {
     setBusy(false);
   }, [openGraphPlan]);
 
-  const handleNewPlan = useCallback(async () => {
+  const handleNewPlan = useCallback(() => {
     if (!container) return;
     const suggested = selection?.kind === 'team' ? `${selection.team.displayName} roadmap` : 'Untitled plan';
-    const name = window.prompt('Name for the new plan', suggested);
-    if (!name?.trim()) return;
+    setNewPlanPrompt({ suggested });
+  }, [container, selection]);
+
+  const handleCreatePlan = useCallback(async (name: string) => {
+    setNewPlanPrompt(null);
+    if (!container || !name.trim()) return;
     setBusy(true);
     await createGraphPlan(container, name.trim());
     setBusy(false);
-  }, [container, createGraphPlan, selection]);
+  }, [container, createGraphPlan]);
 
   const handleDelete = useCallback(async (file: GraphPlanFile) => {
     if (confirmDeleteId !== file.itemId) { setConfirmDeleteId(file.itemId); return; }
@@ -267,6 +281,44 @@ export default function LauncherScreen() {
             </>
           )}
         </section>
+      </div>
+
+      {newPlanPrompt && (
+        <NewPlanModal
+          suggested={newPlanPrompt.suggested}
+          onCreate={handleCreatePlan}
+          onClose={() => setNewPlanPrompt(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+/** Small name prompt for a new plan — replaces window.prompt(). */
+function NewPlanModal({ suggested, onCreate, onClose }: {
+  suggested: string;
+  onCreate: (name: string) => void;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState(suggested);
+  const dialogProps = useModalDismiss(onClose);
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()} {...dialogProps}>
+        <h2>New plan</h2>
+        <label>Plan name</label>
+        <input
+          autoFocus
+          value={name}
+          onChange={e => setName(e.target.value)}
+          onFocus={e => e.target.select()}
+          onKeyDown={e => { if (e.key === 'Enter') onCreate(name); }}
+        />
+        <div className="modal-actions">
+          <button className="btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn-primary" onClick={() => onCreate(name)}>Create</button>
+        </div>
       </div>
     </div>
   );

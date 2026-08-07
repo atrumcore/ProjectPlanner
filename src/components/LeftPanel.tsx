@@ -78,6 +78,18 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
   const [confirmDeleteSection, setConfirmDeleteSection] = useState(false);
   const secCtxRef = useRef<HTMLDivElement>(null);
 
+  // Armed deletes auto-disarm after 3s (v2 buttons card).
+  useEffect(() => {
+    if (!confirmDelete) return;
+    const t = setTimeout(() => setConfirmDelete(false), 3000);
+    return () => clearTimeout(t);
+  }, [confirmDelete]);
+  useEffect(() => {
+    if (!confirmDeleteSection) return;
+    const t = setTimeout(() => setConfirmDeleteSection(false), 3000);
+    return () => clearTimeout(t);
+  }, [confirmDeleteSection]);
+
   // Clamp swimlane context menu to viewport
   useEffect(() => {
     if (!ctxMenu || !ctxRef.current) return;
@@ -387,6 +399,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
           <button
             className="left-panel-add-row"
             onClick={() => setAddLaneSectionId(section.id)}
+            title={`Add a project lane to ${section.label}`}
           >
             ＋ Add project
           </button>
@@ -395,6 +408,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
       <button
         className="left-panel-add-row left-panel-add-section"
         onClick={() => addSection('New Section')}
+        title="Add a section band below the last one"
       >
         ＋ Add section
       </button>

@@ -33,17 +33,23 @@ function App() {
     return () => window.removeEventListener('beforeunload', handler);
   }, [isDirty]);
 
-  // Reflect current file + dirty state in the browser tab title.
+  // Reflect the current view in the browser tab title: the Home screen says
+  // Home; the plan view shows file name + dirty dot.
+  const onLauncher = signedIn && appView === 'launcher';
   useEffect(() => {
+    if (onLauncher) {
+      document.title = 'Home \u2014 BBD Project Planner';
+      return;
+    }
     const name = currentFileName || 'Untitled';
     document.title = `${isDirty ? '\u2022 ' : ''}${name} \u2014 BBD Project Planner`;
-  }, [currentFileName, isDirty]);
+  }, [currentFileName, isDirty, onLauncher]);
 
   // The launcher only exists for signed-in users; signed out, the app opens
   // straight into the plan exactly as it always has.
   return (
     <ErrorBoundary>
-      {signedIn && appView === 'launcher' ? <LauncherScreen /> : <GanttChart />}
+      {onLauncher ? <LauncherScreen /> : <GanttChart />}
     </ErrorBoundary>
   );
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useGanttStore } from '../store/useGanttStore';
+import { useModalDismiss } from '../hooks/useModalDismiss';
 
 interface Props {
   onClose: () => void;
@@ -10,6 +11,7 @@ interface Props {
 export default function AddSwimlaneModal({ onClose, initialSectionId }: Props) {
   const sections = useGanttStore(s => s.sections);
   const addSwimlane = useGanttStore(s => s.addSwimlane);
+  const dialogProps = useModalDismiss(onClose);
 
   const sortedSections = [...sections].sort((a, b) => a.order - b.order);
   const [name, setName] = useState('');
@@ -25,7 +27,7 @@ export default function AddSwimlaneModal({ onClose, initialSectionId }: Props) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
+      <div className="modal" onClick={e => e.stopPropagation()} {...dialogProps}>
         <h2>Add swimlane</h2>
         <label>Project name</label>
         <input

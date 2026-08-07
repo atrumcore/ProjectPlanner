@@ -2,19 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuthStore } from '../auth/useAuthStore';
 import { isMockMode } from '../auth/msal';
-
-/** "Alice Smith" -> "AS"; single word takes its first two letters. */
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return '?';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
+import { initials } from '../utils/initials';
 
 /**
- * Toolbar identity control. Renders a "Sign in" button when signed out and an
- * avatar chip with a small menu when signed in. Hidden entirely when no
- * sign-in path is configured, so the plain local-file app looks untouched.
+ * Identity control (toolbar + launcher header). Renders a "Sign in" button
+ * when signed out and an avatar chip with a small menu when signed in. Hidden
+ * entirely when no sign-in path is configured, so the plain local-file app
+ * looks untouched.
  */
 export default function AccountChip() {
   const available = useAuthStore(s => s.available);
@@ -25,6 +19,10 @@ export default function AccountChip() {
 
   const [menuPos, setMenuPos] = useState<{ left: number; top: number } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  // Clicking the chip while its menu is open must CLOSE it: the menu's
+  // outside-mousedown handler fires first (nulling menuPos), so a naive
+  // click toggle would reopen. Same pattern as the toolbar menus.
+  const suppressReopen = useRef(false);
 
   useEffect(() => {
     if (!menuPos) return;
@@ -41,6 +39,17 @@ export default function AccountChip() {
       document.removeEventListener('mousedown', onDown);
       document.removeEventListener('keydown', onKey);
     };
+  }, [menuPos]);
+
+  // Clamp the menu into the viewport once it has a size. The CSS shifts it
+  // left by its own width (translateX(-100%)), so the horizontal check is on
+  // the left edge after translation; vertical is the usual bottom clamp.
+  useEffect(() => {
+    if (!menuPos || !menuRef.current) return;
+    const rect = menuRef.current.getBoundingClientRect();
+    const left = Math.min(Math.max(menuPos.left, rect.width + 4), window.innerWidth - 4);
+    const top = Math.min(menuPos.top, window.innerHeight - rect.height - 4);
+    if (left !== menuPos.left || top !== menuPos.top) setMenuPos({ left, top });
   }, [menuPos]);
 
   if (!available) return null;
@@ -62,9 +71,14 @@ export default function AccountChip() {
     <>
       <button
         className="account-chip"
+        onPointerDown={() => { suppressReopen.current = menuPos !== null; }}
         onClick={e => {
+          if (suppressReopen.current) {
+            suppressReopen.current = false;
+            return;
+          }
           const r = e.currentTarget.getBoundingClientRect();
-          setMenuPos(menuPos ? null : { left: r.right, top: r.bottom + 4 });
+          setMenuPos({ left: r.right, top: r.bottom + 4 });
         }}
         title={account.email ?? account.name}
       >

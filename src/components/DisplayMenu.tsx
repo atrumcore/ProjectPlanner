@@ -22,6 +22,7 @@ export default function DisplayMenu({ anchor, onClose }: Props) {
   const barStyle = useGanttStore(s => s.barStyle);
   const setBarStyle = useGanttStore(s => s.setBarStyle);
   const setDisplayPreset = useGanttStore(s => s.setDisplayPreset);
+  const togglePhaseTypesModal = useGanttStore(s => s.togglePhaseTypesModal);
 
   const showWeekends = useGanttStore(s => s.showWeekends);
   const showHolidays = useGanttStore(s => s.showHolidays);
@@ -178,6 +179,15 @@ export default function DisplayMenu({ anchor, onClose }: Props) {
         <span className="timeline-range-label">{rangeLabel}</span>
         <button onClick={() => trimEnd(lastMonthWeeks)} title="Remove last month" disabled={timeline.totalWeeks <= lastMonthWeeks}>- End</button>
         <button onClick={() => extendTimeline(nextMonthWeeks)} title="Add month after end">+ End</button>
+      </div>
+
+      <div className="view-menu-divider" />
+      {/* Reachable even on an empty plan (bar context menus need a bar). */}
+      <div
+        className="menu-item-action"
+        onClick={() => { togglePhaseTypesModal(); onClose(); }}
+      >
+        Phase types…
       </div>
     </DropdownMenu>
   );

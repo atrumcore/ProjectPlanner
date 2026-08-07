@@ -662,6 +662,12 @@ select option {
   background: var(--bg-row-odd);
 }
 
+/* Hover feedback as an inset overlay — rows can carry an inline tint
+   background, which a CSS background rule could never beat. */
+.swimlane-row:hover {
+  box-shadow: inset 0 0 0 999px var(--hover);
+}
+
 .swimlane-project {
   width: var(--project-col);
   padding: 4px 8px;
@@ -1027,6 +1033,23 @@ select option {
   margin-top: 8px;
 }
 
+/* Quiet dismissal (v2 dialogs card: Cancel is a muted text link, never a
+   peer of the real choices). */
+.modal-cancel-link {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  padding: 4px 6px;
+}
+
+.modal-cancel-link:hover {
+  color: var(--text-primary);
+  text-decoration: underline;
+}
+
 /* Phase bar context menu */
 .context-menu {
   position: fixed;
@@ -1151,9 +1174,9 @@ select option {
 }
 
 .timeline-range-row button {
-  padding: 2px 8px;
+  padding: 2px 10px;
   border: 1px solid var(--border);
-  border-radius: 3px;
+  border-radius: 999px;
   background: var(--bg-row-even);
   font-size: 11px;
   cursor: pointer;
@@ -1675,11 +1698,11 @@ select option {
   flex: 1;
   min-width: 0;
   font-size: 12px;
-  padding: 5px 9px;
+  padding: 5px 12px;
   background: var(--bg-app);
   color: var(--text-primary);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 999px;
   font-family: inherit;
 }
 .people-roster-search:focus {
@@ -1689,11 +1712,11 @@ select option {
 .people-roster-filter,
 .people-roster-add {
   font-size: 11px;
-  padding: 5px 8px;
+  padding: 5px 10px;
   background: transparent;
   color: var(--text-secondary);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 999px;
   cursor: pointer;
   font-family: inherit;
   white-space: nowrap;
@@ -1874,11 +1897,11 @@ select option {
 .people-detail-focus {
   margin-left: auto;
   font-size: 11px;
-  padding: 4px 10px;
+  padding: 4px 12px;
   background: transparent;
   color: var(--text-secondary);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 999px;
   cursor: pointer;
   font-family: inherit;
   flex-shrink: 0;
@@ -1933,8 +1956,8 @@ select option {
 }
 .file-update-banner button {
   font-size: 11px;
-  padding: 4px 10px;
-  border-radius: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
   cursor: pointer;
   font-family: inherit;
   white-space: nowrap;
@@ -2284,6 +2307,10 @@ select option {
   min-height: 0;
 }
 
+.rail-panel.is-resizing {
+  user-select: none;
+}
+
 .rail-panel-resize {
   position: absolute;
   left: -4px;
@@ -2292,9 +2319,12 @@ select option {
   width: 8px;
   cursor: col-resize;
   z-index: 1;
+  touch-action: none;
 }
 
-.rail-panel-resize:hover::before {
+/* Persistent grip so the handle is discoverable without hovering; brightens
+   to the interactive accent on hover/drag (mirrors the canvas resizers). */
+.rail-panel-resize::before {
   content: '';
   position: absolute;
   left: 3px;
@@ -2302,9 +2332,15 @@ select option {
   transform: translateY(-50%);
   width: 2px;
   height: 24px;
-  background: var(--accent-secondary);
+  background: var(--border-strong);
   border-radius: 1px;
-  opacity: 0.6;
+  opacity: 0.7;
+}
+
+.rail-panel-resize:hover::before,
+.rail-panel.is-resizing .rail-panel-resize::before {
+  background: var(--accent-secondary);
+  opacity: 1;
 }
 
 /* The title span carries the .kicker brand device (red rule + eyebrow). */
@@ -2320,7 +2356,7 @@ select option {
 .rail-panel-header-actions {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 8px;
 }
 
 .rail-panel-header-actions button {
@@ -2631,7 +2667,7 @@ select option {
   color: var(--text-secondary);
   background: none;
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 999px;
   padding: 4px 10px;
   cursor: pointer;
   font-family: inherit;
@@ -2809,8 +2845,8 @@ select option {
   background: transparent;
   border: 1px dashed var(--border-strong);
   color: var(--text-secondary);
-  padding: 5px 10px;
-  border-radius: 3px;
+  padding: 5px 12px;
+  border-radius: 999px;
   cursor: pointer;
   font-size: 12px;
   white-space: nowrap;
@@ -2941,8 +2977,8 @@ select option {
   background: transparent;
   border: 1px solid var(--border);
   font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 3px;
+  padding: 2px 8px;
+  border-radius: 999px;
   cursor: pointer;
   color: var(--text-primary);
 }
@@ -3104,8 +3140,8 @@ select option {
   background: transparent;
   border: 1px solid var(--error-bright);
   color: var(--error-bright);
-  padding: 5px 10px;
-  border-radius: 3px;
+  padding: 5px 12px;
+  border-radius: 999px;
   font-size: 11px;
   cursor: pointer;
 }
@@ -3826,7 +3862,7 @@ select option {
   color: var(--text-primary);
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 999px;
   padding: 7px 12px;
   cursor: pointer;
   font-family: inherit;

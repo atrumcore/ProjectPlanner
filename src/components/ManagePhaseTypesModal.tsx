@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useGanttStore } from '../store/useGanttStore';
 import { deriveColorScheme } from '../data/phasePresets';
+import { useModalDismiss } from '../hooks/useModalDismiss';
 
 export default function ManagePhaseTypesModal() {
   const phaseTypes = useGanttStore(s => s.phaseTypes);
@@ -16,6 +17,18 @@ export default function ManagePhaseTypesModal() {
   const [confirmReset, setConfirmReset] = useState(false);
   const [dragId, setDragId] = useState<string | null>(null);
 
+  // Armed destructive confirms auto-disarm after 3s (v2 buttons card).
+  useEffect(() => {
+    if (!confirmDeleteId) return;
+    const t = setTimeout(() => setConfirmDeleteId(null), 3000);
+    return () => clearTimeout(t);
+  }, [confirmDeleteId]);
+  useEffect(() => {
+    if (!confirmReset) return;
+    const t = setTimeout(() => setConfirmReset(false), 3000);
+    return () => clearTimeout(t);
+  }, [confirmReset]);
+
   const usageCount = useMemo(() => {
     const map = new Map<string, number>();
     for (const b of phaseBars) map.set(b.phaseType, (map.get(b.phaseType) || 0) + 1);
@@ -23,6 +36,7 @@ export default function ManagePhaseTypesModal() {
   }, [phaseBars]);
 
   const handleClose = () => togglePhaseTypesModal();
+  const dialogProps = useModalDismiss(handleClose);
 
   const handleNameBlur = (id: string, name: string, currentLabel: string, originalName: string) => {
     const trimmed = name.trim();
@@ -66,7 +80,7 @@ export default function ManagePhaseTypesModal() {
 
   return (
     <div className="modal-overlay" onClick={handleClose}>
-      <div className="modal phase-types-modal" onClick={e => e.stopPropagation()}>
+      <div className="modal phase-types-modal" onClick={e => e.stopPropagation()} {...dialogProps}>
         <h2>Phase types</h2>
         <p className="modal-copy">
           Define the kinds of work blocks (Analysis, UAT, Smoke Test, …) that can be placed on the timeline.

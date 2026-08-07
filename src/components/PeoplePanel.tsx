@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useGanttStore } from '../store/useGanttStore';
 import type { Person, PhaseType, Team } from '../types/gantt';
 import { PEOPLE_COLOR_PRESETS } from '../types/gantt';
@@ -43,6 +43,13 @@ export default function PeoplePanel() {
   const [editingName, setEditingName] = useState(false);
   const [editingRole, setEditingRole] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
+
+  // Armed delete auto-disarms after 3s (v2 buttons card).
+  useEffect(() => {
+    if (!confirmDelete) return;
+    const t = setTimeout(() => setConfirmDelete(false), 3000);
+    return () => clearTimeout(t);
+  }, [confirmDelete]);
 
   const orderedTeams = useMemo(() => [...teams].sort((a, b) => a.order - b.order), [teams]);
   const orderedPeople = useMemo(() => [...people].sort((a, b) => a.order - b.order), [people]);

@@ -40,6 +40,13 @@ export default function EnvironmentsPanel() {
 
   useEffect(() => { setConfirmDelete(false); }, [activeId]);
 
+  // Armed delete auto-disarms after 3s (v2 buttons card).
+  useEffect(() => {
+    if (!confirmDelete) return;
+    const t = setTimeout(() => setConfirmDelete(false), 3000);
+    return () => clearTimeout(t);
+  }, [confirmDelete]);
+
   const contentions = useMemo(
     () => getContentions({ environments, swimlanes, phaseBars }),
     [environments, swimlanes, phaseBars]

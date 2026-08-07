@@ -100,14 +100,16 @@ export default function Toolbar({ onScrollToToday, onExportPNG, onExportPDF, onE
           <span className="toolbar-doc-caret">&#x25BE;</span>
         </button>
 
-        {onScrollToToday && <button onClick={onScrollToToday}>Today</button>}
+        {onScrollToToday && (
+          <button onClick={onScrollToToday} title="Scroll the timeline to today">Today</button>
+        )}
 
         <div className="toolbar-spacer" />
 
-        <button onPointerDown={() => rememberOpenState('display')} onClick={e => toggleMenu('display', e)} style={menuBtnStyle('display')}>
+        <button onPointerDown={() => rememberOpenState('display')} onClick={e => toggleMenu('display', e)} style={menuBtnStyle('display')} title="Presets, theme & timeline range">
           Display &#x25BE;
         </button>
-        <button onPointerDown={() => rememberOpenState('share')} onClick={e => toggleMenu('share', e)} style={menuBtnStyle('share')}>
+        <button onPointerDown={() => rememberOpenState('share')} onClick={e => toggleMenu('share', e)} style={menuBtnStyle('share')} title="Export PNG / PDF / CSV & email notes">
           Share &#x25BE;
         </button>
 

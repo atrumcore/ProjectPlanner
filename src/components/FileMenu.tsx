@@ -15,13 +15,18 @@ export default function FileMenu({ anchor, onClose, onSetDisplayName }: Props) {
   const openFile = useGanttStore(s => s.openFile);
   const saveFile = useGanttStore(s => s.saveFile);
   const saveFileAs = useGanttStore(s => s.saveFileAs);
+  const undo = useGanttStore(s => s.undo);
+  const redo = useGanttStore(s => s.redo);
+  const canUndo = useGanttStore(s => s.canUndo);
+  const canRedo = useGanttStore(s => s.canRedo);
   const setAppView = useGanttStore(s => s.setAppView);
   const signedIn = useAuthStore(s => s.account !== null);
 
-  const item = (label: string, action: () => void, shortcut?: string) => (
+  const item = (label: string, action: () => void, shortcut?: string, disabled?: boolean) => (
     <div
       className="menu-item-action"
-      onClick={() => { action(); onClose(); }}
+      aria-disabled={disabled || undefined}
+      onClick={() => { if (!disabled) { action(); onClose(); } }}
     >
       {label}
       {shortcut && <span className="menu-item-shortcut">{shortcut}</span>}
@@ -34,6 +39,11 @@ export default function FileMenu({ anchor, onClose, onSetDisplayName }: Props) {
       {item('Open…', openFile, 'Ctrl+O')}
       {item('Save', saveFile, 'Ctrl+S')}
       {item('Save a copy…', saveFileAs, 'Ctrl+Shift+S')}
+      <div className="view-menu-divider" />
+      {/* Interim home for undo/redo until the command palette lands — the
+          shortcuts are otherwise invisible after the toolbar diet. */}
+      {item('Undo', undo, 'Ctrl+Z', !canUndo())}
+      {item('Redo', redo, 'Ctrl+Y', !canRedo())}
       <div className="view-menu-divider" />
       {signedIn
         ? item('Home', () => setAppView('launcher'))

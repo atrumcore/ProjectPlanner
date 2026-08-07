@@ -26,6 +26,7 @@ import { useThemeColors } from '../theme/ThemeContext';
 import {
   ROW_HEIGHT,
   EXPORT_ROW_HEIGHT,
+  WEEK_WIDTH,
 } from '../types/gantt';
 import { ExportLayoutContext } from './ExportLayoutContext';
 
@@ -37,7 +38,7 @@ const RIGHT_MIN = 60;
 const RAIL_TITLES = {
   inspector: 'Inspector',
   notes: 'Notes & Action Items',
-  environments: 'Environments',
+  environments: 'Environments & Contention',
   people: 'People & Teams',
 } as const;
 
@@ -309,6 +310,10 @@ export default function GanttChart() {
         // typing in rich-text fields.
         e.preventDefault();
         toggleRailTab('inspector');
+      } else if (mod && key === 'z' && e.shiftKey) {
+        // Ctrl+Shift+Z = redo (must be checked before plain Ctrl+Z).
+        e.preventDefault();
+        redo();
       } else if (mod && key === 'z') {
         e.preventDefault();
         undo();
@@ -597,10 +602,13 @@ export default function GanttChart() {
         >
           <TimelineContent />
         </div>
-        {/* Floating zoom cluster — hidden while exporting (App.css). */}
+        {/* Floating zoom cluster — hidden while exporting (App.css). The
+            middle button shows the LIVE zoom level and resets it. */}
         <div className="zoom-cluster">
           <button onClick={zoomOut} title="Zoom out (Ctrl+Scroll)">&minus;</button>
-          <button onClick={zoomReset} title="Reset zoom">100%</button>
+          <button onClick={zoomReset} title="Reset zoom to 100%">
+            {Math.round((timeline.weekWidthPx / WEEK_WIDTH) * 100)}%
+          </button>
           <button onClick={zoomIn} title="Zoom in (Ctrl+Scroll)">+</button>
         </div>
       </div>
