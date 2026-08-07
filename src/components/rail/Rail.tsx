@@ -1,19 +1,72 @@
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { useGanttStore } from '../../store/useGanttStore';
 import { getContentions, getPeopleContentions } from '../../utils/contention';
 import type { RailTab } from '../../types/gantt';
 
+/* Monoline 16px icons — light stroke, geometric, currentColor, matching the
+ * BBD icon language (brand CI: minimal, consistent-weight, monoline). */
+const ICON_PROPS = {
+  width: 16,
+  height: 16,
+  viewBox: '0 0 16 16',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 1.5,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+} as const;
+
+/** Sliders — properties/inspector. */
+const InspectorIcon = (
+  <svg {...ICON_PROPS} aria-hidden="true">
+    <line x1="2.5" y1="5" x2="13.5" y2="5" />
+    <circle cx="6" cy="5" r="1.8" fill="var(--bg-header)" />
+    <line x1="2.5" y1="11" x2="13.5" y2="11" />
+    <circle cx="10" cy="11" r="1.8" fill="var(--bg-header)" />
+  </svg>
+);
+
+/** Checklist — notes & action items. */
+const NotesIcon = (
+  <svg {...ICON_PROPS} aria-hidden="true">
+    <polyline points="2.5,4.2 3.4,5.1 5,3.4" />
+    <line x1="7" y1="4.2" x2="13.5" y2="4.2" />
+    <polyline points="2.5,8.2 3.4,9.1 5,7.4" />
+    <line x1="7" y1="8.2" x2="13.5" y2="8.2" />
+    <line x1="7" y1="12.2" x2="13.5" y2="12.2" />
+  </svg>
+);
+
+/** Stacked layers — environments/infrastructure. */
+const EnvironmentsIcon = (
+  <svg {...ICON_PROPS} aria-hidden="true">
+    <path d="M8 2.2 13.8 5.2 8 8.2 2.2 5.2 Z" />
+    <path d="M2.2 8.2 8 11.2 13.8 8.2" />
+    <path d="M2.2 11.2 8 14.2 13.8 11.2" />
+  </svg>
+);
+
+/** Two people — roster. */
+const PeopleIcon = (
+  <svg {...ICON_PROPS} aria-hidden="true">
+    <circle cx="5.8" cy="5.2" r="2.4" />
+    <path d="M1.8 13.8c0-2.6 1.8-4.2 4-4.2s4 1.6 4 4.2" />
+    <path d="M10.6 3.4a2.4 2.4 0 0 1 0 3.9" />
+    <path d="M11.6 9.9c1.6 0.5 2.6 1.9 2.6 3.9" />
+  </svg>
+);
+
 interface TabDef {
   id: RailTab;
-  icon: string;
+  icon: ReactNode;
   title: string;
 }
 
 const TABS: TabDef[] = [
-  { id: 'inspector', icon: 'ⓘ', title: 'Inspector (Ctrl+I)' },
-  { id: 'notes', icon: '☰', title: 'Notes & Action Items (Ctrl+Shift+N)' },
-  { id: 'environments', icon: '▣', title: 'Environments & Contention (Ctrl+Shift+E)' },
-  { id: 'people', icon: '◉', title: 'People & Teams (Ctrl+Shift+P)' },
+  { id: 'inspector', icon: InspectorIcon, title: 'Inspector (Ctrl+I)' },
+  { id: 'notes', icon: NotesIcon, title: 'Notes & Action Items (Ctrl+Shift+N)' },
+  { id: 'environments', icon: EnvironmentsIcon, title: 'Environments & Contention (Ctrl+Shift+E)' },
+  { id: 'people', icon: PeopleIcon, title: 'People & Teams (Ctrl+Shift+P)' },
 ];
 
 /**
@@ -64,7 +117,7 @@ export default function Rail() {
             title={tab.title}
             onClick={() => toggleRailTab(tab.id)}
           >
-            <span aria-hidden="true">{tab.icon}</span>
+            {tab.icon}
             {badge && (
               <span className={`rail-badge${badge.kind === 'info' ? ' info' : ''}`}>
                 {badge.count}

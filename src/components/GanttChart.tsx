@@ -24,8 +24,6 @@ import { buildNotesEmail } from '../utils/notesEmail';
 import { buildSwimlaneCsv } from '../utils/swimlaneExport';
 import { useThemeColors } from '../theme/ThemeContext';
 import {
-  FLOATING_NOTE_DEFAULT_WIDTH,
-  FLOATING_NOTE_DEFAULT_HEIGHT,
   ROW_HEIGHT,
   EXPORT_ROW_HEIGHT,
 } from '../types/gantt';
@@ -516,19 +514,6 @@ export default function GanttChart() {
     URL.revokeObjectURL(url);
   }, [swimlanes, sections, phaseBars, phaseTypes, timeline, people, teams, exportBaseName]);
 
-  // Drop a new floating note into the visible center of the timeline so the
-  // user always sees it appear, no matter where they've scrolled.
-  const handleAddFloatingNote = useCallback(() => {
-    const el = timelineBodyRef.current;
-    if (!el) {
-      addFloatingNote(40, 40);
-      return;
-    }
-    const cx = el.scrollLeft + el.clientWidth / 2 - FLOATING_NOTE_DEFAULT_WIDTH / 2;
-    const cy = el.scrollTop + el.clientHeight / 2 - FLOATING_NOTE_DEFAULT_HEIGHT / 2;
-    addFloatingNote(cx, cy);
-  }, [addFloatingNote]);
-
   const scrollToToday = useCallback(() => {
     if (!timelineBodyRef.current) return;
     const todayOffset = getTodayWeekOffset(timeline.startMonth, timeline.startYear);
@@ -537,10 +522,30 @@ export default function GanttChart() {
     timelineBodyRef.current.scrollLeft = todayX - containerWidth / 2;
   }, [timeline.startMonth, timeline.startYear, timeline.weekWidthPx]);
 
+  // Right-click on empty canvas: bars/milestones stop propagation for their
+  // own menus, so this only fires on the background.
+  const [canvasCtxMenu, setCanvasCtxMenu] = useState<{ x: number; y: number } | null>(null);
+  const handleCanvasContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setCanvasCtxMenu({ x: e.clientX, y: e.clientY });
+  }, []);
+
+  const addNoteAtCanvasPoint = useCallback(() => {
+    if (!canvasCtxMenu) return;
+    const el = timelineBodyRef.current;
+    if (!el) { addFloatingNote(40, 40); setCanvasCtxMenu(null); return; }
+    const rect = el.getBoundingClientRect();
+    addFloatingNote(
+      el.scrollLeft + canvasCtxMenu.x - rect.left,
+      el.scrollTop + canvasCtxMenu.y - rect.top,
+    );
+    setCanvasCtxMenu(null);
+  }, [canvasCtxMenu, addFloatingNote]);
+
 
   return (
     <ExportLayoutContext.Provider value={{ rowHeight: isExporting ? EXPORT_ROW_HEIGHT : ROW_HEIGHT, isExporting }}>
-    <Toolbar onScrollToToday={scrollToToday} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} onExportPNG={exportPNG} onExportPDF={exportPDF} onExportSwimlanes={exportSwimlanes} onEmailNotes={emailNotes} onAddFloatingNote={handleAddFloatingNote} onSetDisplayName={() => setShowNameModal(true)} />
+    <Toolbar onScrollToToday={scrollToToday} onExportPNG={exportPNG} onExportPDF={exportPDF} onExportSwimlanes={exportSwimlanes} onEmailNotes={emailNotes} onSetDisplayName={() => setShowNameModal(true)} />
     <FileUpdateBanner />
     <div className="app-main-row">
     <div className={`gantt-container${isExporting ? ' is-exporting' : ''}`} ref={ganttRef}>
@@ -572,7 +577,7 @@ export default function GanttChart() {
 
       {/* Timeline center. Overflow lives in CSS (.timeline-center) so export
           mode can override it. */}
-      <div className="timeline-center" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 200 }}>
+      <div className="timeline-center" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 200, position: 'relative' }}>
         <TimelineHeader
           totalWeeks={timeline.totalWeeks}
           startMonth={timeline.startMonth}
@@ -587,9 +592,16 @@ export default function GanttChart() {
           onPointerMove={handlePanMove}
           onPointerUp={handlePanEnd}
           onPointerCancel={handlePanEnd}
+          onContextMenu={handleCanvasContextMenu}
           style={{ flex: 1 }}
         >
           <TimelineContent />
+        </div>
+        {/* Floating zoom cluster — hidden while exporting (App.css). */}
+        <div className="zoom-cluster">
+          <button onClick={zoomOut} title="Zoom out (Ctrl+Scroll)">&minus;</button>
+          <button onClick={zoomReset} title="Reset zoom">100%</button>
+          <button onClick={zoomIn} title="Zoom in (Ctrl+Scroll)">+</button>
         </div>
       </div>
 
@@ -639,6 +651,15 @@ export default function GanttChart() {
     )}
     <Rail />
     </div>
+    {canvasCtxMenu && (
+      <>
+        <div className="canvas-ctx-scrim" onClick={() => setCanvasCtxMenu(null)} onContextMenu={e => { e.preventDefault(); setCanvasCtxMenu(null); }} />
+        <div className="context-menu" style={{ left: canvasCtxMenu.x, top: canvasCtxMenu.y, position: 'fixed' }}>
+          <div className="context-menu-item" onClick={addNoteAtCanvasPoint}>Add note here</div>
+          <div className="context-menu-item" onClick={() => { scrollToToday(); setCanvasCtxMenu(null); }}>Scroll to today</div>
+        </div>
+      </>
+    )}
     {phaseTypesModalOpen && <ManagePhaseTypesModal />}
     <SaveConflictModal />
     {showNameModal && !signedIn && <DisplayNameModal onClose={() => setShowNameModal(false)} />}

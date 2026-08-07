@@ -9,6 +9,7 @@ import RichTextEditor from './RichTextEditor';
 import FeaturesCell from './FeaturesCell';
 import KeyFeaturesPopover from './KeyFeaturesPopover';
 import PeoplePickerPopover from './PeoplePickerPopover';
+import AddSwimlaneModal from './AddSwimlaneModal';
 import { htmlToPlainText } from '../utils/plainText';
 
 interface Props {
@@ -60,6 +61,9 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
 
   // Swimlane owner picker (people/teams allocation for the whole project)
   const [ownerPicker, setOwnerPicker] = useState<{ laneId: string; x: number; y: number } | null>(null);
+
+  // "+ Add project" modal, preselecting the section whose row was clicked
+  const [addLaneSectionId, setAddLaneSectionId] = useState<string | null>(null);
 
   // Swimlane right-click context menu
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; laneId: string } | null>(null);
@@ -377,8 +381,20 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
             )}
           </div>
           {lanes.map((lane, i) => renderRow(lane, i, lanes))}
+          <button
+            className="left-panel-add-row"
+            onClick={() => setAddLaneSectionId(section.id)}
+          >
+            ＋ Add project
+          </button>
         </div>
       ))}
+      <button
+        className="left-panel-add-row left-panel-add-section"
+        onClick={() => addSection('New Section')}
+      >
+        ＋ Add section
+      </button>
 
       {/* Swimlane context menu */}
       {ctxMenu && (
@@ -606,6 +622,14 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
           />
         );
       })()}
+
+      {/* "+ Add project" modal (per-section rows above) */}
+      {addLaneSectionId && (
+        <AddSwimlaneModal
+          initialSectionId={addLaneSectionId}
+          onClose={() => setAddLaneSectionId(null)}
+        />
+      )}
     </div>
   );
 });

@@ -3,15 +3,19 @@ import { useGanttStore } from '../store/useGanttStore';
 
 interface Props {
   onClose: () => void;
+  /** Preselect this section (e.g. opened from that section's add row). */
+  initialSectionId?: string;
 }
 
-export default function AddSwimlaneModal({ onClose }: Props) {
+export default function AddSwimlaneModal({ onClose, initialSectionId }: Props) {
   const sections = useGanttStore(s => s.sections);
   const addSwimlane = useGanttStore(s => s.addSwimlane);
 
   const sortedSections = [...sections].sort((a, b) => a.order - b.order);
   const [name, setName] = useState('');
-  const [section, setSection] = useState(sortedSections[sortedSections.length - 1]?.id || '');
+  const [section, setSection] = useState(
+    initialSectionId ?? (sortedSections[sortedSections.length - 1]?.id || '')
+  );
 
   const handleAdd = () => {
     if (!name.trim()) return;

@@ -30,6 +30,7 @@ import {
   FLOATING_NOTE_MIN_HEIGHT,
 } from '../types/gantt';
 import { pickNextEnvColor } from '../utils/contention';
+import { PRESET_MATRIX } from '../data/displayPresets';
 import { getBuiltinPhaseTypes, getPhaseDef, deriveColorScheme, applyThemePresetsToBuiltins } from '../data/phasePresets';
 import type { ThemeName } from '../theme/colors';
 import { getDaysInMonth } from '../utils/dateUtils';
@@ -184,6 +185,9 @@ interface GanttActions {
   togglePeopleIndicators: () => void;
   togglePeopleContention: () => void;
   setBarStyle: (style: import('../types/gantt').BarStyle) => void;
+  /** Apply a display preset's toggle matrix in one step. The active preset is
+   * derived (matchDisplayPreset), never stored. */
+  setDisplayPreset: (preset: import('../data/displayPresets').DisplayPreset) => void;
 
   // Persistence
   saveToStorage: () => void;
@@ -1219,6 +1223,11 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
 
   toggleWeekends: () => {
     set(state => ({ showWeekends: !state.showWeekends }));
+    get().saveToStorage();
+  },
+
+  setDisplayPreset: (preset) => {
+    set({ ...PRESET_MATRIX[preset] });
     get().saveToStorage();
   },
 

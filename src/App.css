@@ -226,16 +226,172 @@ select option {
 [data-theme='light'] .bbd-logo-white { display: none; }
 [data-theme='light'] .bbd-logo-black { display: block; }
 
-.toolbar-filename {
-  font-weight: 400;
-  opacity: 0.75;
-  font-size: 13px;
-}
-
 .toolbar-filename-dirty {
   color: #ffb74d;
   font-weight: 700;
   opacity: 1;
+}
+
+/* Brand mark button (Home when signed in) */
+.toolbar-logo-btn {
+  display: inline-flex;
+  align-items: center;
+  background: none !important;
+  border: none !important;
+  padding: 2px 4px !important;
+  cursor: pointer;
+}
+
+/* Document chip — filename + dirty dot + caret; opens the File menu */
+.toolbar-doc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  max-width: 320px;
+}
+
+.toolbar-doc-chip:hover {
+  background: var(--hover) !important;
+  border-color: var(--border) !important;
+}
+
+.toolbar-doc-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toolbar-doc-caret {
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+/* Floating zoom cluster — bottom-right of the canvas, hidden in exports */
+.zoom-cluster {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  display: flex;
+  gap: 1px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  overflow: hidden;
+  z-index: 40;
+}
+
+.zoom-cluster button {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-family: var(--font-body);
+  padding: 5px 9px;
+  cursor: pointer;
+}
+
+.zoom-cluster button:hover {
+  background: var(--hover-strong);
+  color: var(--text-primary);
+}
+
+.gantt-container.is-exporting ~ * .zoom-cluster,
+.gantt-container.is-exporting .zoom-cluster {
+  display: none;
+}
+
+/* Invisible click-catcher behind the canvas context menu */
+.canvas-ctx-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+}
+
+/* Left panel add-affordances — the Insert menu's replacement */
+.left-panel-add-row {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 7px 12px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+.left-panel-add-row:hover {
+  color: var(--text-primary);
+  background: var(--hover);
+}
+
+.left-panel-add-section {
+  border-top: 1px solid var(--border);
+}
+
+/* Display menu: preset rows + segmented controls */
+.display-preset-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.display-preset-name {
+  font-weight: 600;
+}
+
+.display-preset-hint {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.view-menu-disclosure {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 14px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+.view-menu-disclosure:hover {
+  color: var(--text-primary);
+  background: var(--hover);
+}
+
+.display-segmented {
+  display: inline-flex;
+  margin: 2px 14px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.display-segmented button {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  padding: 5px 14px;
+  cursor: pointer;
+}
+
+.display-segmented button.on {
+  background: var(--accent-primary);
+  color: var(--on-accent);
 }
 
 .toolbar button {
