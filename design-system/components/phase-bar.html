@@ -1,0 +1,67 @@
+<!-- @dsCard group="App components" name="Phase bar anatomy" subtitle="Adornments per preset · hover-peek · conflict states" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Phase bar anatomy</title>
+<style>
+  * { margin: 0; box-sizing: border-box; font-family: 'Figtree', system-ui, sans-serif; }
+  body { background: #0b1426; color: #eee; padding: 24px; }
+  h2 { font-size: 12px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: #8aa0b8; margin: 20px 0 10px; }
+  h2:first-child { margin-top: 0; }
+  .lane { position: relative; height: 48px; background: #0e2543; border-radius: 6px; margin-bottom: 8px; overflow: visible; }
+  .bar { position: absolute; top: 9px; height: 30px; background: #16335a; border: 1px solid rgba(203,102,0,.5); border-radius: 8px; display: flex; align-items: center; }
+  .tag { width: 5px; height: 100%; background: #cb6600; border-radius: 7px 0 0 7px; flex-shrink: 0; }
+  .lbl { font-size: 10px; font-weight: 700; padding: 0 8px; }
+  .envdot { position: absolute; top: 3px; right: 4px; width: 10px; height: 10px; border-radius: 50%; background: #43a047; border: 1.5px solid #fff; }
+  .chip { position: absolute; bottom: 2px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #fff; font-size: 0; }
+  .ribbon-b { position: absolute; bottom: 1px; height: 5px; border-radius: 2px; background: #e57394; border: .5px solid rgba(255,255,255,.45); }
+  .ribbon-t { position: absolute; top: 1px; height: 5px; border-radius: 2px; background: #e879ab; border: .5px solid rgba(255,255,255,.45); }
+  .datelbl { position: absolute; left: 12px; top: 12px; font-size: 8px; font-weight: 700; opacity: .85; writing-mode: vertical-rl; transform: rotate(180deg); }
+  .pill { position: absolute; top: -18px; left: 6px; font-size: 9px; font-weight: 700; background: #43a047; color: #fff; border-radius: 3px; padding: 1px 7px; letter-spacing: .4px; }
+  .selected { border: 2px solid #eee; box-shadow: 0 0 3px rgba(0,0,0,.3); }
+  .cap { font-size: 11px; color: #8aa0b8; margin: 4px 0 0; line-height: 1.55; }
+  .conflictpill { position: absolute; top: -18px; left: 6px; font-size: 9px; font-weight: 800; background: #c0466a; color: #fff; border-radius: 3px; padding: 1px 7px; }
+  .clearpill { background: #009991; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; }
+</style>
+</head>
+<body>
+
+<h2>Resting state per preset — same bar, three densities</h2>
+<div class="grid">
+<div>
+  <div class="lane"><div class="bar" style="left:16px;width:220px"><span class="tag"></span><span class="lbl">DEVELOPMENT</span></div></div>
+  <div class="cap"><b>Minimal</b> — the bar, nothing else. New plans start here.</div>
+</div>
+<div>
+  <div class="lane"><div class="bar" style="left:16px;width:220px"><span class="tag"></span><span class="datelbl">3 Feb</span><span class="lbl" style="padding-left:14px">DEVELOPMENT</span><span class="envdot"></span></div><div class="ribbon-b" style="left:100px;width:90px"></div></div>
+  <div class="cap"><b>Delivery (default)</b> — + start date, env dot, env-contention ribbon (below).</div>
+</div>
+<div>
+  <div class="lane"><div class="bar" style="left:16px;width:220px"><span class="tag"></span><span class="lbl">DEVELOPMENT</span><span class="envdot"></span><span class="chip" style="left:8px;background:#d81b60"></span><span class="chip" style="left:20px;background:#039be5"></span></div><div class="ribbon-b" style="left:100px;width:90px"></div><div class="ribbon-t" style="left:60px;width:80px"></div></div>
+  <div class="cap"><b>Workload</b> — + people chips (bottom-left), double-booking ribbon (top). Date labels off — chips need the room.</div>
+</div>
+<div>
+  <div class="lane"><div class="bar selected" style="left:16px;width:220px"><span class="tag"></span><span class="lbl">DEVELOPMENT</span><span class="envdot"></span><span class="chip" style="left:8px;background:#d81b60"></span><span class="chip" style="left:20px;background:#039be5"></span></div><div class="pill">QA ENV</div></div>
+  <div class="cap"><b>Hover / selected — full peek in ANY preset.</b> The bar you're pointing at always shows everything: env pill, chips, dates. Clutter rules apply to the crowd, not the subject.</div>
+</div>
+</div>
+
+<h2>Ribbon geometry — two conflict systems, never colliding</h2>
+<div class="lane" style="height:56px">
+  <div class="bar" style="left:16px;width:260px;top:13px"><span class="tag"></span><span class="lbl">SIT</span></div>
+  <div class="ribbon-t" style="left:60px;width:120px;top:5px"></div>
+  <div class="ribbon-b" style="left:120px;width:120px;bottom:5px"></div>
+</div>
+<div class="cap">Double-booking (people) rides <b>above</b> the bar · env contention rides <b>below</b>. Both day-snapped to the overlap range, coloured by the contended resource, brightened for dark canvas.</div>
+
+<h2>Drag feedback — always on, every preset</h2>
+<div class="grid">
+  <div><div class="lane"><div class="bar" style="left:16px;width:180px"><span class="tag" style="background:#009991"></span><span class="lbl">SIT</span></div><div class="conflictpill clearpill">CLEAR</div></div></div>
+  <div><div class="lane"><div class="bar" style="left:16px;width:180px"><span class="tag" style="background:#009991"></span><span class="lbl">SIT</span></div><div class="conflictpill">CONFLICT (QA, Alice)</div></div></div>
+</div>
+<div class="cap">Live while dragging a bar that has an exclusive env or assignees: green CLEAR / pink CONFLICT naming every contended resource. This is the tool's core promise — it never moves silently into a clash.</div>
+
+</body>
+</html>

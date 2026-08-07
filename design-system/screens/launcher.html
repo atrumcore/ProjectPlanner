@@ -1,0 +1,94 @@
+<!-- @dsCard group="Screens" name="Home / launcher" subtitle="Signed in (Teams) · signed out (local) — one Home for everyone" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Home / launcher</title>
+<style>
+  * { margin: 0; box-sizing: border-box; font-family: 'Figtree', system-ui, sans-serif; }
+  body { background: #060d1c; color: #eee; padding: 20px; }
+  h2 { font-size: 12px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: #8aa0b8; margin: 24px 0 8px; }
+  h2:first-child { margin-top: 0; }
+  .app { width: 1000px; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; overflow: hidden; background: #0b1426; }
+  .tb { display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 16px; background: #0d203c; border-bottom: 1px solid rgba(255,255,255,.1); }
+  .mark { width: 4px; height: 16px; border-radius: 2px; background: #ce181e; }
+  .appname { font-size: 13px; font-weight: 700; }
+  .spacer { flex: 1; }
+  .chipacct { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px 2px 3px; border: 1px solid rgba(255,255,255,.18); border-radius: 6px; font-size: 11px; }
+  .av { width: 20px; height: 20px; border-radius: 50%; background: #0098cc; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; }
+  .btn { font-size: 11px; font-weight: 600; padding: 4px 10px; background: transparent; color: #eee; border: 1px solid rgba(255,255,255,.18); border-radius: 6px; }
+  .body2 { display: flex; min-height: 300px; }
+  .side { width: 220px; border-right: 1px solid rgba(255,255,255,.1); padding: 12px 0; flex-shrink: 0; }
+  .side .lbl { font-size: 9px; font-weight: 800; letter-spacing: .5px; color: #6e8299; padding: 0 14px 6px; }
+  .titem { display: flex; align-items: center; gap: 8px; padding: 7px 14px; font-size: 12px; font-weight: 600; }
+  .titem.active { background: #10294a; box-shadow: inset 3px 0 0 #0098cc; }
+  .tsq { width: 20px; height: 20px; border-radius: 5px; color: #fff; font-size: 8px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; }
+  .content { flex: 1; padding: 16px 20px; }
+  .content h3 { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+  .content .sub { font-size: 11px; color: #8aa0b8; margin-bottom: 12px; }
+  .plan { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: #102a4a; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; margin-bottom: 7px; font-size: 12px; }
+  .plan .ico { font-size: 14px; opacity: .7; }
+  .plan .nm { flex: 1; font-weight: 600; }
+  .plan .nm small { display: block; font-weight: 400; font-size: 10px; color: #8aa0b8; }
+  .plan .del { color: #566d88; font-size: 11px; }
+  .newrow { display: flex; gap: 8px; margin-top: 12px; }
+  .newrow button { font-size: 11px; font-weight: 600; padding: 6px 12px; border-radius: 6px; font-family: inherit; }
+  .b1 { background: #8f87f1; color: #0b0a2a; border: none; }
+  .b2 { background: transparent; color: #eee; border: 1px solid rgba(255,255,255,.2); }
+  .cap { font-size: 11px; color: #8aa0b8; margin-top: 10px; line-height: 1.6; max-width: 1000px; }
+  .cap b { color: #eee; }
+  .greyed { opacity: .45; }
+</style>
+</head>
+<body>
+
+<h2>Signed in — plans live in Teams</h2>
+<div class="app">
+  <div class="tb">
+    <span class="mark"></span><span class="appname">BBD Project Planner</span>
+    <span class="spacer"></span>
+    <span class="chipacct"><span class="av">SS</span> Streicher</span>
+  </div>
+  <div class="body2">
+    <div class="side">
+      <div class="lbl">MY TEAMS</div>
+      <div class="titem active"><span class="tsq" style="background:#5e35b1">DC</span> Digital Channels</div>
+      <div class="titem"><span class="tsq" style="background:#00695c">PE</span> Platform Engineering</div>
+      <div class="titem"><span class="tsq" style="background:#ad1457">DI</span> Data &amp; Insights</div>
+      <div class="lbl" style="margin-top:14px">PERSONAL</div>
+      <div class="titem"><span class="tsq" style="background:#16335a;color:#8aa0b8">◔</span> My drafts</div>
+    </div>
+    <div class="content">
+      <h3>Digital Channels — Roadmaps</h3>
+      <div class="sub">General channel · Files › Roadmaps · visible to the whole team</div>
+      <div class="plan"><span class="ico">▦</span><span class="nm">2026 Priority Roadmap<small>Alice Dlamini · today 09:12</small></span><span class="del">Delete</span></div>
+      <div class="plan"><span class="ico">▦</span><span class="nm">Mobile app relaunch<small>Bob Nkosi · Mon 16:40</small></span><span class="del">Delete</span></div>
+      <div class="newrow"><button class="b1">＋ New plan</button><button class="b2">Open local file…</button></div>
+    </div>
+  </div>
+</div>
+
+<h2>Signed out — same Home, local files</h2>
+<div class="app">
+  <div class="tb">
+    <span class="mark"></span><span class="appname">BBD Project Planner</span>
+    <span class="spacer"></span>
+    <button class="btn">Sign in with Microsoft</button>
+  </div>
+  <div class="body2" style="min-height:240px">
+    <div class="content" style="max-width:560px">
+      <h3>Recent plans</h3>
+      <div class="sub">Stored on this device — sign in to keep plans in your Teams</div>
+      <div class="plan"><span class="ico">▤</span><span class="nm">roadmap-2026.json<small>you · yesterday 17:03</small></span></div>
+      <div class="plan greyed"><span class="ico">▤</span><span class="nm">q3-replan.json<small>needs re-open — browser can't retain this file</small></span></div>
+      <div class="newrow"><button class="b1">＋ New plan</button><button class="b2">Open local file…</button><button class="b2">Sample plan</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="cap">
+  <b>One Home for everyone</b> — the launcher no longer gates on sign-in. Signed in: Teams in the sidebar (squares = team colour+initials), each team's plans from its Roadmaps folder with <b>who saved it last</b>, My drafts in OneDrive. Signed out: recent local files (re-opened via stored handles where the browser allows; greyed → re-pick), New, Open, Sample. Delete is the standard two-click confirm. The brand mark in the plan editor's toolbar returns here.
+</div>
+
+</body>
+</html>

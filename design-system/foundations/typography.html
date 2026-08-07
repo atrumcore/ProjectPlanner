@@ -1,0 +1,58 @@
+<!-- @dsCard group="Foundations" name="Type & spacing" subtitle="Figtree · scale · spacing steps · radii" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Type &amp; spacing</title>
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  body { font-family: 'Figtree', system-ui, sans-serif; background: #0b1426; color: #eee; padding: 24px; }
+  h2 { font-size: 13px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: #8aa0b8; margin: 22px 0 10px; }
+  h2:first-child { margin-top: 0; }
+  table { border-collapse: collapse; width: 100%; }
+  td { padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,.08); vertical-align: baseline; }
+  td.meta { font-size: 10px; color: #6e8299; font-family: ui-monospace, monospace; white-space: nowrap; }
+  .bar { height: 14px; background: #8f87f1; border-radius: 3px; display: inline-block; vertical-align: middle; }
+  .chip { display: inline-block; border: 1px solid rgba(255,255,255,.2); border-radius: 10px; padding: 2px 10px; font-size: 11px; margin-right: 6px; }
+  .rad { display: inline-block; width: 56px; height: 36px; background: #16335a; border: 1px solid rgba(255,255,255,.2); margin-right: 10px; vertical-align: middle; }
+  .note { font-size: 11px; color: #8aa0b8; line-height: 1.5; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<h2>Typeface</h2>
+<div class="note">Primary: <b style="color:#eee">Figtree</b> (Google Fonts, 400/500/600/700/800) · fallback Aptos Display → Helvetica → system. Monospace only for token values, never UI.</div>
+
+<h2>Scale — every size in the app</h2>
+<table>
+  <tr><td style="font-size:15px;font-weight:800">App title / launcher heading</td><td class="meta">15px · 800</td></tr>
+  <tr><td style="font-size:14px;font-weight:700">Panel detail name</td><td class="meta">14px · 700</td></tr>
+  <tr><td style="font-size:13px;font-weight:600">Row titles, buttons, plan names</td><td class="meta">13px · 600</td></tr>
+  <tr><td style="font-size:12px">Body — panels, menus, inputs</td><td class="meta">12px · 400</td></tr>
+  <tr><td style="font-size:11px;color:#8aa0b8">Secondary — meta, hints, toolbar attribution</td><td class="meta">11px · 400</td></tr>
+  <tr><td style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#6e8299">Section labels / eyebrows</td><td class="meta">10px · 700 · caps · +0.5px</td></tr>
+  <tr><td style="font-size:10px;font-weight:700">On-bar labels (SVG)</td><td class="meta">10px · 700 · phase bars</td></tr>
+  <tr><td style="font-size:9px;font-weight:700">Badges, pills, chip initials</td><td class="meta">9px · 700 · floor — never smaller</td></tr>
+</table>
+
+<h2>Spacing steps</h2>
+<div style="display:flex; flex-direction:column; gap:6px;">
+  <div><span class="bar" style="width:4px"></span> <span class="note">4 — chip gaps, icon-to-text</span></div>
+  <div><span class="bar" style="width:8px"></span> <span class="note">8 — control gaps, row padding-y</span></div>
+  <div><span class="bar" style="width:12px"></span> <span class="note">12 — group gaps, panel padding-x</span></div>
+  <div><span class="bar" style="width:16px"></span> <span class="note">16 — section gaps</span></div>
+  <div><span class="bar" style="width:24px"></span> <span class="note">24 — screen padding</span></div>
+</div>
+
+<h2>Radii &amp; control heights</h2>
+<div style="padding-bottom: 8px;">
+  <span class="rad" style="border-radius:4px"></span>
+  <span class="rad" style="border-radius:6px"></span>
+  <span class="rad" style="border-radius:8px"></span>
+  <span class="rad" style="border-radius:10px"></span>
+</div>
+<div class="note">4 — swatches, tags · 6 — buttons, inputs, menu items · 8 — bars, cards, chips-pill · 10+ — panels, modals.<br>
+Control heights: 24 toolbar buttons · 28 rail tabs · 32 inputs · rows 48 (timeline) / 34 (lists).</div>
+
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!-- @dsCard group="Controls" name="Menus & popovers" subtitle="Dropdown / context menu / picker — one anatomy" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Menus &amp; popovers</title>
+<style>
+  * { margin: 0; box-sizing: border-box; font-family: 'Figtree', system-ui, sans-serif; }
+  body { background: #0b1426; color: #eee; padding: 24px; display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+  .menu { background: #16335a; border: 1px solid rgba(255,255,255,.15); border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.35); padding: 4px; min-width: 200px; font-size: 12px; }
+  .mi { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 7px 10px; border-radius: 5px; cursor: pointer; }
+  .mi:hover { background: rgba(255,255,255,.08); }
+  .mi .sc { font-size: 10px; color: #6e8299; font-family: ui-monospace, monospace; }
+  .mi.danger { color: #e0556b; }
+  .divider { height: 1px; background: rgba(255,255,255,.1); margin: 4px 6px; }
+  .label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #6e8299; padding: 6px 10px 2px; }
+  .check { color: #0098cc; }
+  .picker-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 5px; cursor: pointer; }
+  .picker-item:hover { background: rgba(255,255,255,.08); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .sq { border-radius: 3px; }
+  .cap { font-size: 11px; color: #8aa0b8; margin-top: 6px; max-width: 210px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<div>
+  <div class="menu">
+    <div class="mi">New <span class="sc">Ctrl+N</span></div>
+    <div class="mi">Open… <span class="sc">Ctrl+O</span></div>
+    <div class="mi">Save <span class="sc">Ctrl+S</span></div>
+    <div class="mi">Save a copy… <span class="sc">Ctrl+Shift+S</span></div>
+    <div class="divider"></div>
+    <div class="mi">Home</div>
+  </div>
+  <div class="cap"><b>File menu</b> — opens from the document chip. Shortcuts right-aligned, monospace, muted.</div>
+</div>
+
+<div>
+  <div class="menu">
+    <div class="mi">Edit label</div>
+    <div class="mi">Change phase ▸</div>
+    <div class="mi">Environment ▸</div>
+    <div class="mi">People ▸</div>
+    <div class="divider"></div>
+    <div class="mi">Properties… <span class="sc">opens Inspector</span></div>
+    <div class="divider"></div>
+    <div class="mi danger">Delete bar</div>
+  </div>
+  <div class="cap"><b>Context menu</b> (right-click) — shortcuts to Inspector actions, never the only path. Every context menu ends with Properties… + a danger zone.</div>
+</div>
+
+<div>
+  <div class="menu" style="min-width:220px">
+    <div class="label">Teams</div>
+    <div class="picker-item"><span class="dot sq" style="background:#5e35b1"></span> Backend Team <span style="margin-left:auto" class="check">✓</span></div>
+    <div class="label">People</div>
+    <div class="picker-item"><span class="dot" style="background:#d81b60"></span> Alice Dlamini <span style="font-size:10px;color:#6e8299">· Backend Dev</span></div>
+    <div class="picker-item"><span class="dot" style="background:#039be5"></span> Bob Nkosi <span style="margin-left:auto" class="check">✓</span></div>
+    <div class="picker-item"><span class="dot" style="background:#6d4c41"></span> Dan Visser <span style="font-size:10px;color:#6e8299">(Guest)</span></div>
+    <div class="divider"></div>
+    <div class="mi" style="color:#8aa0b8">Manage people…</div>
+  </div>
+  <div class="cap"><b>Multi-select picker</b> — stays open on toggle; checks in interactive blue; group labels in caps; footer link to the full panel.</div>
+</div>
+
+</body>
+</html>

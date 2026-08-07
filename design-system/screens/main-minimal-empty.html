@@ -1,0 +1,88 @@
+<!-- @dsCard group="Screens" name="Main · empty plan" subtitle="Minimal preset · starter card · first-run experience" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Main · empty plan</title>
+<style>
+  * { margin: 0; box-sizing: border-box; font-family: 'Figtree', system-ui, sans-serif; }
+  body { background: #060d1c; color: #eee; padding: 20px; }
+  .app { width: 1120px; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; overflow: hidden; background: #0b1426; }
+  .tb { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; background: #0d203c; border-bottom: 1px solid rgba(255,255,255,.1); }
+  .mark { width: 4px; height: 15px; border-radius: 2px; background: #ce181e; }
+  .doc { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 6px; }
+  .doc .caret { font-size: 9px; color: #6e8299; }
+  .btn { font-size: 11px; font-weight: 600; padding: 4px 10px; background: transparent; color: #eee; border: 1px solid rgba(255,255,255,.18); border-radius: 6px; }
+  .spacer { flex: 1; }
+  .search { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; color: #8aa0b8; border: 1px solid rgba(255,255,255,.15); border-radius: 6px; padding: 4px 10px; min-width: 140px; }
+  .search kbd { font-size: 9px; background: rgba(255,255,255,.08); border-radius: 3px; padding: 1px 5px; font-family: inherit; }
+  .main { display: flex; height: 360px; }
+  .lp { width: 218px; background: #0b1426; border-right: 1px solid rgba(255,255,255,.1); font-size: 11px; flex-shrink: 0; }
+  .lp .head { height: 34px; display: flex; align-items: center; padding: 0 10px; font-size: 10px; font-weight: 800; letter-spacing: .4px; color: #8aa0b8; border-bottom: 1px solid rgba(255,255,255,.08); }
+  .sechead { padding: 5px 10px; background: #16335a; border-left: 3px solid #8f87f1; font-size: 10px; font-weight: 800; letter-spacing: .3px; }
+  .addrow { padding: 6px 10px; color: #566d88; font-size: 10px; }
+  .cv { flex: 1; position: relative; background: #0b1426; }
+  .months { display: flex; height: 20px; border-bottom: 1px solid rgba(255,255,255,.1); font-size: 9px; font-weight: 700; color: #8aa0b8; }
+  .months div { flex: 1; display: flex; align-items: center; justify-content: center; border-right: 1px solid rgba(255,255,255,.06); }
+  .wk { position: absolute; top: 20px; bottom: 0; width: 12px; background: rgba(255,255,255,.03); }
+  .today { position: absolute; top: 20px; bottom: 0; left: 208px; width: 2px; background: #ffb224; opacity: .9; }
+  .starter { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 320px; background: #102a4a; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; padding: 22px 20px; text-align: center; box-shadow: 0 8px 28px rgba(0,0,0,.4); }
+  .starter h3 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .starter p { font-size: 11px; color: #8aa0b8; margin-bottom: 14px; line-height: 1.5; }
+  .starter .b1 { display: block; width: 100%; font-size: 12px; font-weight: 700; padding: 8px; background: #8f87f1; color: #0b0a2a; border: none; border-radius: 7px; margin-bottom: 7px; font-family: inherit; }
+  .starter .b2 { display: block; width: 100%; font-size: 12px; font-weight: 600; padding: 8px; background: transparent; color: #eee; border: 1px solid rgba(255,255,255,.2); border-radius: 7px; font-family: inherit; }
+  .starter .hint { font-size: 10px; color: #6e8299; margin-top: 12px; }
+  .starter .hint kbd { font-size: 8px; background: rgba(255,255,255,.08); border-radius: 3px; padding: 1px 4px; font-family: inherit; }
+  .rail { width: 40px; background: #0d203c; border-left: 1px solid rgba(255,255,255,.1); display: flex; flex-direction: column; align-items: center; padding-top: 8px; gap: 5px; flex-shrink: 0; }
+  .tab { width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; color: #8aa0b8; font-size: 13px; }
+  .cap { font-size: 11px; color: #8aa0b8; margin-top: 10px; line-height: 1.6; max-width: 1100px; }
+  .cap b { color: #eee; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="tb">
+    <span class="mark"></span>
+    <span class="doc">Untitled <span class="caret">▾</span></span>
+    <button class="btn">Today</button>
+    <span class="spacer"></span>
+    <button class="btn">Display ▾</button>
+    <button class="btn">Share ▾</button>
+    <span class="search">Search…<span style="flex:1"></span><kbd>Ctrl K</kbd></span>
+    <button class="btn">Sign in</button>
+  </div>
+  <div class="main">
+    <div class="lp">
+      <div class="head">PROJECTS</div>
+      <div class="sechead">IN PROGRESS</div>
+      <div class="addrow">＋ Add project</div>
+      <div class="addrow" style="border-top:1px solid rgba(255,255,255,.07)">＋ Add section</div>
+    </div>
+    <div class="cv">
+      <div class="months"><div>FEB 2026</div><div>MAR 2026</div><div>APR 2026</div><div>MAY 2026</div></div>
+      <div class="wk" style="left:64px"></div><div class="wk" style="left:140px"></div><div class="wk" style="left:216px"></div><div class="wk" style="left:292px"></div><div class="wk" style="left:368px"></div><div class="wk" style="left:444px"></div><div class="wk" style="left:520px"></div><div class="wk" style="left:596px"></div>
+      <div class="today"></div>
+      <div class="starter">
+        <h3>Start your roadmap</h3>
+        <p>A plan is projects on a timeline. Add your first, or explore a filled-in example.</p>
+        <button class="b1">＋ Add your first project</button>
+        <button class="b2">Open the sample plan</button>
+        <div class="hint">drag on the timeline to draw a bar · <kbd>Ctrl K</kbd> for anything</div>
+      </div>
+    </div>
+    <div class="rail">
+      <div class="tab">ⓘ</div>
+      <div class="tab">☰</div>
+      <div class="tab">▣</div>
+      <div class="tab">◉</div>
+    </div>
+  </div>
+</div>
+
+<div class="cap">
+  <b>First-run.</b> New plans open in the Minimal preset — weekends, go-lives and bars only; environments and people exist but stay invisible until used. The starter card is the only overlay: primary action, sample plan (6 lanes, 1 env contention, 1 double-booking — so badges demo themselves), and the two gestures worth knowing. Rail tabs are quiet — no badges at zero, and each opens to a one-sentence teach state. Card dismisses on first lane or bar and never returns.
+</div>
+
+</body>
+</html>

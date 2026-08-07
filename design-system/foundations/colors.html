@@ -1,0 +1,102 @@
+<!-- @dsCard group="Foundations" name="Colour tokens" subtitle="Both themes · semantic · categorical palettes" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Colour tokens</title>
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  body { font-family: 'Figtree', system-ui, sans-serif; background: #0b1426; color: #eee; padding: 24px; }
+  h2 { font-size: 13px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: #8aa0b8; margin: 22px 0 10px; }
+  h2:first-child { margin-top: 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+  .sw { border-radius: 8px; padding: 10px; border: 1px solid rgba(255,255,255,.12); }
+  .sw b { display: block; font-size: 11px; font-weight: 700; }
+  .sw span { font-size: 10px; opacity: .75; font-family: ui-monospace, monospace; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .dot { width: 34px; height: 34px; border-radius: 8px; border: 1px solid rgba(255,255,255,.25); position: relative; }
+  .dot i { position: absolute; top: 38px; left: 0; font-style: normal; font-size: 9px; white-space: nowrap; color: #8aa0b8; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .panel-light { background: #e8e4dd; color: #1a1814; border-radius: 10px; padding: 14px; }
+  .panel-light .sw { border-color: rgba(0,0,0,.15); }
+  .panel-light h3, .panel-dark h3 { font-size: 12px; font-weight: 800; margin-bottom: 8px; }
+  .panel-dark { background: #060d1a; border-radius: 10px; padding: 14px; }
+  .note { font-size: 11px; color: #8aa0b8; margin-top: 8px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<h2>Brand</h2>
+<div class="grid">
+  <div class="sw" style="background:#ce181e"><b>Brand red</b><span>#CE181E · logo mark only — never interactive state (red = danger here)</span></div>
+  <div class="sw" style="background:#1b1846"><b>BBD navy</b><span>#1B1846 · accent-primary (light theme)</span></div>
+  <div class="sw" style="background:#8f87f1;color:#0b0a2a"><b>Navy, lifted</b><span>#8F87F1 · accent-primary (dark theme)</span></div>
+</div>
+
+<h2>Surfaces · dark (default) vs light</h2>
+<div class="pair">
+  <div class="panel-dark">
+    <h3>Dark</h3>
+    <div class="grid">
+      <div class="sw" style="background:#0b1426"><b>bg-app</b><span>#0B1426</span></div>
+      <div class="sw" style="background:#0d203c"><b>bg-header</b><span>#0D203C</span></div>
+      <div class="sw" style="background:#102a4a"><b>bg-surface</b><span>#102A4A</span></div>
+      <div class="sw" style="background:#16335a"><b>bg-surface-2</b><span>#16335A</span></div>
+    </div>
+    <div class="note">text #EEEEEE · secondary #8AA0B8 · muted #6E8299 · border white@10%</div>
+  </div>
+  <div class="panel-light">
+    <h3>Light</h3>
+    <div class="grid">
+      <div class="sw" style="background:#e8e4dd"><b>bg-app</b><span>#E8E4DD</span></div>
+      <div class="sw" style="background:#ffffff"><b>bg-header</b><span>#FFFFFF</span></div>
+      <div class="sw" style="background:#fffaf3"><b>bg-surface</b><span>#FFFAF3</span></div>
+      <div class="sw" style="background:#f5f2ec"><b>bg-surface-2</b><span>#F5F2EC</span></div>
+    </div>
+    <div class="note" style="color:#5c5a54">text #1A1814 · header text #1B1846 (brand navy) · border #DEDAD3</div>
+  </div>
+</div>
+
+<h2>Semantic</h2>
+<div class="grid">
+  <div class="sw" style="background:#0098cc"><b>Interactive blue</b><span>#0098CC · active panels/toggles (dark) / #0277A3 light</span></div>
+  <div class="sw" style="background:#009991"><b>Success</b><span>#009991</span></div>
+  <div class="sw" style="background:#cb6600"><b>Warning</b><span>#CB6600</span></div>
+  <div class="sw" style="background:#99001b"><b>Error</b><span>#99001B · bright #E0556B</span></div>
+  <div class="sw" style="background:#c0466a"><b>Contention</b><span>#C0466A dark / #7A1F3D light · conflict badges + ribbons</span></div>
+  <div class="sw" style="background:#ff8a3d;color:#3a1c05"><b>Today</b><span>#FF8A3D marker line + strip</span></div>
+</div>
+
+<h2>Categorical palettes</h2>
+<div style="display:flex; gap:40px; flex-wrap:wrap; padding-bottom: 40px;">
+  <div>
+    <div class="note" style="margin:0 0 6px">Phase types (defaults, user-recolourable)</div>
+    <div class="row">
+      <div class="dot" style="background:#0098cc"><i>analysis</i></div>
+      <div class="dot" style="background:#cb6600"><i>development</i></div>
+      <div class="dot" style="background:#009991"><i>sit</i></div>
+      <div class="dot" style="background:#31bf69"><i>uat</i></div>
+      <div class="dot" style="background:#d23a52"><i>live</i></div>
+      <div class="dot" style="background:#8aa0b8"><i>custom</i></div>
+    </div>
+  </div>
+  <div>
+    <div class="note" style="margin:0 0 6px">People &amp; teams (offset hues from envs)</div>
+    <div class="row">
+      <div class="dot" style="background:#d81b60"></div><div class="dot" style="background:#5e35b1"></div>
+      <div class="dot" style="background:#039be5"></div><div class="dot" style="background:#00897b"></div>
+      <div class="dot" style="background:#7cb342"></div><div class="dot" style="background:#ef6c00"></div>
+    </div>
+  </div>
+  <div>
+    <div class="note" style="margin:0 0 6px">Environments</div>
+    <div class="row">
+      <div class="dot" style="background:#e53935"></div><div class="dot" style="background:#f57c00"></div>
+      <div class="dot" style="background:#fbc02d"></div><div class="dot" style="background:#43a047"></div>
+      <div class="dot" style="background:#00acc1"></div><div class="dot" style="background:#1e88e5"></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

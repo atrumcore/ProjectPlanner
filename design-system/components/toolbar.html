@@ -1,0 +1,71 @@
+<!-- @dsCard group="App components" name="Toolbar" subtitle="7 controls · signed in & out · both themes" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Toolbar</title>
+<style>
+  * { margin: 0; box-sizing: border-box; font-family: 'Figtree', system-ui, sans-serif; }
+  body { background: #0b1426; color: #eee; padding: 24px; }
+  h2 { font-size: 12px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: #8aa0b8; margin: 20px 0 8px; }
+  h2:first-child { margin-top: 0; }
+  .tb { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; background: #0d203c; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; }
+  .mark { width: 4px; height: 15px; border-radius: 2px; background: #ce181e; cursor: pointer; }
+  .doc { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 6px; cursor: pointer; }
+  .doc:hover { background: rgba(255,255,255,.07); }
+  .doc .dirty { color: #ff8a3d; }
+  .doc .caret { font-size: 9px; color: #6e8299; }
+  .btn { font-size: 11px; font-weight: 600; padding: 4px 10px; background: transparent; color: #eee; border: 1px solid rgba(255,255,255,.18); border-radius: 6px; cursor: pointer; }
+  .spacer { flex: 1; }
+  .search { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; color: #8aa0b8; border: 1px solid rgba(255,255,255,.15); border-radius: 6px; padding: 4px 10px; min-width: 150px; cursor: pointer; }
+  .search kbd { font-size: 9px; background: rgba(255,255,255,.08); border-radius: 3px; padding: 1px 5px; font-family: inherit; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px 2px 3px; border: 1px solid rgba(255,255,255,.18); border-radius: 6px; font-size: 11px; cursor: pointer; }
+  .av { width: 20px; height: 20px; border-radius: 50%; background: #0098cc; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; }
+  .light { background: #ffffff; border-color: #c8c3ba; color: #1b1846; }
+  .light .btn { color: #1b1846; border-color: #c8c3ba; }
+  .light .search { color: #5c5a54; border-color: #c8c3ba; }
+  .light .doc:hover { background: rgba(0,0,0,.05); }
+  .cap { font-size: 11px; color: #8aa0b8; margin-top: 8px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<h2>Signed in · dark (default)</h2>
+<div class="tb">
+  <span class="mark" title="Home"></span>
+  <span class="doc">2026 Priority Roadmap <span class="dirty">•</span> <span class="caret">▾</span></span>
+  <button class="btn">Today</button>
+  <span class="spacer"></span>
+  <button class="btn">Display ▾</button>
+  <button class="btn">Share ▾</button>
+  <span class="search">Search…<span style="flex:1"></span><kbd>Ctrl K</kbd></span>
+  <span class="chip"><span class="av">SS</span> Streicher</span>
+</div>
+<div class="cap">① brand mark = Home (signed in) · ② document chip opens the File menu; dirty dot lives here; tooltip = "saved by Alice · 09:12" · ③ Today · ④ Display (presets) · ⑤ Share (exports) · ⑥ palette · ⑦ account. Gone: File/Insert/View buttons, three panel buttons (→ rail), zoom (→ floating cluster), Undo/Redo (→ shortcuts + palette), Home button (→ mark).</div>
+
+<h2>Signed out</h2>
+<div class="tb">
+  <span class="mark"></span>
+  <span class="doc">Untitled <span class="caret">▾</span></span>
+  <button class="btn">Today</button>
+  <span class="spacer"></span>
+  <button class="btn">Display ▾</button>
+  <button class="btn">Share ▾</button>
+  <span class="search">Search…<span style="flex:1"></span><kbd>Ctrl K</kbd></span>
+  <button class="btn">Sign in</button>
+</div>
+
+<h2>Light theme</h2>
+<div class="tb light">
+  <span class="mark"></span>
+  <span class="doc" style="font-weight:700">2026 Priority Roadmap <span class="caret">▾</span></span>
+  <button class="btn">Today</button>
+  <span class="spacer"></span>
+  <button class="btn">Display ▾</button>
+  <button class="btn">Share ▾</button>
+  <span class="search">Search…<span style="flex:1"></span><kbd>Ctrl K</kbd></span>
+  <span class="chip" style="border-color:#c8c3ba"><span class="av" style="background:#1b1846">SS</span> Streicher</span>
+</div>
+
+</body>
+</html>

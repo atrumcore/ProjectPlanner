@@ -1,0 +1,53 @@
+<!-- @dsCard group="App components" name="Rail & panel shell" subtitle="Four tabs · one panel · badges always live" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rail &amp; panel shell</title>
+<style>
+  * { margin: 0; box-sizing: border-box; font-family: 'Figtree', system-ui, sans-serif; }
+  body { background: #0b1426; color: #eee; padding: 24px; display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+  .demo { display: flex; height: 320px; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; overflow: hidden; }
+  .canvas { width: 180px; background: #0b1426; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #6e8299; }
+  .panel { width: 240px; background: #102a4a; border-left: 1px solid rgba(255,255,255,.1); display: flex; flex-direction: column; }
+  .panel-head { padding: 10px 12px; font-size: 12px; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,.1); display: flex; justify-content: space-between; }
+  .panel-head span:last-child { color: #6e8299; cursor: pointer; }
+  .panel-body { padding: 12px; font-size: 11px; color: #8aa0b8; line-height: 1.6; }
+  .rail { width: 44px; background: #0d203c; border-left: 1px solid rgba(255,255,255,.1); display: flex; flex-direction: column; align-items: center; padding-top: 10px; gap: 6px; }
+  .tab { width: 30px; height: 30px; border-radius: 7px; display: flex; align-items: center; justify-content: center; color: #8aa0b8; cursor: pointer; position: relative; font-size: 14px; }
+  .tab:hover { background: rgba(255,255,255,.07); color: #eee; }
+  .tab.active { background: #0098cc; color: #fff; }
+  .tab .badge { position: absolute; top: -3px; right: -3px; min-width: 14px; height: 14px; border-radius: 7px; background: #c0466a; color: #fff; font-size: 8px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 3px; }
+  .tab .badge.blue { background: #0098cc; }
+  .cap { font-size: 11px; color: #8aa0b8; max-width: 300px; line-height: 1.6; }
+  .cap b { color: #eee; }
+  kbd { font-size: 9px; background: rgba(255,255,255,.08); border-radius: 3px; padding: 1px 5px; }
+</style>
+</head>
+<body>
+
+<div class="demo">
+  <div class="canvas">timeline canvas</div>
+  <div class="panel">
+    <div class="panel-head">Inspector <span>×</span></div>
+    <div class="panel-body">Active tab's content renders here.<br><br>One shared shell: single width (320–720px, one resize handle on the left edge), one close affordance. The three existing panels' internals (People master-detail, Environments tabs, Notes list) become tab content unchanged.</div>
+  </div>
+  <div class="rail">
+    <div class="tab active" title="Inspector · Ctrl+I">ⓘ</div>
+    <div class="tab" title="Notes · Ctrl+Shift+N">☰<span class="badge blue">4</span></div>
+    <div class="tab" title="Environments · Ctrl+Shift+E">▣<span class="badge">1</span></div>
+    <div class="tab" title="People · Ctrl+Shift+P">◉<span class="badge">2</span></div>
+  </div>
+</div>
+
+<div class="cap">
+  <b>Rules</b><br><br>
+  · Rail strip (44px) is <b>always visible</b>, panel opens/closes — click active tab to close, <kbd>Esc</kbd> also closes.<br><br>
+  · <b>One panel at a time.</b> Replaces three independent slide-ins that could stack.<br><br>
+  · Order mirrors the old toolbar buttons: Inspector, Notes, Environments, People. Shortcuts unchanged (<kbd>Ctrl+Shift+N/E/P</kbd>), Inspector gains <kbd>Ctrl+I</kbd>.<br><br>
+  · <b>Badges always compute</b> — conflict counts show even when ribbons are toggled off. Pink = conflicts, blue = open notes. No badge when zero.<br><br>
+  · Icons monochrome &amp; quiet; active tab = interactive blue. The rail sits <b>outside</b> .gantt-container so exports never capture it.
+</div>
+
+</body>
+</html>
