@@ -14,9 +14,9 @@ export default function ViewMenu({ anchor, onClose }: Props) {
   const barStyle = useGanttStore(s => s.barStyle);
   const setBarStyle = useGanttStore(s => s.setBarStyle);
 
-  // Notes panel
-  const notesPanelOpen = useGanttStore(s => s.notesPanelOpen);
-  const toggleNotesPanel = useGanttStore(s => s.toggleNotesPanel);
+  // Notes panel (rail tab)
+  const railTab = useGanttStore(s => s.railTab);
+  const toggleRailTab = useGanttStore(s => s.toggleRailTab);
 
   // Visibility toggles
   const showWeekends = useGanttStore(s => s.showWeekends);
@@ -102,7 +102,7 @@ export default function ViewMenu({ anchor, onClose }: Props) {
       </label>
       <div className="view-menu-divider" />
       <label className="view-menu-item">
-        <input type="checkbox" checked={notesPanelOpen} onChange={toggleNotesPanel} />
+        <input type="checkbox" checked={railTab === 'notes'} onChange={() => toggleRailTab('notes')} />
         Notes panel
       </label>
       <div className="view-menu-divider" />

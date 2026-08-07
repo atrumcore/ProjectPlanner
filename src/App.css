@@ -1932,22 +1932,88 @@ select option {
 
 /* ─── Notes Panel ─── */
 
-.notes-panel {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  /* width set inline via style prop (resizable) */
-  background: var(--bg-row-even);
-  border-left: 2px solid var(--border);
-  box-shadow: -4px 0 16px rgba(0,0,0,0.12);
-  z-index: 500;
+/* ─── Rail + panel shell ────────────────────────────────────────────────────
+   The right-edge rail (44px tab strip, always visible) and the single shared
+   panel shell every tab renders into. Both are in-flow siblings of
+   .gantt-container inside .app-main-row, so exports never capture them and
+   panels never float over the canvas (design-system: rail card). */
+.app-main-row {
+  flex: 1;
   display: flex;
-  flex-direction: column;
-  animation: slideInRight 200ms ease-out;
+  min-height: 0;
+  overflow: hidden;
 }
 
-.notes-panel-resize-handle {
+.rail {
+  width: 44px;
+  flex-shrink: 0;
+  background: var(--bg-header);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 10px;
+  gap: 6px;
+}
+
+.rail-tab {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rail-tab:hover {
+  background: var(--hover);
+  color: var(--text-primary);
+}
+
+.rail-tab.active {
+  background: var(--accent-secondary);
+  color: #ffffff;
+}
+
+.rail-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 7px;
+  background: var(--contention);
+  color: #ffffff;
+  font-size: 8px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rail-badge.info {
+  background: var(--accent-secondary);
+}
+
+.rail-panel {
+  flex-shrink: 0;
+  position: relative;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.rail-panel-resize {
   position: absolute;
   left: -4px;
   top: 0;
@@ -1957,12 +2023,7 @@ select option {
   z-index: 1;
 }
 
-.notes-panel-resize-handle:hover,
-.notes-panel-resize-handle:active {
-  background: rgba(49, 191, 105, 0.18);
-}
-
-.notes-panel-resize-handle:hover::before {
+.rail-panel-resize:hover::before {
   content: '';
   position: absolute;
   left: 3px;
@@ -1970,56 +2031,66 @@ select option {
   transform: translateY(-50%);
   width: 2px;
   height: 24px;
-  background: var(--today-line);
+  background: var(--accent-secondary);
   border-radius: 1px;
   opacity: 0.6;
 }
 
-@keyframes slideInRight {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
-}
-
-@keyframes slideOutRight {
-  from { transform: translateX(0); }
-  to { transform: translateX(100%); }
-}
-
-.notes-panel--closing {
-  animation: slideOutRight 200ms ease-in forwards;
-}
-
-.notes-panel-header {
+.rail-panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  background: var(--accent-secondary);
-  color: #ffffff;
+  border-bottom: 1px solid var(--border);
   font-size: 13px;
   font-weight: 700;
+  font-family: var(--font-display);
   flex-shrink: 0;
 }
 
-.notes-panel-header button {
-  background: none;
-  border: none;
-  color: var(--text-header);
-  font-size: 16px;
-  cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 3px;
-  line-height: 1;
-}
-
-.notes-panel-header button:hover {
-  background: rgba(255,255,255,0.15);
-}
-
-.notes-panel-header-actions {
+.rail-panel-header-actions {
   display: flex;
   align-items: center;
   gap: 2px;
+}
+
+.rail-panel-header-actions button {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 15px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.rail-panel-header-actions button:hover {
+  background: var(--hover-strong);
+  color: var(--text-primary);
+}
+
+.rail-panel-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.inspector-placeholder {
+  padding: 18px 16px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.inspector-placeholder p {
+  margin: 10px 0 0;
+}
+
+.inspector-placeholder-note {
+  color: var(--text-muted);
+  font-size: 11px;
 }
 
 .notes-panel-filter-bar {
@@ -2445,73 +2516,8 @@ select option {
   background: var(--contention);
 }
 
-/* Environments panel — modeled on NotesPanel */
-.env-panel {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--bg-surface);
-  border-left: 1px solid var(--border);
-  box-shadow: -2px 0 12px rgba(0, 0, 0, 0.12);
-  display: flex;
-  flex-direction: column;
-  z-index: 500;
-  font-family: var(--font-body);
-  animation: env-panel-slide-in 200ms ease-out;
-}
-@keyframes env-panel-slide-in {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
-}
-.env-panel--closing {
-  animation: env-panel-slide-out 200ms ease-in forwards;
-}
-@keyframes env-panel-slide-out {
-  from { transform: translateX(0); }
-  to { transform: translateX(100%); }
-}
-.env-panel-resize-handle {
-  position: absolute;
-  left: -4px;
-  top: 0;
-  bottom: 0;
-  width: 8px;
-  cursor: ew-resize;
-}
-.env-panel-resize-handle:hover::before {
-  content: '';
-  position: absolute;
-  left: 3px;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: rgba(255, 255, 255, 0.25);
-}
-
-.env-panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 14px;
-  background: var(--accent-secondary);
-  font-weight: 700;
-  font-size: 14px;
-  color: #ffffff;
-}
-.env-panel-header-actions button {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.85);
-  padding: 2px 6px;
-  border-radius: 3px;
-}
-.env-panel-header-actions button:hover {
-  background: rgba(255, 255, 255, 0.18);
-}
-
+/* Environments / People tab content (hosted in the shared .rail-panel shell;
+   the old fixed-position .env-panel shell is gone). */
 .env-panel-tabs {
   display: flex;
   gap: 2px;

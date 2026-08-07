@@ -1,6 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useGanttStore } from '../store/useGanttStore';
-import { getContentions, getPeopleContentions } from '../utils/contention';
 import { formatSavedAt } from '../utils/dateUtils';
 import { useAuthStore } from '../auth/useAuthStore';
 import AccountChip from './AccountChip';
@@ -40,31 +39,6 @@ export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomRe
   const redo = useGanttStore(s => s.redo);
   const canUndo = useGanttStore(s => s.canUndo);
   const canRedo = useGanttStore(s => s.canRedo);
-  const notesPanelOpen = useGanttStore(s => s.notesPanelOpen);
-  const toggleNotesPanel = useGanttStore(s => s.toggleNotesPanel);
-  const actionItems = useGanttStore(s => s.actionItems);
-  const openCount = actionItems.filter(i => !i.done).length;
-
-  const environments = useGanttStore(s => s.environments);
-  const swimlanes = useGanttStore(s => s.swimlanes);
-  const phaseBars = useGanttStore(s => s.phaseBars);
-  const showContention = useGanttStore(s => s.showContention);
-  const environmentsPanelOpen = useGanttStore(s => s.environmentsPanelOpen);
-  const toggleEnvironmentsPanel = useGanttStore(s => s.toggleEnvironmentsPanel);
-  const contentionCount = useMemo(
-    () => showContention ? getContentions({ environments, swimlanes, phaseBars }).length : 0,
-    [environments, swimlanes, phaseBars, showContention]
-  );
-
-  const people = useGanttStore(s => s.people);
-  const teams = useGanttStore(s => s.teams);
-  const showPeopleContention = useGanttStore(s => s.showPeopleContention);
-  const peoplePanelOpen = useGanttStore(s => s.peoplePanelOpen);
-  const togglePeoplePanel = useGanttStore(s => s.togglePeoplePanel);
-  const peopleContentionCount = useMemo(
-    () => showPeopleContention ? getPeopleContentions({ people, teams, phaseBars }).length : 0,
-    [people, teams, phaseBars, showPeopleContention]
-  );
 
   const toggleMenu = (id: MenuId, e: React.MouseEvent<HTMLButtonElement>) => {
     if (openMenu === id) {
@@ -123,30 +97,6 @@ export default function Toolbar({ onScrollToToday, onZoomIn, onZoomOut, onZoomRe
         )}
 
         {onScrollToToday && <button onClick={onScrollToToday}>Today</button>}
-
-        <button
-          onClick={toggleNotesPanel}
-          title="Notes & Action Items (Ctrl+Shift+N)"
-          style={notesPanelOpen ? { background: 'var(--accent-secondary)', color: '#ffffff', borderColor: 'var(--accent-secondary)' } : undefined}
-        >
-          Notes{openCount > 0 && <span className="toolbar-notes-badge">{openCount}</span>}
-        </button>
-
-        <button
-          onClick={toggleEnvironmentsPanel}
-          title="Environments & Contention (Ctrl+Shift+E)"
-          style={environmentsPanelOpen ? { background: 'var(--accent-secondary)', color: '#ffffff', borderColor: 'var(--accent-secondary)' } : undefined}
-        >
-          Environments{contentionCount > 0 && <span className="toolbar-env-badge">{contentionCount}</span>}
-        </button>
-
-        <button
-          onClick={togglePeoplePanel}
-          title="People & Teams (Ctrl+Shift+P)"
-          style={peoplePanelOpen ? { background: 'var(--accent-secondary)', color: '#ffffff', borderColor: 'var(--accent-secondary)' } : undefined}
-        >
-          People{peopleContentionCount > 0 && <span className="toolbar-env-badge">{peopleContentionCount}</span>}
-        </button>
 
         <div className="toolbar-spacer" />
 

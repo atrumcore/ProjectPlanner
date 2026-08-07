@@ -194,6 +194,10 @@ export interface TimelineConfig {
  *   - `legacy`: solid pill filled with the phase colour. */
 export type BarStyle = 'tagged' | 'legacy';
 
+/** Tabs on the right-edge rail. One panel open at a time; the strip itself is
+ * always visible. Order mirrors the old toolbar buttons. */
+export type RailTab = 'inspector' | 'notes' | 'environments' | 'people';
+
 export interface GanttState {
   sections: Section[];
   swimlanes: Swimlane[];
@@ -225,12 +229,12 @@ export interface GanttState {
   lastUsedPhaseType: PhaseType;
   creatingBarId: string | null;
   isSpaceHeld: boolean;
-  notesPanelOpen: boolean;
+  /** Which rail tab's panel is open (one at a time), or null for none.
+   * Replaces the three independent panel booleans. */
+  railTab: RailTab | null;
   notesPanelSwimlaneId: string | null;
   notesPanelFilterId: string | null;
-  environmentsPanelOpen: boolean;
   environmentFocusId: string | null;
-  peoplePanelOpen: boolean;
   /** Focused resource in people focus mode — dims bars not assigned to it. */
   peopleFocus: { kind: 'person' | 'team'; id: string } | null;
   hoveredBarId: string | null;

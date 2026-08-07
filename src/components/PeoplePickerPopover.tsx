@@ -26,8 +26,7 @@ export default function PeoplePickerPopover({
 }: Props) {
   const people = useGanttStore(s => s.people);
   const teams = useGanttStore(s => s.teams);
-  const togglePeoplePanel = useGanttStore(s => s.togglePeoplePanel);
-  const peoplePanelOpen = useGanttStore(s => s.peoplePanelOpen);
+  const setRailTab = useGanttStore(s => s.setRailTab);
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ left: x, top: y });
 
@@ -142,7 +141,7 @@ export default function PeoplePickerPopover({
       <button
         className="bar-env-popover-link"
         onClick={() => {
-          if (!peoplePanelOpen) togglePeoplePanel();
+          setRailTab('people');
           onClose();
         }}
       >

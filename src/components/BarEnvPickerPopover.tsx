@@ -14,8 +14,7 @@ interface Props {
 export default function BarEnvPickerPopover({ barId, currentEnvId, x, y, onClose }: Props) {
   const environments = useGanttStore(s => s.environments);
   const setBarEnvironment = useGanttStore(s => s.setBarEnvironment);
-  const toggleEnvironmentsPanel = useGanttStore(s => s.toggleEnvironmentsPanel);
-  const environmentsPanelOpen = useGanttStore(s => s.environmentsPanelOpen);
+  const setRailTab = useGanttStore(s => s.setRailTab);
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ left: x, top: y });
 
@@ -76,7 +75,7 @@ export default function BarEnvPickerPopover({ barId, currentEnvId, x, y, onClose
       <button
         className="bar-env-popover-link"
         onClick={() => {
-          if (!environmentsPanelOpen) toggleEnvironmentsPanel();
+          setRailTab('environments');
           onClose();
         }}
       >

@@ -9,6 +9,9 @@ import Toolbar from './Toolbar';
 import NotesPanel from './NotesPanel';
 import EnvironmentsPanel from './EnvironmentsPanel';
 import PeoplePanel from './PeoplePanel';
+import Rail from './rail/Rail';
+import RailPanel from './rail/RailPanel';
+import InspectorTab from './rail/InspectorTab';
 import FileUpdateBanner from './FileUpdateBanner';
 import SaveConflictModal from './SaveConflictModal';
 import DisplayNameModal from './DisplayNameModal';
@@ -32,6 +35,13 @@ const LEFT_DEFAULT = 304;
 const LEFT_MIN = 80;
 const RIGHT_DEFAULT = 180;
 const RIGHT_MIN = 60;
+
+const RAIL_TITLES = {
+  inspector: 'Inspector',
+  notes: 'Notes & Action Items',
+  environments: 'Environments',
+  people: 'People & Teams',
+} as const;
 
 export default function GanttChart() {
   const themeColors = useThemeColors();
@@ -82,14 +92,11 @@ export default function GanttChart() {
   const saveFileAs = useGanttStore(s => s.saveFileAs);
   const openFile = useGanttStore(s => s.openFile);
   const newFile = useGanttStore(s => s.newFile);
-  const notesPanelOpen = useGanttStore(s => s.notesPanelOpen);
-  const toggleNotesPanel = useGanttStore(s => s.toggleNotesPanel);
-  const environmentsPanelOpen = useGanttStore(s => s.environmentsPanelOpen);
-  const toggleEnvironmentsPanel = useGanttStore(s => s.toggleEnvironmentsPanel);
+  const railTab = useGanttStore(s => s.railTab);
+  const setRailTab = useGanttStore(s => s.setRailTab);
+  const toggleRailTab = useGanttStore(s => s.toggleRailTab);
   const environmentFocusId = useGanttStore(s => s.environmentFocusId);
   const setEnvironmentFocus = useGanttStore(s => s.setEnvironmentFocus);
-  const peoplePanelOpen = useGanttStore(s => s.peoplePanelOpen);
-  const togglePeoplePanel = useGanttStore(s => s.togglePeoplePanel);
   const peopleFocus = useGanttStore(s => s.peopleFocus);
   const setPeopleFocus = useGanttStore(s => s.setPeopleFocus);
   const phaseTypesModalOpen = useGanttStore(s => s.phaseTypesModalOpen);
@@ -272,17 +279,17 @@ export default function GanttChart() {
       }
       if (mod && e.shiftKey && key === 'n') {
         e.preventDefault();
-        toggleNotesPanel();
+        toggleRailTab('notes');
         return;
       }
       if (mod && e.shiftKey && key === 'e') {
         e.preventDefault();
-        toggleEnvironmentsPanel();
+        toggleRailTab('environments');
         return;
       }
       if (mod && e.shiftKey && key === 'p') {
         e.preventDefault();
-        togglePeoplePanel();
+        toggleRailTab('people');
         return;
       }
       if (mod && key === 'n') {
@@ -299,7 +306,12 @@ export default function GanttChart() {
         || target.isContentEditable;
       if (inTextField) return;
 
-      if (mod && key === 'z') {
+      if (mod && key === 'i' && !e.shiftKey) {
+        // Below the text-field guard on purpose: Ctrl+I stays italics while
+        // typing in rich-text fields.
+        e.preventDefault();
+        toggleRailTab('inspector');
+      } else if (mod && key === 'z') {
         e.preventDefault();
         undo();
       } else if (mod && key === 'y') {
@@ -315,14 +327,16 @@ export default function GanttChart() {
           setEnvironmentFocus(null);
         } else if (peopleFocus) {
           setPeopleFocus(null);
-        } else {
+        } else if (selectedBarId) {
           selectBar(null);
+        } else if (railTab) {
+          setRailTab(null);
         }
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [undo, redo, selectedBarId, removePhaseBar, selectBar, saveFile, saveFileAs, openFile, newFile, toggleNotesPanel, toggleEnvironmentsPanel, togglePeoplePanel, environmentFocusId, setEnvironmentFocus, peopleFocus, setPeopleFocus]);
+  }, [undo, redo, selectedBarId, removePhaseBar, selectBar, saveFile, saveFileAs, openFile, newFile, toggleRailTab, railTab, setRailTab, environmentFocusId, setEnvironmentFocus, peopleFocus, setPeopleFocus]);
 
   const handleSpacePanStart = useCallback((e: React.PointerEvent) => {
     if (spaceHeld.current && e.button === 0) {
@@ -528,6 +542,7 @@ export default function GanttChart() {
     <ExportLayoutContext.Provider value={{ rowHeight: isExporting ? EXPORT_ROW_HEIGHT : ROW_HEIGHT, isExporting }}>
     <Toolbar onScrollToToday={scrollToToday} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} onExportPNG={exportPNG} onExportPDF={exportPDF} onExportSwimlanes={exportSwimlanes} onEmailNotes={emailNotes} onAddFloatingNote={handleAddFloatingNote} onSetDisplayName={() => setShowNameModal(true)} />
     <FileUpdateBanner />
+    <div className="app-main-row">
     <div className={`gantt-container${isExporting ? ' is-exporting' : ''}`} ref={ganttRef}>
       {/* Left panel */}
       {!leftCollapsed && (
@@ -604,9 +619,26 @@ export default function GanttChart() {
         />
       )}
     </div>
-    {notesPanelOpen && <NotesPanel />}
-    {environmentsPanelOpen && <EnvironmentsPanel />}
-    {peoplePanelOpen && <PeoplePanel />}
+
+    {/* Rail panel + strip — in-flow, outside .gantt-container so exports
+        never capture them. One panel at a time; a single RailPanel instance
+        hosts every tab so the chosen width survives tab switches. */}
+    {railTab && (
+      <RailPanel
+        title={RAIL_TITLES[railTab]}
+        onClose={() => setRailTab(null)}
+        headerActions={railTab === 'notes'
+          ? <button onClick={emailNotes} title="Email notes" aria-label="Email notes">&#x2709;</button>
+          : undefined}
+      >
+        {railTab === 'inspector' && <InspectorTab />}
+        {railTab === 'notes' && <NotesPanel />}
+        {railTab === 'environments' && <EnvironmentsPanel />}
+        {railTab === 'people' && <PeoplePanel />}
+      </RailPanel>
+    )}
+    <Rail />
+    </div>
     {phaseTypesModalOpen && <ManagePhaseTypesModal />}
     <SaveConflictModal />
     {showNameModal && !signedIn && <DisplayNameModal onClose={() => setShowNameModal(false)} />}

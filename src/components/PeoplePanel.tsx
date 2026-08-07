@@ -1,5 +1,4 @@
-import { useState, useRef, useMemo, useCallback, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { useState, useMemo, useCallback } from 'react';
 import { useGanttStore } from '../store/useGanttStore';
 import type { Person, PhaseType, Team } from '../types/gantt';
 import { PEOPLE_COLOR_PRESETS } from '../types/gantt';
@@ -7,20 +6,17 @@ import { getPhaseDef } from '../data/phasePresets';
 import { getPeopleContentions, type ResourceRef } from '../utils/contention';
 import { htmlToPlainText } from '../utils/plainText';
 
-const PANEL_MIN = 320;
-const PANEL_MAX = 720;
-
 const sameRef = (a: ResourceRef | null, b: ResourceRef | null) =>
   !!a && !!b && a.kind === b.kind && a.id === b.id;
 
 const refKey = (r: ResourceRef) => `${r.kind}:${r.id}`;
 
 /**
- * People & Teams panel — a searchable master-detail layout built to scale to
- * large rosters. Top: a team-grouped roster list with search and a
+ * People & Teams tab content — a searchable master-detail layout built to
+ * scale to large rosters. Top: a team-grouped roster list with search and a
  * conflicts-only filter. Bottom: a fixed detail pane for the selected person
  * or team (identity editing, focus mode, allocated bars, double-bookings).
- * Reuses the env-panel shell CSS; roster/detail styles are its own.
+ * Hosted inside the shared RailPanel shell (width/resize/header live there).
  */
 export default function PeoplePanel() {
   const teams = useGanttStore(s => s.teams);
@@ -36,13 +32,10 @@ export default function PeoplePanel() {
   const updatePerson = useGanttStore(s => s.updatePerson);
   const removePerson = useGanttStore(s => s.removePerson);
   const setBarPeople = useGanttStore(s => s.setBarPeople);
-  const togglePeoplePanel = useGanttStore(s => s.togglePeoplePanel);
   const setPeopleFocus = useGanttStore(s => s.setPeopleFocus);
   const selectBar = useGanttStore(s => s.selectBar);
 
   const [active, setActive] = useState<ResourceRef | null>(null);
-  const [closing, setClosing] = useState(false);
-  const [width, setWidth] = useState(420);
   const [search, setSearch] = useState('');
   const [conflictsOnly, setConflictsOnly] = useState(false);
   const [collapsedTeams, setCollapsedTeams] = useState<Set<string>>(new Set());
@@ -50,7 +43,6 @@ export default function PeoplePanel() {
   const [editingName, setEditingName] = useState(false);
   const [editingRole, setEditingRole] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
-  const resizing = useRef<{ startX: number; startWidth: number } | null>(null);
 
   const orderedTeams = useMemo(() => [...teams].sort((a, b) => a.order - b.order), [teams]);
   const orderedPeople = useMemo(() => [...people].sort((a, b) => a.order - b.order), [people]);
@@ -65,22 +57,6 @@ export default function PeoplePanel() {
     setEditingName(false);
     setEditingRole(false);
     setShowColorPicker(false);
-  }, []);
-
-  // Resize
-  useEffect(() => {
-    const onMove = (e: PointerEvent) => {
-      if (!resizing.current) return;
-      const delta = resizing.current.startX - e.clientX;
-      setWidth(Math.min(PANEL_MAX, Math.max(PANEL_MIN, resizing.current.startWidth + delta)));
-    };
-    const onUp = () => { resizing.current = null; };
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-    return () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-    };
   }, []);
 
   const contentions = useMemo(
@@ -177,8 +153,6 @@ export default function PeoplePanel() {
 
   const isFocused = sameRef(peopleFocus, active);
 
-  const handleClose = useCallback(() => setClosing(true), []);
-
   const handleAddTeam = useCallback(() => {
     const id = addTeam('');
     selectResource({ kind: 'team', id });
@@ -238,28 +212,8 @@ export default function PeoplePanel() {
 
   const rosterEmpty = teams.length === 0 && people.length === 0;
 
-  return createPortal(
-    <div
-      className={`env-panel${closing ? ' env-panel--closing' : ''}`}
-      style={{ width }}
-      onAnimationEnd={() => { if (closing) togglePeoplePanel(); }}
-    >
-      <div
-        className="env-panel-resize-handle"
-        onPointerDown={e => {
-          e.preventDefault();
-          (e.target as Element).setPointerCapture(e.pointerId);
-          resizing.current = { startX: e.clientX, startWidth: width };
-        }}
-      />
-
-      <div className="env-panel-header">
-        <span>People &amp; Teams</span>
-        <div className="env-panel-header-actions">
-          <button onClick={handleClose} title="Close (Ctrl+Shift+P)" aria-label="Close">&times;</button>
-        </div>
-      </div>
-
+  return (
+    <>
       {/* Search / filter / add row */}
       <div className="people-roster-toolbar">
         <input
@@ -569,7 +523,6 @@ export default function PeoplePanel() {
           </div>
         )
       )}
-    </div>,
-    document.body
+    </>
   );
 }

@@ -19,8 +19,7 @@ export default function ContextMenu({ x, y, barId, currentEnvId, onChangePhase, 
   const phaseTypes = useGanttStore(s => s.phaseTypes);
   const environments = useGanttStore(s => s.environments);
   const togglePhaseTypesModal = useGanttStore(s => s.togglePhaseTypesModal);
-  const toggleEnvironmentsPanel = useGanttStore(s => s.toggleEnvironmentsPanel);
-  const environmentsPanelOpen = useGanttStore(s => s.environmentsPanelOpen);
+  const setRailTab = useGanttStore(s => s.setRailTab);
   const setBarEnvironment = useGanttStore(s => s.setBarEnvironment);
 
   // Clamp to viewport after first render
@@ -104,7 +103,7 @@ export default function ContextMenu({ x, y, barId, currentEnvId, onChangePhase, 
         style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}
         onClick={() => {
           onClose();
-          if (!environmentsPanelOpen) toggleEnvironmentsPanel();
+          setRailTab('environments');
         }}
       >
         + Manage environments…
