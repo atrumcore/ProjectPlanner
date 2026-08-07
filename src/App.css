@@ -155,8 +155,11 @@ h3 {
   font-family: var(--font-display);
 }
 
-/* BBD kicker device — 28×3px red rule above an uppercase Montserrat label.
-   The brand signature for panel/section headings (v2 typography card). */
+/* Eyebrow — the v2 label style for every small uppercase heading (type card:
+   10px Montserrat 700, +0.12em). The kicker is an eyebrow plus the BBD 28×3px
+   red rule — the brand signature for panel headers, launcher sections and
+   empty-state headings. */
+.eyebrow,
 .kicker {
   font-family: var(--font-display);
   font-size: 10px;
@@ -174,6 +177,111 @@ h3 {
   background: var(--brand-accent);
   border-radius: 1px;
   margin-bottom: 6px;
+}
+
+/* Teach state — the shared empty-state pattern (v2 dialogs card): centred,
+   kicker heading, ONE sentence, at most one primary action. */
+.teach-state {
+  padding: 28px 18px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.teach-state .kicker::before {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.teach-state p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin: 8px 0 14px;
+  max-width: 260px;
+}
+
+.teach-state .teach-state-note {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 2px 0 0;
+}
+
+.btn-quiet {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.btn-quiet:hover {
+  color: var(--text-primary);
+  text-decoration: underline;
+}
+
+/* Core button set (v2 buttons card): pill silhouette, one primary per
+   surface, danger stays outline until armed (.confirm). Top-level classes —
+   usable in modals, panels and the launcher alike. */
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  padding: 7px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.btn-primary {
+  background: var(--accent-primary);
+  color: var(--on-accent);
+  border: 1px solid transparent;
+}
+
+.btn-primary:hover {
+  background: var(--accent-primary-hover);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+}
+
+.btn-secondary:hover {
+  background: var(--hover);
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--error-bright);
+  border: 1px solid var(--error-bright);
+}
+
+.btn-danger:hover {
+  background: color-mix(in srgb, var(--error-bright) 12%, transparent);
+}
+
+.btn-danger.confirm,
+.btn-secondary.confirm {
+  background: var(--error-bright);
+  border-color: var(--error-bright);
+  color: #ffffff;
+  font-size: 11px;
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-danger:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 /* Native <option> elements are OS-rendered in the open dropdown; force theme
@@ -202,21 +310,8 @@ select option {
   z-index: 100;
 }
 
-.toolbar h1 {
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0.3px;
-  margin-right: 16px;
-  white-space: nowrap;
-}
-
-/* Product name with the BBD logo (secondary variant — glyph + logotype).
-   White artwork on dark, black artwork on light; both rendered, CSS picks. */
-.toolbar-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
+/* BBD logo (secondary variant — glyph + logotype). White artwork on dark,
+   black artwork on light; both rendered, CSS picks. */
 .bbd-logo {
   height: 17px;
   flex-shrink: 0;
@@ -426,23 +521,6 @@ select option {
   height: 20px;
   background: var(--border);
   flex-shrink: 0;
-}
-
-.toolbar-notes-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 16px;
-  height: 16px;
-  margin-left: 4px;
-  padding: 0 4px;
-  border-radius: 8px;
-  background: var(--today-line);
-  color: #fff;
-  font-size: 9px;
-  font-weight: 700;
-  line-height: 1;
-  vertical-align: middle;
 }
 
 /* Gantt chart container */
@@ -794,12 +872,43 @@ select option {
   position: relative;
 }
 
-.timeline-wrapper::-webkit-scrollbar {
+/* One scrollbar treatment for every scrolling surface (canvas, rail panel
+   internals, launcher panes) — thin, themed thumb, no track chrome. */
+.timeline-wrapper,
+.rail-panel-body,
+.notes-panel-list,
+.people-roster,
+.people-detail,
+.env-panel-body,
+.phase-types-list,
+.launcher-sidebar,
+.launcher-main {
+  scrollbar-width: thin;
+  scrollbar-color: var(--grid-monthly) transparent;
+}
+
+.timeline-wrapper::-webkit-scrollbar,
+.rail-panel-body::-webkit-scrollbar,
+.notes-panel-list::-webkit-scrollbar,
+.people-roster::-webkit-scrollbar,
+.people-detail::-webkit-scrollbar,
+.env-panel-body::-webkit-scrollbar,
+.phase-types-list::-webkit-scrollbar,
+.launcher-sidebar::-webkit-scrollbar,
+.launcher-main::-webkit-scrollbar {
   height: 8px;
   width: 8px;
 }
 
-.timeline-wrapper::-webkit-scrollbar-thumb {
+.timeline-wrapper::-webkit-scrollbar-thumb,
+.rail-panel-body::-webkit-scrollbar-thumb,
+.notes-panel-list::-webkit-scrollbar-thumb,
+.people-roster::-webkit-scrollbar-thumb,
+.people-detail::-webkit-scrollbar-thumb,
+.env-panel-body::-webkit-scrollbar-thumb,
+.phase-types-list::-webkit-scrollbar-thumb,
+.launcher-sidebar::-webkit-scrollbar-thumb,
+.launcher-main::-webkit-scrollbar-thumb {
   background: var(--grid-monthly);
   border-radius: 4px;
 }
@@ -827,8 +936,9 @@ select option {
 
 .section-header:hover {
   background:
+    linear-gradient(var(--hover), var(--hover)),
     linear-gradient(var(--section-tint, transparent), var(--section-tint, transparent)),
-    #1b3a63;
+    var(--bg-surface-2);
 }
 
 /* Modal overlay */
@@ -888,6 +998,14 @@ select option {
   resize: vertical;
 }
 
+.modal input:focus,
+.modal select:focus,
+.modal textarea:focus {
+  outline: none;
+  border-color: var(--accent-secondary);
+}
+
+/* Layout only — button chrome comes from the top-level .btn-* classes. */
 .modal-actions {
   display: flex;
   gap: 8px;
@@ -895,39 +1013,13 @@ select option {
   margin-top: 8px;
 }
 
-.modal-actions button {
-  padding: 6px 16px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  font-size: 11px;
-  font-family: var(--font-body);
-  cursor: pointer;
-}
-
-.modal-actions .btn-primary {
-  background: var(--accent-primary);
-  color: var(--on-accent);
-  border-color: var(--accent-primary);
-  font-weight: 700;
-}
-
-.modal-actions .btn-primary:hover {
-  background: var(--accent-primary-hover);
-  border-color: var(--accent-primary-hover);
-}
-
-.modal-actions .btn-secondary {
-  background: var(--bg-surface);
-  color: var(--text-primary);
-}
-
 /* Phase bar context menu */
 .context-menu {
   position: fixed;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
   z-index: 2000;
   min-width: 160px;
   padding: 4px 0;
@@ -943,7 +1035,7 @@ select option {
 }
 
 .context-menu-item:hover {
-  background: var(--bg-row-odd);
+  background: var(--hover);
 }
 
 .context-menu-divider {
@@ -952,13 +1044,10 @@ select option {
   margin: 4px 0;
 }
 
+/* .context-menu-label typography comes from .eyebrow (applied in markup);
+   only spacing lives here. */
 .context-menu-label {
-  padding: 4px 12px 2px;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-secondary);
+  padding: 6px 12px 2px;
 }
 
 .swimlane-color-swatches {
@@ -1002,8 +1091,8 @@ select option {
   position: fixed;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
   z-index: 2000;
   min-width: 200px;
   padding: 6px 0;
@@ -1023,7 +1112,7 @@ select option {
 }
 
 .menu-item-action:hover {
-  background: var(--bg-row-odd);
+  background: var(--hover);
 }
 
 .menu-item-action[aria-disabled="true"] {
@@ -1036,7 +1125,7 @@ select option {
   margin-left: auto;
   font-size: 10px;
   color: var(--text-muted);
-  font-family: 'Courier New', monospace;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, Menlo, monospace;
 }
 
 /* Timeline range row inside View menu */
@@ -1097,7 +1186,7 @@ select option {
 }
 
 .view-menu-item:hover {
-  background: var(--bg-row-odd);
+  background: var(--hover);
 }
 
 .view-menu-item input[type="checkbox"],
@@ -1160,7 +1249,7 @@ select option {
 }
 
 .row-hover:hover {
-  fill: rgba(49, 191, 105, 0.10);
+  fill: color-mix(in srgb, var(--accent-secondary) 8%, transparent);
 }
 
 
@@ -1365,8 +1454,8 @@ select option {
   z-index: 2010;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
   min-width: 180px;
   padding: 4px;
   font-family: var(--font-body);
@@ -1487,6 +1576,12 @@ select option {
   border-radius: 4px;
   min-width: 0;
   flex: 1;
+}
+
+.people-panel-person-meta input:focus,
+.people-panel-person-meta select:focus {
+  outline: none;
+  border-color: var(--accent-secondary);
 }
 .people-panel-role em {
   color: var(--text-muted);
@@ -1854,10 +1949,6 @@ select option {
   width: 100%;
   text-align: center;
 }
-.save-conflict-overwrite {
-  color: var(--error-bright, #e5484d);
-  border-color: var(--error-bright, #e5484d);
-}
 
 /* Save-attribution note beside the file name. */
 .toolbar-saved-by {
@@ -1908,8 +1999,8 @@ select option {
   min-width: 210px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
   padding: 4px;
   font-family: var(--font-body);
 }
@@ -2009,8 +2100,8 @@ select option {
   z-index: 2000;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
   padding: 4px 6px;
   display: flex;
   gap: 2px;
@@ -2071,8 +2162,8 @@ select option {
   margin-top: 2px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
   z-index: 2001;
   padding: 2px;
   display: flex;
@@ -2311,7 +2402,7 @@ select option {
 }
 
 .notes-panel-add-row input:focus {
-  border-color: var(--accent-primary);
+  border-color: var(--accent-secondary);
 }
 
 .notes-panel-add-row select {
@@ -2324,6 +2415,11 @@ select option {
   color: var(--text-primary);
   max-width: 120px;
   cursor: pointer;
+}
+
+.notes-panel-add-row select:focus {
+  outline: none;
+  border-color: var(--accent-secondary);
 }
 
 .notes-panel-list {
@@ -2397,7 +2493,7 @@ select option {
 }
 
 .action-item-text-input:focus {
-  border-color: var(--accent-primary);
+  border-color: var(--accent-secondary);
 }
 
 .action-item-swimlane-tag {
@@ -2471,7 +2567,7 @@ select option {
 }
 
 .action-item-owner-input:focus {
-  border-color: var(--accent-primary);
+  border-color: var(--accent-secondary);
 }
 
 .action-item-delete {
@@ -2583,7 +2679,7 @@ select option {
 .swimlane-row.action-item-drop-target {
   outline: 2px solid var(--today-line);
   outline-offset: -2px;
-  background: rgba(49, 191, 105, 0.18) !important;
+  background: color-mix(in srgb, var(--accent-secondary) 16%, transparent) !important;
 }
 
 .swimlane-note-badge {
@@ -2613,25 +2709,7 @@ select option {
  * Environments & contention
  * ====================================================================== */
 
-/* Toolbar contention badge — wine, distinct from Notes' orange */
-.toolbar-env-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 16px;
-  height: 16px;
-  margin-left: 4px;
-  padding: 0 4px;
-  border-radius: 8px;
-  background: var(--contention);
-  color: #fff;
-  font-size: 9px;
-  font-weight: 700;
-  line-height: 1;
-  vertical-align: middle;
-}
-
-/* Context menu accent dot + group label (used by bar context menu env section) */
+/* Context menu accent dot (used by bar context menu env section) */
 .context-menu-color-dot {
   display: inline-block;
   width: 10px;
@@ -2640,13 +2718,6 @@ select option {
   margin-right: 6px;
   vertical-align: middle;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
-}
-.context-menu-label {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  padding: 6px 12px 2px;
 }
 
 /* Phase bar drag-time pill */
@@ -2790,7 +2861,7 @@ select option {
   outline: none;
 }
 .env-panel-identity input:focus {
-  border-color: var(--text-secondary);
+  border-color: var(--accent-secondary);
 }
 .env-panel-name {
   flex: 1;
@@ -2819,7 +2890,8 @@ select option {
   top: calc(100% + 4px);
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
   padding: 6px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -2893,8 +2965,8 @@ select option {
   top: calc(100% + 2px);
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
   z-index: 10;
   min-width: 160px;
   padding: 4px;
@@ -3055,19 +3127,6 @@ select option {
   color: #fff;
 }
 
-.env-panel-link-btn {
-  background: transparent;
-  border: 1px solid var(--border);
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 3px;
-  cursor: pointer;
-  color: var(--text-primary);
-}
-.env-panel-link-btn:hover {
-  background: var(--hover);
-}
-
 .env-panel-behaviour {
   display: flex;
   flex-direction: column;
@@ -3181,8 +3240,7 @@ select option {
 .phase-types-name:focus,
 .phase-types-label:focus {
   outline: none;
-  border-color: var(--text-primary);
-  box-shadow: 0 0 0 2px rgba(49, 191, 105, 0.35);
+  border-color: var(--accent-secondary);
 }
 .phase-types-label {
   font-weight: 700;
@@ -3232,11 +3290,7 @@ select option {
   padding-top: 10px;
   border-top: 1px solid var(--border);
 }
-.phase-types-footer .btn-secondary.confirm {
-  background: var(--error-bright);
-  color: #fff;
-  border-color: var(--error-bright);
-}
+/* Armed confirm styling comes from the shared .btn-secondary.confirm rule. */
 
 /* ─── Floating Notes (free-positioned sticky notes on the timeline) ─── */
 
@@ -3306,7 +3360,8 @@ select option {
   top: 22px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
   padding: 4px;
   display: grid;
   grid-template-columns: repeat(6, 1fr);
@@ -3639,7 +3694,7 @@ select option {
   padding: 0 16px;
   height: 44px;
   background: var(--bg-header);
-  border-bottom: 1px solid var(--header-divider);
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 .launcher-header h1 {
@@ -3690,12 +3745,17 @@ select option {
 .launcher-team-filter {
   margin: 4px 6px 6px;
   font-size: 12px;
-  padding: 5px 9px;
+  padding: 5px 12px;
   background: var(--bg-surface);
   color: var(--text-primary);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 999px;
   font-family: inherit;
+}
+
+.launcher-team-filter:focus {
+  outline: none;
+  border-color: var(--accent-secondary);
 }
 .launcher-nav-item {
   display: block;
@@ -3703,7 +3763,7 @@ select option {
   text-align: left;
   background: transparent;
   border: none;
-  border-radius: var(--radius, 6px);
+  border-radius: 6px;
   padding: 7px 10px;
   font-size: 13px;
   color: var(--text-secondary);
