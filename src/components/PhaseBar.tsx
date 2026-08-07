@@ -322,7 +322,8 @@ export default function PhaseBar({ bar, rowY }: Props) {
         </>
       )}
 
-      {/* Start-date label (rotated, on the left edge — toggled via toolbar) */}
+      {/* Start-date label (rotated, on the left edge — toggled via toolbar).
+          9px is the type-scale floor; 10px would visibly overhang the 30px bar. */}
       {showBarDates && !editing && (
         <text
           x={x + (useSolidPill ? 7 : TAG_WIDTH + 6)}
@@ -330,7 +331,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
           textAnchor="middle"
           dominantBaseline="middle"
           fill={labelFill}
-          fontSize={8}
+          fontSize={9}
           fontWeight={700}
           fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
           transform={`rotate(-90, ${x + (useSolidPill ? 7 : TAG_WIDTH + 6)}, ${y + BAR_HEIGHT / 2})`}
@@ -607,7 +608,9 @@ export default function PhaseBar({ bar, rowY }: Props) {
         const hasAny = chips.length > 0;
         if (!hasAny && !(isHovered || isSelected)) return null;
 
-        const chipR = 6;
+        // 16px chips: the smallest that fit two-letter initials at the type
+        // scale's 9px floor. All chip layout derives from this radius.
+        const chipR = 8;
         const step = chipR * 2 + 2;
         const maxVisible = 3;
         const visible = chips.slice(0, maxVisible);
@@ -654,7 +657,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
                         y={cyChip}
                         textAnchor="middle"
                         dominantBaseline="central"
-                        fontSize={6}
+                        fontSize={9}
                         fontWeight={700}
                         fill="#ffffff"
                         fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
@@ -670,7 +673,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
                     x={baseX + chipR + visible.length * step - chipR + 2}
                     y={cyChip}
                     dominantBaseline="central"
-                    fontSize={7}
+                    fontSize={9}
                     fontWeight={700}
                     fill={c.TEXT_SECONDARY}
                     fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"

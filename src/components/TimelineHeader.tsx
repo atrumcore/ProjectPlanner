@@ -127,7 +127,7 @@ export default function TimelineHeader({ totalWeeks, startMonth, startYear, scro
                 y={13}
                 textAnchor="middle"
                 fill="white"
-                fontSize={8}
+                fontSize={9}
                 fontWeight={700}
                 fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
               >
@@ -151,8 +151,9 @@ export default function TimelineHeader({ totalWeeks, startMonth, startYear, scro
                   y={HEADER_HEIGHT + WEEK_LABEL_HEIGHT / 2 + 3}
                   textAnchor="middle"
                   fill={c.WEEK_LABEL_COLOR}
-                  fontSize={7}
-                  fontFamily="Courier New, monospace"
+                  fontSize={10}
+                  fontWeight={600}
+                  fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
                 >
                   {d}
                 </text>
@@ -170,7 +171,11 @@ export default function TimelineHeader({ totalWeeks, startMonth, startYear, scro
               // avoids IEEE-754 false-negatives — e.g. 32/7 − 25/7 evaluates
               // to 0.9999999999999996, which naive `< 1` drops as "partial".
               const boundaries = getCalendarWeekBoundaries(startMonth, startYear, totalWeeks);
+              // At the 10px label size a "W34" is ~22px wide; below ~24px/week
+              // adjacent labels collide, so thin to every second week.
+              const thinLabels = weekWidth < 24;
               return boundaries.map((b, i) => {
+                if (thinLabels && i % 2 === 1) return null;
                 const next = boundaries[i + 1];
                 let centerX: number;
                 if (next) {
@@ -188,8 +193,9 @@ export default function TimelineHeader({ totalWeeks, startMonth, startYear, scro
                     y={HEADER_HEIGHT + WEEK_LABEL_HEIGHT / 2 + 3}
                     textAnchor="middle"
                     fill={c.WEEK_LABEL_COLOR}
-                    fontSize={7}
-                    fontFamily="Courier New, monospace"
+                    fontSize={10}
+                    fontWeight={600}
+                    fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
                   >
                     W{b.weekNumber}
                   </text>

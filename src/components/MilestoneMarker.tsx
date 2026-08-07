@@ -37,7 +37,7 @@ export default function MilestoneMarker({ id, week, rowY }: Props) {
     return () => clearTimeout(t);
   }, [confirmDelete]);
 
-  // Enough room for rotated "DD Mon" text at 8px. Keeps a readable minimum
+  // Enough room for rotated "DD Mon" text at 10px. Keeps a readable minimum
   // even when zoomed way out, and grows with zoom so it stays proportional.
   const markerWidth = Math.max(12, weekWidth * 0.3);
   const dayPx = weekWidth / 7;
@@ -113,7 +113,7 @@ export default function MilestoneMarker({ id, week, rowY }: Props) {
         y={cy}
         textAnchor="middle"
         dominantBaseline="middle"
-        fontSize={8}
+        fontSize={10}
         fontWeight={700}
         fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
         fill={c.MILESTONE_TEXT}
