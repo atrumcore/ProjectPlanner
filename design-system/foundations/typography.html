@@ -1,58 +1,67 @@
-<!-- @dsCard group="Foundations" name="Type & spacing" subtitle="Figtree · scale · spacing steps · radii" -->
+<!-- @dsCard group="Foundations" name="Type & spacing" subtitle="Montserrat display · Open Sans body · scale · spacing · radii" -->
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Type &amp; spacing</title>
+<title>Type &amp; spacing · BBD v2</title>
+<link rel="stylesheet" href="../styles.css">
 <style>
-  * { margin: 0; box-sizing: border-box; }
-  body { font-family: 'Figtree', system-ui, sans-serif; background: #0b1426; color: #eee; padding: 24px; }
-  h2 { font-size: 13px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: #8aa0b8; margin: 22px 0 10px; }
+  * { margin: 0; box-sizing: border-box; font-family: 'Open Sans', system-ui, sans-serif; }
+  body { background: #040406; color: #eee; padding: 24px; }
+  h2 { font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #8A9298; margin: 24px 0 10px; font-family: 'Montserrat', system-ui, sans-serif; }
   h2:first-child { margin-top: 0; }
-  table { border-collapse: collapse; width: 100%; }
-  td { padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,.08); vertical-align: baseline; }
-  td.meta { font-size: 10px; color: #6e8299; font-family: ui-monospace, monospace; white-space: nowrap; }
-  .bar { height: 14px; background: #8f87f1; border-radius: 3px; display: inline-block; vertical-align: middle; }
-  .chip { display: inline-block; border: 1px solid rgba(255,255,255,.2); border-radius: 10px; padding: 2px 10px; font-size: 11px; margin-right: 6px; }
-  .rad { display: inline-block; width: 56px; height: 36px; background: #16335a; border: 1px solid rgba(255,255,255,.2); margin-right: 10px; vertical-align: middle; }
-  .note { font-size: 11px; color: #8aa0b8; line-height: 1.5; margin-top: 6px; }
+  h2::before { content: ''; display: block; width: 28px; height: 3px; background: #CE181E; margin-bottom: 6px; border-radius: 1px; }
+  .spec { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,.06); }
+  .spec .meta { font-size: 10px; color: #71787e; font-family: ui-monospace, monospace; white-space: nowrap; }
+  .note { font-size: 11px; color: #8A9298; line-height: 1.6; margin-top: 8px; }
+  .mont { font-family: 'Montserrat', system-ui, sans-serif; }
+  .steps { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+  .step { display: flex; align-items: center; gap: 10px; font-size: 11px; color: #8A9298; }
+  .step i { display: inline-block; background: #4E44DB; border-radius: 2px; height: 12px; }
+  .radii { display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; margin-top: 4px; }
+  .rad { background: #17191c; border: 1px solid rgba(255,255,255,.12); display: flex; align-items: center; justify-content: center; font-size: 9px; color: #8A9298; }
 </style>
 </head>
 <body>
 
-<h2>Typeface</h2>
-<div class="note">Primary: <b style="color:#eee">Figtree</b> (Google Fonts, 400/500/600/700/800) · fallback Aptos Display → Helvetica → system. Monospace only for token values, never UI.</div>
+<h2>Typefaces</h2>
+<div class="note" style="margin-top:0">Primary display: <b class="mont" style="color:#eee">Montserrat</b> (bundled OTF, 400–800) — titles, headings, eyebrows, kickers, on-bar labels. Body: <b style="color:#eee">Open Sans</b> (bundled TTF) — panels, menus, inputs, captions. Monospace only for token values, never UI. Emphasis pattern: mix Light + Bold inside one headline to stress keywords.</div>
 
 <h2>Scale — every size in the app</h2>
-<table>
-  <tr><td style="font-size:15px;font-weight:800">App title / launcher heading</td><td class="meta">15px · 800</td></tr>
-  <tr><td style="font-size:14px;font-weight:700">Panel detail name</td><td class="meta">14px · 700</td></tr>
-  <tr><td style="font-size:13px;font-weight:600">Row titles, buttons, plan names</td><td class="meta">13px · 600</td></tr>
-  <tr><td style="font-size:12px">Body — panels, menus, inputs</td><td class="meta">12px · 400</td></tr>
-  <tr><td style="font-size:11px;color:#8aa0b8">Secondary — meta, hints, toolbar attribution</td><td class="meta">11px · 400</td></tr>
-  <tr><td style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#6e8299">Section labels / eyebrows</td><td class="meta">10px · 700 · caps · +0.5px</td></tr>
-  <tr><td style="font-size:10px;font-weight:700">On-bar labels (SVG)</td><td class="meta">10px · 700 · phase bars</td></tr>
-  <tr><td style="font-size:9px;font-weight:700">Badges, pills, chip initials</td><td class="meta">9px · 700 · floor — never smaller</td></tr>
-</table>
+<div class="spec"><span class="mont" style="font-size:15px;font-weight:700">App title / launcher heading</span><span class="meta">15px · Montserrat 700</span></div>
+<div class="spec"><span class="mont" style="font-size:14px;font-weight:600">Panel detail name</span><span class="meta">14px · Montserrat 600</span></div>
+<div class="spec"><span style="font-size:13px;font-weight:600">Row titles, buttons, plan names</span><span class="meta">13px · Open Sans 600</span></div>
+<div class="spec"><span style="font-size:12px">Body — panels, menus, inputs</span><span class="meta">12px · Open Sans 400</span></div>
+<div class="spec"><span style="font-size:11px;color:#8A9298">Secondary — meta, hints, toolbar attribution</span><span class="meta">11px · Open Sans 400</span></div>
+<div class="spec"><span class="mont" style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#8A9298">Section labels / eyebrows</span><span class="meta">10px · Montserrat 700 · caps · +0.12em</span></div>
+<div class="spec"><span class="mont" style="font-size:10px;font-weight:700">On-bar labels (SVG)</span><span class="meta">10px · Montserrat 700 · phase bars</span></div>
+<div class="spec"><span style="font-size:9px;font-weight:700">Badges, pills, chip initials</span><span class="meta">9px · 700 · floor — never smaller</span></div>
+<div class="note">Kickers and eyebrows carry the brand's wide tracking (.12em); everything else stays dense. Sentence case in titles — never Title Case.</div>
+
+<h2>The kicker device</h2>
+<div style="padding:10px">
+  <div style="width:28px;height:3px;background:#CE181E;border-radius:1px;margin-bottom:6px"></div>
+  <div class="mont" style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#8A9298">Projects</div>
+</div>
+<div class="note">The red kicker rule (28px × 3px) above an uppercase Montserrat label is the brand signature — used for panel headers, launcher sections, and empty-state headings. A thin red <i>vertical</i> bar to the left of a label is the sub-kicker for inline section labels.</div>
 
 <h2>Spacing steps</h2>
-<div style="display:flex; flex-direction:column; gap:6px;">
-  <div><span class="bar" style="width:4px"></span> <span class="note">4 — chip gaps, icon-to-text</span></div>
-  <div><span class="bar" style="width:8px"></span> <span class="note">8 — control gaps, row padding-y</span></div>
-  <div><span class="bar" style="width:12px"></span> <span class="note">12 — group gaps, panel padding-x</span></div>
-  <div><span class="bar" style="width:16px"></span> <span class="note">16 — section gaps</span></div>
-  <div><span class="bar" style="width:24px"></span> <span class="note">24 — screen padding</span></div>
+<div class="steps">
+  <div class="step"><i style="width:4px"></i>4 — chip gaps, icon-to-text</div>
+  <div class="step"><i style="width:8px"></i>8 — control gaps, row padding-y</div>
+  <div class="step"><i style="width:12px"></i>12 — group gaps, panel padding-x</div>
+  <div class="step"><i style="width:16px"></i>16 — section gaps</div>
+  <div class="step"><i style="width:24px"></i>24 — screen padding</div>
 </div>
 
-<h2>Radii &amp; control heights</h2>
-<div style="padding-bottom: 8px;">
-  <span class="rad" style="border-radius:4px"></span>
-  <span class="rad" style="border-radius:6px"></span>
-  <span class="rad" style="border-radius:8px"></span>
-  <span class="rad" style="border-radius:10px"></span>
+<h2>Radii</h2>
+<div class="radii">
+  <div class="rad" style="width:64px;height:24px;border-radius:999px">pill</div>
+  <div class="rad" style="width:64px;height:40px;border-radius:8px">8</div>
+  <div class="rad" style="width:80px;height:56px;border-radius:12px">12</div>
+  <div class="rad" style="width:96px;height:64px;border-radius:16px">16</div>
 </div>
-<div class="note">4 — swatches, tags · 6 — buttons, inputs, menu items · 8 — bars, cards, chips-pill · 10+ — panels, modals.<br>
-Control heights: 24 toolbar buttons · 28 rail tabs · 32 inputs · rows 48 (timeline) / 34 (lists).</div>
+<div class="note">Pill (999px) — buttons, CTAs, the search field. 8px — bars, small affordances. 12–16px — cards, panels, modals. No drop shadows on dark surfaces; hairlines at white@8%.</div>
 
 </body>
 </html>

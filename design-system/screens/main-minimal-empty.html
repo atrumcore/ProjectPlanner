@@ -1,49 +1,52 @@
-<!-- @dsCard group="Screens" name="Main · empty plan" subtitle="Minimal preset · starter card · first-run experience" -->
+<!-- @dsCard group="Screens" viewport="1180x540" name="Main · empty plan" subtitle="Minimal preset · starter card · first-run experience" -->
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <title>Main · empty plan</title>
+<link rel="stylesheet" href="../styles.css">
 <style>
-  * { margin: 0; box-sizing: border-box; font-family: 'Figtree', system-ui, sans-serif; }
-  body { background: #060d1c; color: #eee; padding: 20px; }
-  .app { width: 1120px; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; overflow: hidden; background: #0b1426; }
-  .tb { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; background: #0d203c; border-bottom: 1px solid rgba(255,255,255,.1); }
-  .mark { width: 4px; height: 15px; border-radius: 2px; background: #ce181e; }
+  * { margin: 0; box-sizing: border-box; font-family: 'Open Sans', system-ui, sans-serif; }
+  body { background: #040406; color: #eee; padding: 20px; }
+  .app { width: 1120px; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; overflow: hidden; background: #0b0c0e; }
+  .tb { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; background: #151719; border-bottom: 1px solid rgba(255,255,255,.1); }
+  .mark { height: 16px; cursor: pointer; }
   .doc { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 6px; }
-  .doc .caret { font-size: 9px; color: #6e8299; }
-  .btn { font-size: 11px; font-weight: 600; padding: 4px 10px; background: transparent; color: #eee; border: 1px solid rgba(255,255,255,.18); border-radius: 6px; }
+  .doc .caret { font-size: 9px; color: #71787e; }
+  .btn { font-size: 11px; font-weight: 600; padding: 4px 12px; background: transparent; color: #eee; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; white-space: nowrap; font-family: inherit; }
   .spacer { flex: 1; }
-  .search { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; color: #8aa0b8; border: 1px solid rgba(255,255,255,.15); border-radius: 6px; padding: 4px 10px; min-width: 140px; }
+  .search { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; color: #8A9298; border: 1px solid rgba(255,255,255,.15); border-radius: 999px; padding: 4px 12px; min-width: 140px; }
   .search kbd { font-size: 9px; background: rgba(255,255,255,.08); border-radius: 3px; padding: 1px 5px; font-family: inherit; }
   .main { display: flex; height: 360px; }
-  .lp { width: 218px; background: #0b1426; border-right: 1px solid rgba(255,255,255,.1); font-size: 11px; flex-shrink: 0; }
-  .lp .head { height: 34px; display: flex; align-items: center; padding: 0 10px; font-size: 10px; font-weight: 800; letter-spacing: .4px; color: #8aa0b8; border-bottom: 1px solid rgba(255,255,255,.08); }
-  .sechead { padding: 5px 10px; background: #16335a; border-left: 3px solid #8f87f1; font-size: 10px; font-weight: 800; letter-spacing: .3px; }
-  .addrow { padding: 6px 10px; color: #566d88; font-size: 10px; }
-  .cv { flex: 1; position: relative; background: #0b1426; }
-  .months { display: flex; height: 20px; border-bottom: 1px solid rgba(255,255,255,.1); font-size: 9px; font-weight: 700; color: #8aa0b8; }
+  .lp { width: 218px; background: #0b0c0e; border-right: 1px solid rgba(255,255,255,.1); font-size: 11px; flex-shrink: 0; }
+  .lp .head { height: 34px; display: flex; align-items: center; padding: 0 10px; font-size: 10px; font-weight: 800; letter-spacing: .4px; color: #8A9298; border-bottom: 1px solid rgba(255,255,255,.08); }
+  .sechead { padding: 5px 10px; background: rgba(255,255,255,.035); border-left: 3px solid #4E44DB; font-size: 10px; font-weight: 800; letter-spacing: .3px; color: #b3b8bd; }
+  .addrow { padding: 6px 10px; color: #5a6067; font-size: 10px; }
+  .cv { flex: 1; position: relative; background: #0b0c0e; }
+  .months { display: flex; height: 20px; border-bottom: 1px solid rgba(255,255,255,.1); font-size: 9px; font-weight: 700; color: #8A9298; }
   .months div { flex: 1; display: flex; align-items: center; justify-content: center; border-right: 1px solid rgba(255,255,255,.06); }
   .wk { position: absolute; top: 20px; bottom: 0; width: 12px; background: rgba(255,255,255,.03); }
   .today { position: absolute; top: 20px; bottom: 0; left: 208px; width: 2px; background: #ffb224; opacity: .9; }
-  .starter { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 320px; background: #102a4a; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; padding: 22px 20px; text-align: center; box-shadow: 0 8px 28px rgba(0,0,0,.4); }
+  .starter { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 320px; background: #17191c; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; padding: 22px 20px; text-align: center; box-shadow: 0 8px 28px rgba(0,0,0,.4); }
   .starter h3 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
-  .starter p { font-size: 11px; color: #8aa0b8; margin-bottom: 14px; line-height: 1.5; }
-  .starter .b1 { display: block; width: 100%; font-size: 12px; font-weight: 700; padding: 8px; background: #8f87f1; color: #0b0a2a; border: none; border-radius: 7px; margin-bottom: 7px; font-family: inherit; }
-  .starter .b2 { display: block; width: 100%; font-size: 12px; font-weight: 600; padding: 8px; background: transparent; color: #eee; border: 1px solid rgba(255,255,255,.2); border-radius: 7px; font-family: inherit; }
-  .starter .hint { font-size: 10px; color: #6e8299; margin-top: 12px; }
+  .starter p { font-size: 11px; color: #8A9298; margin-bottom: 14px; line-height: 1.5; }
+  .starter .b1 { display: block; width: 100%; font-size: 12px; font-weight: 700; padding: 8px; background: #4E44DB; color: #ffffff; border: none; border-radius: 999px; margin-bottom: 7px; font-family: inherit; }
+  .starter .b2 { display: block; width: 100%; font-size: 12px; font-weight: 600; padding: 8px; background: transparent; color: #eee; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; font-family: inherit; }
+  .starter .hint { font-size: 10px; color: #71787e; margin-top: 12px; }
   .starter .hint kbd { font-size: 8px; background: rgba(255,255,255,.08); border-radius: 3px; padding: 1px 4px; font-family: inherit; }
-  .rail { width: 40px; background: #0d203c; border-left: 1px solid rgba(255,255,255,.1); display: flex; flex-direction: column; align-items: center; padding-top: 8px; gap: 5px; flex-shrink: 0; }
-  .tab { width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; color: #8aa0b8; font-size: 13px; }
-  .cap { font-size: 11px; color: #8aa0b8; margin-top: 10px; line-height: 1.6; max-width: 1100px; }
+  .rail { width: 40px; background: #151719; border-left: 1px solid rgba(255,255,255,.1); display: flex; flex-direction: column; align-items: center; padding-top: 8px; gap: 5px; flex-shrink: 0; }
+  .tab { width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; color: #8A9298; font-size: 13px; }
+  .cap { font-size: 11px; color: #8A9298; margin-top: 10px; line-height: 1.6; max-width: 1100px; }
   .cap b { color: #eee; }
+  h2, h3, .title, .ititle { font-family: 'Montserrat', system-ui, sans-serif; }
+  h2::before { content: ''; display: block; width: 28px; height: 3px; background: #CE181E; margin-bottom: 6px; border-radius: 1px; }
 </style>
 </head>
 <body>
 
 <div class="app">
   <div class="tb">
-    <span class="mark"></span>
+    <img class="mark" src="../assets/logos/bbd_logo_white.svg" alt="BBD">
     <span class="doc">Untitled <span class="caret">▾</span></span>
     <button class="btn">Today</button>
     <span class="spacer"></span>

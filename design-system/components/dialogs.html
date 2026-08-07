@@ -4,27 +4,30 @@
 <head>
 <meta charset="utf-8">
 <title>Dialogs &amp; banners</title>
+<link rel="stylesheet" href="../styles.css">
 <style>
-  * { margin: 0; box-sizing: border-box; font-family: 'Figtree', system-ui, sans-serif; }
-  body { background: #0b1426; color: #eee; padding: 24px; display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+  * { margin: 0; box-sizing: border-box; font-family: 'Open Sans', system-ui, sans-serif; }
+  body { background: #0b0c0e; color: #eee; padding: 24px; display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
   .col { display: flex; flex-direction: column; gap: 16px; max-width: 340px; }
-  .modal { background: #102a4a; border: 1px solid rgba(255,255,255,.15); border-radius: 10px; box-shadow: 0 10px 32px rgba(0,0,0,.5); padding: 16px; }
+  .modal { background: #17191c; border: 1px solid rgba(255,255,255,.15); border-radius: 10px; box-shadow: 0 10px 32px rgba(0,0,0,.5); padding: 16px; }
   .modal h3 { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
-  .modal p { font-size: 12px; color: #8aa0b8; line-height: 1.55; margin-bottom: 12px; }
+  .modal p { font-size: 12px; color: #8A9298; line-height: 1.55; margin-bottom: 12px; }
   .stackbtns { display: flex; flex-direction: column; gap: 6px; }
-  .stackbtns button { font-size: 12px; font-weight: 600; padding: 8px; border-radius: 6px; cursor: pointer; font-family: inherit; }
-  .b1 { background: #8f87f1; color: #0b0a2a; border: none; }
+  .stackbtns button { font-size: 12px; font-weight: 600; padding: 8px; border-radius: 999px; cursor: pointer; font-family: inherit; }
+  .b1 { background: #4E44DB; color: #ffffff; border: none; }
   .b2 { background: transparent; color: #eee; border: 1px solid rgba(255,255,255,.2); }
-  .b3 { background: transparent; color: #e0556b; border: 1px solid #e0556b; }
+  .b3 { background: transparent; color: #d9363c; border: 1px solid #d9363c; }
   .cancel { margin-top: 10px; text-align: right; }
-  .cancel button { font-size: 11px; background: none; border: none; color: #8aa0b8; cursor: pointer; font-family: inherit; }
-  .banner { display: flex; align-items: center; gap: 10px; padding: 7px 12px; background: rgba(0,152,204,.18); border: 1px solid #0098cc; border-radius: 8px; font-size: 12px; }
-  .banner button { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 5px; cursor: pointer; font-family: inherit; }
-  .empty { background: #102a4a; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 20px 16px; text-align: center; font-size: 12px; }
+  .cancel button { font-size: 11px; background: none; border: none; color: #8A9298; cursor: pointer; font-family: inherit; }
+  .banner { display: flex; align-items: center; gap: 10px; padding: 7px 12px; background: rgba(0,184,204,.18); border: 1px solid #00B8CC; border-radius: 8px; font-size: 12px; }
+  .banner button { font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 999px; cursor: pointer; font-family: inherit; white-space: nowrap; }
+  .empty { background: #17191c; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 20px 16px; text-align: center; font-size: 12px; }
   .empty .icon { font-size: 20px; opacity: .5; margin-bottom: 6px; }
-  .empty p { color: #8aa0b8; line-height: 1.5; margin: 4px 0 12px; font-size: 11px; }
-  .empty button { font-size: 11px; font-weight: 600; padding: 6px 12px; background: #8f87f1; color: #0b0a2a; border: none; border-radius: 6px; cursor: pointer; font-family: inherit; }
-  .cap { font-size: 11px; color: #8aa0b8; line-height: 1.5; }
+  .empty p { color: #8A9298; line-height: 1.5; margin: 4px 0 12px; font-size: 11px; }
+  .empty button { font-size: 11px; font-weight: 600; padding: 6px 14px; background: #4E44DB; color: #ffffff; border: none; border-radius: 999px; cursor: pointer; font-family: inherit; }
+  .cap { font-size: 11px; color: #8A9298; line-height: 1.5; }
+  h2, h3, .title, .ititle { font-family: 'Montserrat', system-ui, sans-serif; }
+  h2::before { content: ''; display: block; width: 28px; height: 3px; background: #CE181E; margin-bottom: 6px; border-radius: 1px; }
 </style>
 </head>
 <body>
@@ -46,8 +49,8 @@
 <div class="col">
   <div class="banner">
     <span style="flex:1">Plan updated by <b>Bob Nkosi</b> · 14:02</span>
-    <button style="background:#0098cc;border:1px solid #0098cc;color:#fff">Reload</button>
-    <button style="background:transparent;border:1px solid rgba(255,255,255,.25);color:#8aa0b8">Keep mine</button>
+    <button style="background:#00B8CC;border:1px solid #00B8CC;color:#fff">Reload</button>
+    <button style="background:transparent;border:1px solid rgba(255,255,255,.25);color:#8A9298">Keep mine</button>
   </div>
   <div class="cap"><b style="color:#eee">File-updated banner</b> — in-flow under the toolbar, never floating. Informational blue, not alarm pink: nothing is wrong yet. "Keep mine" holds until an even newer save appears; the save guard still protects on write.</div>
 

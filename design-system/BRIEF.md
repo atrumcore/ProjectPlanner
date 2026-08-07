@@ -47,14 +47,17 @@ The old UI grew feature-by-feature into 13 toolbar controls, three stacking side
 - **Toolbar diet**: 7 controls — brand mark (Home), document chip (File menu), Today, Display, Share, search pill, account.
 - **Unified Home/launcher**: signed in shows your Teams and their plans; signed out shows recent local files.
 
-## Design language
+## Design language (v2 — aligned to the official BBD brand template)
 
-- **Dark theme default.** App background `#0b1426`, header `#0d203c`, surfaces `#102a4a` / `#16335a`. Light theme exists (white/warm greys, navy text `#1b1846`).
-- **Interactive accent**: purple `#8f87f1` (primary buttons), blue `#0098cc` (selection, active states, informational badges).
-- **BBD red `#ce181e` is brand-only** — the logo mark. Red is never an interactive colour; reserved for danger/destructive.
-- **Conflict pink `#c0466a`** — contention and double-booking. Distinct from red on purpose.
-- **Type**: Figtree, 15px page scale down to 9px micro-labels. Small, dense, confident.
+- **Dark-first, BBD near-black.** App background `#0B0C0E` (page `#040406`), header `#151719` (BBD Process Black), surfaces `#17191C` / `#212429`. Light theme: `#F6F6F7` / white / `#DCDDDE`, text `#151719`. No drop shadows on dark surfaces — separation by contrast and white@8% hairlines.
+- **Interactive accents from the BBD extension palette**: violet `#4E44DB` (primary buttons, focus), cyan `#00B8CC` (selection, active tabs, informational badges). Indigo `#37309C` and teal `#25898E` reserved for charts.
+- **BBD red `#CE181E` is a signal, never a fill** — the logo glyph, the kicker rule, danger. Red is never an interactive colour.
+- **The kicker device**: a 28×3px red rule above an uppercase Montserrat label (+0.12em tracking) is the brand signature for section headings; a thin red vertical bar is the sub-kicker.
+- **Conflict pink `#c0466a`** — contention and double-booking. Distinct from danger red (`#D9363C`) on purpose.
+- **Type**: Montserrat (display — titles, headings, eyebrows, on-bar labels) + Open Sans (body — panels, menus, inputs). 15px scale down to 9px floor. Sentence case, never Title Case.
+- **Shape language**: pill (999px) buttons/CTAs/search, 8px bars, 12–16px cards and modals.
 - Chips: **circle = person, square = team.** Badges: pink = conflicts, blue = open notes, none at zero.
+- Full reference: `bbd-brand-ci-guidelines.md` in the uploads folder (colour Pantones, logo rules, type hierarchy).
 
 ## Hard constraints — do not design against these
 

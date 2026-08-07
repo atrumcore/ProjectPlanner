@@ -1,32 +1,35 @@
-<!-- @dsCard group="App components" name="Inspector" subtitle="All four selection states" -->
+<!-- @dsCard group="App components" viewport="1160x620" name="Inspector" subtitle="All four selection states" -->
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <title>Inspector</title>
+<link rel="stylesheet" href="../styles.css">
 <style>
-  * { margin: 0; box-sizing: border-box; font-family: 'Figtree', system-ui, sans-serif; }
-  body { background: #0b1426; color: #eee; padding: 24px; display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
-  .insp { width: 250px; background: #102a4a; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 12px 14px; font-size: 12px; }
-  .eyebrow { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #6e8299; margin-bottom: 6px; }
+  * { margin: 0; box-sizing: border-box; font-family: 'Open Sans', system-ui, sans-serif; }
+  body { background: #0b0c0e; color: #eee; padding: 24px; display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+  .insp { width: 250px; background: #17191c; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 12px 14px; font-size: 12px; }
+  .eyebrow { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #71787e; margin-bottom: 6px; }
   .title { font-size: 14px; font-weight: 700; }
-  .sub { font-size: 11px; color: #8aa0b8; margin-bottom: 10px; }
+  .sub { font-size: 11px; color: #8A9298; margin-bottom: 10px; }
   .frow { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,.06); font-size: 11px; }
-  .frow label { color: #8aa0b8; }
+  .frow label { color: #8A9298; }
   .frow .val { font-weight: 600; }
-  .frow .caret { color: #6e8299; font-size: 9px; }
-  .sect { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #6e8299; margin: 12px 0 4px; }
+  .frow .caret { color: #71787e; font-size: 9px; }
+  .sect { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #71787e; margin: 12px 0 4px; }
   .conflict { margin-top: 10px; padding: 7px 9px; background: rgba(192,70,106,.15); border: 1px solid #c0466a; border-radius: 6px; font-size: 10px; color: #e0879e; cursor: pointer; }
   .actions { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
-  .actions button { font-size: 10px; font-weight: 600; padding: 4px 9px; background: transparent; color: #eee; border: 1px solid rgba(255,255,255,.2); border-radius: 5px; cursor: pointer; font-family: inherit; }
-  .actions .danger { color: #e0556b; border-color: rgba(224,85,107,.5); }
+  .actions button { font-size: 10px; font-weight: 600; padding: 4px 9px; background: transparent; color: #eee; border: 1px solid rgba(255,255,255,.2); border-radius: 5px; cursor: pointer; font-family: inherit; white-space: nowrap; }
+  .actions .danger { color: #d9363c; border-color: rgba(217,54,60,.5); }
   .chips { display: flex; gap: 3px; }
   .av { width: 18px; height: 18px; border-radius: 50%; color: #fff; font-size: 7px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,.5); }
-  .rt { background: #0b1426; border: 1px solid rgba(255,255,255,.12); border-radius: 6px; padding: 6px 8px; font-size: 11px; color: #8aa0b8; min-height: 44px; margin-top: 3px; }
+  .rt { background: #0b0c0e; border: 1px solid rgba(255,255,255,.12); border-radius: 6px; padding: 6px 8px; font-size: 11px; color: #8A9298; min-height: 44px; margin-top: 3px; }
   .swrow { display: flex; gap: 4px; margin-top: 3px; }
   .sw { width: 16px; height: 16px; border-radius: 4px; cursor: pointer; }
   .range { display: flex; gap: 4px; align-items: center; font-size: 10px; margin-top: 3px; }
-  .range button { font-size: 9px; padding: 2px 7px; background: transparent; color: #8aa0b8; border: 1px solid rgba(255,255,255,.2); border-radius: 4px; cursor: pointer; font-family: inherit; }
+  .range button { font-size: 9px; padding: 2px 7px; background: transparent; color: #8A9298; border: 1px solid rgba(255,255,255,.2); border-radius: 4px; cursor: pointer; font-family: inherit; white-space: nowrap; }
+  h2, h3, .title, .ititle { font-family: 'Montserrat', system-ui, sans-serif; }
+  h2::before { content: ''; display: block; width: 28px; height: 3px; background: #CE181E; margin-bottom: 6px; border-radius: 1px; }
 </style>
 </head>
 <body>
@@ -36,7 +39,7 @@
   <div class="title">2026 Priority Roadmap</div>
   <div class="sub">Digital Channels · saved by Alice · 09:12</div>
   <div class="sect">Timeline range</div>
-  <div class="range"><button>+ Start</button><button>− Start</button><span style="color:#8aa0b8">Jan 2026 — Aug 2026</span><button>− End</button><button>+ End</button></div>
+  <div class="range"><button>+ Start</button><button>− Start</button><span style="color:#8A9298">Jan 2026 — Aug 2026</span><button>− End</button><button>+ End</button></div>
   <div class="sect">Contents</div>
   <div class="frow"><label>Lanes</label><span class="val">8</span></div>
   <div class="frow"><label>Bars</label><span class="val">21</span></div>
@@ -54,7 +57,7 @@
   <div class="frow"><label>Start</label><span class="val">3 Feb 2026</span></div>
   <div class="frow"><label>Duration</label><span class="val">54 days</span></div>
   <div class="frow"><label>Environment</label><span class="val">QA <span class="caret">▾</span></span></div>
-  <div class="frow"><label>People</label><span class="chips"><span class="av" style="background:#d81b60">AD</span><span class="av" style="background:#039be5">BN</span><span class="av" style="background:#16335a;color:#8aa0b8">+</span></span></div>
+  <div class="frow"><label>People</label><span class="chips"><span class="av" style="background:#d81b60">AD</span><span class="av" style="background:#039be5">BN</span><span class="av" style="background:#212429;color:#8A9298">+</span></span></div>
   <div class="conflict">Alice also on Wave 2 UAT · wk 8–10 →</div>
   <div class="actions"><button>Rename</button><button>Colour</button><button class="danger">Delete bar</button></div>
 </div>
@@ -63,11 +66,11 @@
   <div class="eyebrow">Lane selected</div>
   <div class="title">Channel modernisation</div>
   <div class="frow"><label>Section</label><span class="val">In Progress <span class="caret">▾</span></span></div>
-  <div class="frow"><label>Owners</label><span class="chips"><span class="av" style="background:#5e35b1;border-radius:5px">BT</span><span class="av" style="background:#16335a;color:#8aa0b8">+</span></span></div>
-  <div class="frow"><label>Row colour</label><span class="swrow"><span class="sw" style="background:none;border:1px dashed #6e8299"></span><span class="sw" style="background:#3e63dd"></span><span class="sw" style="background:#46a758"></span><span class="sw" style="background:#e5484d"></span></span></div>
+  <div class="frow"><label>Owners</label><span class="chips"><span class="av" style="background:#5e35b1;border-radius:5px">BT</span><span class="av" style="background:#212429;color:#8A9298">+</span></span></div>
+  <div class="frow"><label>Row colour</label><span class="swrow"><span class="sw" style="background:none;border:1px dashed #71787e"></span><span class="sw" style="background:#3e63dd"></span><span class="sw" style="background:#46a758"></span><span class="sw" style="background:#e5484d"></span></span></div>
   <div class="sect">Key features</div>
   <div class="rt">• SSO rollout<br>• Bulk import / export</div>
-  <div class="sect">Key dependencies <span style="color:#6e8299;text-transform:none;font-weight:400">(folded in from right panel)</span></div>
+  <div class="sect">Key dependencies <span style="color:#71787e;text-transform:none;font-weight:400">(folded in from right panel)</span></div>
   <div class="rt">Vendor API v2 · Network team</div>
   <div class="actions"><button>+ Bar</button><button>+ Go-live</button><button>Notes</button><button class="danger">Delete lane</button></div>
 </div>
@@ -75,7 +78,7 @@
 <div class="insp">
   <div class="eyebrow">Section selected</div>
   <div class="title">In Progress</div>
-  <div class="frow"><label>Colour</label><span class="swrow"><span class="sw" style="background:none;border:1px dashed #6e8299"></span><span class="sw" style="background:#3e63dd"></span><span class="sw" style="background:#8e4ec6"></span></span></div>
+  <div class="frow"><label>Colour</label><span class="swrow"><span class="sw" style="background:none;border:1px dashed #71787e"></span><span class="sw" style="background:#3e63dd"></span><span class="sw" style="background:#8e4ec6"></span></span></div>
   <div class="frow"><label>Lanes</label><span class="val">5</span></div>
   <div class="actions"><button>Rename</button><button>+ Add lane</button><button class="danger">Delete section</button></div>
 </div>

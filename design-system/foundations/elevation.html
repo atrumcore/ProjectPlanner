@@ -4,20 +4,23 @@
 <head>
 <meta charset="utf-8">
 <title>Elevation &amp; layers</title>
+<link rel="stylesheet" href="../styles.css">
 <style>
   * { margin: 0; box-sizing: border-box; }
-  body { font-family: 'Figtree', system-ui, sans-serif; background: #0b1426; color: #eee; padding: 24px; }
-  h2 { font-size: 13px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: #8aa0b8; margin: 0 0 12px; }
+  body { font-family: 'Open Sans', system-ui, sans-serif; background: #0b0c0e; color: #eee; padding: 24px; }
+  h2 { font-size: 13px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: #8A9298; margin: 0 0 12px; }
   .stack { position: relative; height: 300px; }
   .layer { position: absolute; border-radius: 10px; padding: 10px 14px; font-size: 12px; font-weight: 600; }
-  .l0 { inset: 0; background: #0b1426; border: 1px dashed rgba(255,255,255,.2); color: #6e8299; }
-  .l1 { left: 24px; top: 40px; width: 300px; height: 220px; background: #102a4a; border: 1px solid rgba(255,255,255,.12); }
-  .l2 { left: 130px; top: 84px; width: 280px; height: 150px; background: #16335a; border: 1px solid rgba(255,255,255,.14); box-shadow: 0 6px 20px rgba(0,0,0,.35); }
-  .l3 { left: 250px; top: 130px; width: 260px; height: 110px; background: #16335a; border: 1px solid rgba(255,255,255,.18); box-shadow: 0 10px 32px rgba(0,0,0,.5); }
-  .tag { font-size: 9px; font-weight: 700; color: #8aa0b8; display: block; margin-top: 2px; }
+  .l0 { inset: 0; background: #0b0c0e; border: 1px dashed rgba(255,255,255,.2); color: #71787e; }
+  .l1 { left: 24px; top: 40px; width: 300px; height: 220px; background: #17191c; border: 1px solid rgba(255,255,255,.12); }
+  .l2 { left: 130px; top: 84px; width: 280px; height: 150px; background: #212429; border: 1px solid rgba(255,255,255,.14); box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+  .l3 { left: 250px; top: 130px; width: 260px; height: 110px; background: #212429; border: 1px solid rgba(255,255,255,.18); box-shadow: 0 10px 32px rgba(0,0,0,.5); }
+  .tag { font-size: 9px; font-weight: 700; color: #8A9298; display: block; margin-top: 2px; }
   table { border-collapse: collapse; width: 100%; margin-top: 18px; font-size: 12px; }
   td { padding: 6px 10px; border-bottom: 1px solid rgba(255,255,255,.08); }
-  td:last-child { color: #8aa0b8; font-size: 11px; }
+  td:last-child { color: #8A9298; font-size: 11px; }
+  h2, h3, .title, .ititle { font-family: 'Montserrat', system-ui, sans-serif; }
+  h2::before { content: ''; display: block; width: 28px; height: 3px; background: #CE181E; margin-bottom: 6px; border-radius: 1px; }
 </style>
 </head>
 <body>
