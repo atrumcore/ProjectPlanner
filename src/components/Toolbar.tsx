@@ -88,6 +88,15 @@ export default function Toolbar({ onScrollToToday, onExportPNG, onExportPDF, onE
           </span>
         )}
 
+        {/* Labelled path back to the launcher — the logo alone is an
+            invisible convention. Hidden signed-out until Home exists for
+            everyone (R5). */}
+        {signedIn && (
+          <button onClick={() => setAppView('launcher')} title="Back to your plans">
+            &#x2039; Home
+          </button>
+        )}
+
         <button
           className="toolbar-doc-chip"
           onPointerDown={() => rememberOpenState('file')}
