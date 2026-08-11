@@ -2010,13 +2010,28 @@ select option {
   white-space: nowrap;
 }
 
+/* Self-contained chrome (not reliant on `.toolbar button`) so the chip works
+   identically in the toolbar and the launcher header. */
 .account-chip {
   display: inline-flex;
   align-items: center;
   gap: 7px;
   margin-left: 4px;
   max-width: 190px;
-  padding-left: 4px !important;
+  padding: 3px 12px 3px 4px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--hover);
+  color: var(--text-header);
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+.account-chip:hover {
+  background: var(--hover-strong);
+  border-color: var(--border-strong);
 }
 .account-chip-avatar {
   width: 22px;
@@ -3738,12 +3753,6 @@ select option {
   height: 18px;
 }
 .launcher-header-spacer { flex: 1; }
-.launcher-account {
-  font-size: 12px;
-  color: var(--text-header);
-  opacity: 0.75;
-}
-
 .launcher-body {
   flex: 1;
   display: grid;
@@ -3768,10 +3777,8 @@ select option {
   color: var(--text-muted);
   padding: 4px 10px;
 }
-.launcher-sidebar-divider {
-  height: 1px;
-  background: var(--border);
-  margin: 10px 6px;
+.launcher-sidebar-label-gap {
+  margin-top: 14px;
 }
 .launcher-team-filter {
   margin: 4px 6px 6px;
@@ -3789,26 +3796,53 @@ select option {
   border-color: var(--accent-secondary);
 }
 .launcher-nav-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   width: 100%;
   text-align: left;
   background: transparent;
   border: none;
   border-radius: 6px;
-  padding: 7px 10px;
+  padding: 6px 10px;
   font-size: 13px;
   color: var(--text-secondary);
   cursor: pointer;
   font-family: inherit;
+}
+.launcher-nav-item:hover { background: var(--hover); color: var(--text-primary); }
+/* Active = surface + cyan inset edge — the app's one selection language
+   (matches the rail's active tab and the design's nav mock). */
+.launcher-nav-item.active {
+  background: var(--bg-surface-2);
+  box-shadow: inset 3px 0 0 var(--accent-secondary);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.launcher-nav-label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.launcher-nav-item:hover { background: var(--hover); color: var(--text-primary); }
-.launcher-nav-item.active {
-  background: var(--accent-primary);
-  color: var(--on-accent);
-  font-weight: 600;
+.launcher-team-square {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.launcher-nav-glyph {
+  width: 20px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+  flex-shrink: 0;
 }
 
 .launcher-main {
@@ -3836,15 +3870,6 @@ select option {
   border-radius: 6px;
   margin-bottom: 12px;
 }
-.launcher-empty {
-  font-size: 13px;
-  color: var(--text-secondary);
-  padding: 24px;
-  text-align: center;
-  border: 1px dashed var(--border);
-  border-radius: 8px;
-}
-
 .launcher-welcome { max-width: 560px; }
 .launcher-welcome h2 { margin-bottom: 8px; }
 .launcher-welcome p {
@@ -3870,30 +3895,47 @@ select option {
 .launcher-recent-chip:hover { border-color: var(--accent-primary); }
 .launcher-recent-where { font-size: 11px; color: var(--text-muted); }
 
+/* Plan rows are surface cards (v2 launcher mock): border, radius 8, glyph +
+   name with nested meta. */
 .launcher-plan-list { list-style: none; margin: 0; padding: 0; }
-.launcher-plan-list li {
+.launcher-plan-card {
   display: flex;
   align-items: center;
-  gap: 8px;
-  border-top: 1px solid var(--border);
+  gap: 4px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 7px;
+  padding-right: 6px;
 }
-.launcher-plan-list li:last-child { border-bottom: 1px solid var(--border); }
+.launcher-plan-card:hover {
+  border-color: var(--border-strong);
+}
 .launcher-plan-open {
   flex: 1;
   min-width: 0;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  align-items: flex-start;
+  align-items: center;
+  gap: 10px;
   background: transparent;
   border: none;
-  padding: 11px 8px;
+  padding: 10px 12px;
   cursor: pointer;
   font-family: inherit;
   text-align: left;
-  border-radius: 6px;
+  border-radius: 8px;
 }
-.launcher-plan-open:hover { background: var(--hover); }
+.launcher-plan-glyph {
+  font-size: 14px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.launcher-plan-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
 .launcher-plan-name {
   font-size: 13px;
   font-weight: 600;
@@ -3902,6 +3944,13 @@ select option {
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 100%;
+}
+.launcher-plan-meta {
+  font-size: 11px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .launcher-plan-delete {
   background: transparent;
