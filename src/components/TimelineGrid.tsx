@@ -36,6 +36,9 @@ interface Props {
   weekWidth: number;
   /** Row height to draw with — taller during export (see ExportLayoutContext). */
   rowHeight: number;
+  /** Height of the spacer band after each section, mirroring the left panel's
+   * "+ Add project" row. 0 during export (the add rows are hidden then). */
+  addRowHeight: number;
   monthSpans: MonthSpan[];
   holidays: HolidayMark[];
   weekendSpans: WeekendSpan[];
@@ -49,6 +52,7 @@ export default function TimelineGrid({
   sections,
   weekWidth,
   rowHeight: ROW_HEIGHT,
+  addRowHeight,
   monthSpans,
   holidays,
   weekendSpans,
@@ -59,7 +63,7 @@ export default function TimelineGrid({
   const c = useThemeColors();
   const gridWidth = totalWeeks * weekWidth;
 
-  // Compute layout: each section has a header band + rows
+  // Compute layout: each section has a header band + rows + an add-row spacer
   const sectionLayout: { headerY: number; rowsY: number; rowsHeight: number; laneCount: number; label: string; color?: string }[] = [];
   let yOffset = 0;
   for (const sec of sections) {
@@ -68,7 +72,7 @@ export default function TimelineGrid({
     const rowsY = yOffset;
     const rowsHeight = sec.laneCount * ROW_HEIGHT;
     sectionLayout.push({ headerY, rowsY, rowsHeight, laneCount: sec.laneCount, label: sec.label, color: sec.color });
-    yOffset += rowsHeight;
+    yOffset += rowsHeight + addRowHeight;
   }
   // Row-only Y ranges (for clipping grid lines to avoid section headers)
   const rowRanges = sectionLayout
@@ -168,6 +172,23 @@ export default function TimelineGrid({
     }
   }
 
+  // Add-row spacer bands — the canvas-side mirror of the left panel's
+  // "+ Add project" rows: a bg-app gap that breaks the row striping, closed
+  // by a rule so the section division carries across the whole plan.
+  const addRowBands: React.ReactElement[] = [];
+  if (addRowHeight > 0) {
+    for (const sec of sectionLayout) {
+      const bandY = sec.rowsY + sec.rowsHeight;
+      addRowBands.push(
+        <g key={`ab-${sec.headerY}`}>
+          <rect x={0} y={bandY} width={gridWidth} height={addRowHeight} fill={c.BG_APP} />
+          <line x1={0} y1={bandY + addRowHeight} x2={gridWidth} y2={bandY + addRowHeight}
+            stroke={c.GRID_MONTHLY} strokeWidth={1} />
+        </g>
+      );
+    }
+  }
+
   // Section header bands — rendered last (on top) for clean look
   const sectionHeaders: React.ReactElement[] = [];
   for (const sec of sectionLayout) {
@@ -195,6 +216,7 @@ export default function TimelineGrid({
       {holidayMarks}
       {gridLines}
       {hLines}
+      {addRowBands}
       {sectionHeaders}
     </>
   );

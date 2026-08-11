@@ -72,6 +72,8 @@ const RightPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) 
             } as CSSProperties}
           >{section.label}</div>
           {lanes.map((lane, i) => renderCell(lane, i))}
+          {/* Mirrors the left panel's "+ Add project" row height. */}
+          <div className="panel-add-spacer" />
         </div>
       ))}
 

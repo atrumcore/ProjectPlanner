@@ -17,6 +17,9 @@
   --font-body: 'Open Sans', Helvetica, Arial, sans-serif;
 
   --row-height: 48px;
+  /* "+ Add project/section" row height — mirrored by the timeline SVG's
+     spacer bands (ADD_ROW_HEIGHT in src/types/gantt.ts). */
+  --add-row-height: 30px;
   --header-height: 48px;
   --week-label-height: 18px;
   --project-col: 140px;
@@ -408,18 +411,36 @@ select option {
   z-index: 999;
 }
 
-/* Left panel add-affordances — the Insert menu's replacement */
+/* Left panel add-affordances — the Insert menu's replacement. Fixed height:
+   the timeline SVG mirrors it as a spacer band per section, so the three
+   columns stay row-aligned. */
 .left-panel-add-row {
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
+  height: var(--add-row-height);
   text-align: left;
-  padding: 7px 12px;
+  padding: 0 12px;
   background: none;
   border: none;
   color: var(--text-muted);
   font-size: 11px;
   font-family: var(--font-body);
   cursor: pointer;
+}
+
+/* Spacer in the RightPanel mirroring the add rows (it has no affordance of
+   its own — Key Dependencies cells just need the same rhythm). */
+.panel-add-spacer {
+  height: var(--add-row-height);
+  flex-shrink: 0;
+}
+
+/* Exports hide the affordances; the SVG collapses its spacer bands to match
+   (ADD_ROW_HEIGHT -> 0 while isExporting). */
+.gantt-container.is-exporting .left-panel-add-row,
+.gantt-container.is-exporting .panel-add-spacer {
+  display: none;
 }
 
 .left-panel-add-row:hover {
