@@ -322,24 +322,34 @@ export default function PhaseBar({ bar, rowY }: Props) {
         </>
       )}
 
-      {/* Start-date label (rotated, on the left edge — toggled via toolbar).
-          9px is the type-scale floor; 10px would visibly overhang the 30px bar. */}
-      {showBarDates && !editing && (
-        <text
-          x={x + (useSolidPill ? 7 : TAG_WIDTH + 6)}
-          y={y + BAR_HEIGHT / 2}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fill={labelFill}
-          fontSize={9}
-          fontWeight={700}
-          fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
-          transform={`rotate(-90, ${x + (useSolidPill ? 7 : TAG_WIDTH + 6)}, ${y + BAR_HEIGHT / 2})`}
-          style={{ pointerEvents: 'none', userSelect: 'none', opacity: 0.85 }}
-        >
-          {formatDayMonth(startDate)}
-        </text>
-      )}
+      {/* Start-date label — horizontal, tucked into the bar's left end.
+          The old rotated treatment overhung the 30px bar. Rendered only when
+          it fits between the tag and the centred label; narrow bars rely on
+          the hover tooltip, which always carries the full date range. */}
+      {showBarDates && !editing && (() => {
+        const dateStr = formatDayMonth(startDate);
+        const dateX = x + (useSolidPill ? 8 : TAG_WIDTH + 7);
+        // Conservative width estimates (no SVG text measurement needed):
+        // 10px Montserrat 700 caps ≈ 7px/char; 9px date ≈ 5.2px/char.
+        const labelLeftEdge =
+          x + displayWidth / 2 + (useSolidPill ? 0 : TAG_WIDTH / 2)
+          - (bar.label.length * 7) / 2;
+        const fits = labelLeftEdge - dateX >= dateStr.length * 5.2 + 8;
+        if (!fits) return null;
+        return (
+          <text
+            x={dateX}
+            y={y + BAR_HEIGHT / 2 + 3}
+            fill={labelFill}
+            fontSize={9}
+            fontWeight={600}
+            fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
+            style={{ pointerEvents: 'none', userSelect: 'none', opacity: 0.7 }}
+          >
+            {dateStr}
+          </text>
+        );
+      })()}
 
       {/* Label */}
       {!editing && (
