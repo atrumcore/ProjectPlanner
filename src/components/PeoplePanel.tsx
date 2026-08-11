@@ -1,5 +1,4 @@
-import { useState, useRef, useMemo, useCallback, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useGanttStore } from '../store/useGanttStore';
 import type { Person, PhaseType, Team } from '../types/gantt';
 import { PEOPLE_COLOR_PRESETS } from '../types/gantt';
@@ -7,20 +6,17 @@ import { getPhaseDef } from '../data/phasePresets';
 import { getPeopleContentions, type ResourceRef } from '../utils/contention';
 import { htmlToPlainText } from '../utils/plainText';
 
-const PANEL_MIN = 320;
-const PANEL_MAX = 720;
-
 const sameRef = (a: ResourceRef | null, b: ResourceRef | null) =>
   !!a && !!b && a.kind === b.kind && a.id === b.id;
 
 const refKey = (r: ResourceRef) => `${r.kind}:${r.id}`;
 
 /**
- * People & Teams panel — a searchable master-detail layout built to scale to
- * large rosters. Top: a team-grouped roster list with search and a
+ * People & Teams tab content — a searchable master-detail layout built to
+ * scale to large rosters. Top: a team-grouped roster list with search and a
  * conflicts-only filter. Bottom: a fixed detail pane for the selected person
  * or team (identity editing, focus mode, allocated bars, double-bookings).
- * Reuses the env-panel shell CSS; roster/detail styles are its own.
+ * Hosted inside the shared RailPanel shell (width/resize/header live there).
  */
 export default function PeoplePanel() {
   const teams = useGanttStore(s => s.teams);
@@ -36,13 +32,10 @@ export default function PeoplePanel() {
   const updatePerson = useGanttStore(s => s.updatePerson);
   const removePerson = useGanttStore(s => s.removePerson);
   const setBarPeople = useGanttStore(s => s.setBarPeople);
-  const togglePeoplePanel = useGanttStore(s => s.togglePeoplePanel);
   const setPeopleFocus = useGanttStore(s => s.setPeopleFocus);
   const selectBar = useGanttStore(s => s.selectBar);
 
   const [active, setActive] = useState<ResourceRef | null>(null);
-  const [closing, setClosing] = useState(false);
-  const [width, setWidth] = useState(420);
   const [search, setSearch] = useState('');
   const [conflictsOnly, setConflictsOnly] = useState(false);
   const [collapsedTeams, setCollapsedTeams] = useState<Set<string>>(new Set());
@@ -50,7 +43,13 @@ export default function PeoplePanel() {
   const [editingName, setEditingName] = useState(false);
   const [editingRole, setEditingRole] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
-  const resizing = useRef<{ startX: number; startWidth: number } | null>(null);
+
+  // Armed delete auto-disarms after 3s (v2 buttons card).
+  useEffect(() => {
+    if (!confirmDelete) return;
+    const t = setTimeout(() => setConfirmDelete(false), 3000);
+    return () => clearTimeout(t);
+  }, [confirmDelete]);
 
   const orderedTeams = useMemo(() => [...teams].sort((a, b) => a.order - b.order), [teams]);
   const orderedPeople = useMemo(() => [...people].sort((a, b) => a.order - b.order), [people]);
@@ -65,22 +64,6 @@ export default function PeoplePanel() {
     setEditingName(false);
     setEditingRole(false);
     setShowColorPicker(false);
-  }, []);
-
-  // Resize
-  useEffect(() => {
-    const onMove = (e: PointerEvent) => {
-      if (!resizing.current) return;
-      const delta = resizing.current.startX - e.clientX;
-      setWidth(Math.min(PANEL_MAX, Math.max(PANEL_MIN, resizing.current.startWidth + delta)));
-    };
-    const onUp = () => { resizing.current = null; };
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-    return () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-    };
   }, []);
 
   const contentions = useMemo(
@@ -177,8 +160,6 @@ export default function PeoplePanel() {
 
   const isFocused = sameRef(peopleFocus, active);
 
-  const handleClose = useCallback(() => setClosing(true), []);
-
   const handleAddTeam = useCallback(() => {
     const id = addTeam('');
     selectResource({ kind: 'team', id });
@@ -238,55 +219,38 @@ export default function PeoplePanel() {
 
   const rosterEmpty = teams.length === 0 && people.length === 0;
 
-  return createPortal(
-    <div
-      className={`env-panel${closing ? ' env-panel--closing' : ''}`}
-      style={{ width }}
-      onAnimationEnd={() => { if (closing) togglePeoplePanel(); }}
-    >
-      <div
-        className="env-panel-resize-handle"
-        onPointerDown={e => {
-          e.preventDefault();
-          (e.target as Element).setPointerCapture(e.pointerId);
-          resizing.current = { startX: e.clientX, startWidth: width };
-        }}
-      />
-
-      <div className="env-panel-header">
-        <span>People &amp; Teams</span>
-        <div className="env-panel-header-actions">
-          <button onClick={handleClose} title="Close (Ctrl+Shift+P)" aria-label="Close">&times;</button>
+  return (
+    <>
+      {/* Search / filter / add row — hidden while the roster is empty so the
+          teach state's single primary action is the only affordance. */}
+      {!rosterEmpty && (
+        <div className="people-roster-toolbar">
+          <input
+            className="people-roster-search"
+            type="search"
+            placeholder="Search people, roles, teams…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          <button
+            className={`people-roster-filter${conflictsOnly ? ' active' : ''}`}
+            onClick={() => setConflictsOnly(v => !v)}
+            title="Show only people/teams with double-bookings"
+          >
+            &#x26A0; {contentions.length > 0 ? contentions.length : ''}
+          </button>
+          <button className="people-roster-add" onClick={handleAddPerson} title="Add person">+ Person</button>
+          <button className="people-roster-add" onClick={handleAddTeam} title="Add team">+ Team</button>
         </div>
-      </div>
-
-      {/* Search / filter / add row */}
-      <div className="people-roster-toolbar">
-        <input
-          className="people-roster-search"
-          type="search"
-          placeholder="Search people, roles, teams…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-        <button
-          className={`people-roster-filter${conflictsOnly ? ' active' : ''}`}
-          onClick={() => setConflictsOnly(v => !v)}
-          title="Show only people/teams with double-bookings"
-        >
-          &#x26A0; {contentions.length > 0 ? contentions.length : ''}
-        </button>
-        <button className="people-roster-add" onClick={handleAddPerson} title="Add person">+ Person</button>
-        <button className="people-roster-add" onClick={handleAddTeam} title="Add team">+ Team</button>
-      </div>
+      )}
 
       {/* Roster list */}
       {rosterEmpty ? (
-        <div className="env-panel-empty">
-          <p>No people or teams yet.</p>
-          <p>Add the teams and people who execute the planned work, then allocate them to phase bars. Double-bookings across projects are flagged automatically.</p>
-          <button onClick={handleAddPerson} className="env-panel-primary-btn">Add person</button>
-          <button onClick={handleAddTeam} className="env-panel-primary-btn">Create team</button>
+        <div className="teach-state">
+          <div className="kicker">People &amp; teams</div>
+          <p>Assign people to phase bars and double-bookings across projects get flagged automatically.</p>
+          <button onClick={handleAddPerson} className="btn-primary">Add person</button>
+          <button onClick={handleAddTeam} className="btn-quiet">or create a team</button>
         </div>
       ) : (
         <div className="people-roster">
@@ -569,7 +533,6 @@ export default function PeoplePanel() {
           </div>
         )
       )}
-    </div>,
-    document.body
+    </>
   );
 }

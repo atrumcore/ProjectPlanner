@@ -1,0 +1,72 @@
+<!-- @dsCard group="Controls" name="Buttons" subtitle="Primary / secondary / danger / two-click confirm / toolbar" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Buttons</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  * { margin: 0; box-sizing: border-box; font-family: 'Open Sans', system-ui, sans-serif; }
+  body { background: #0b0c0e; color: #eee; padding: 24px; }
+  h2 { font-size: 13px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: #8A9298; margin: 22px 0 10px; }
+  h2:first-child { margin-top: 0; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  button { font-size: 12px; font-weight: 600; border-radius: 999px; padding: 7px 16px; cursor: pointer; border: 1px solid transparent; white-space: nowrap; font-family: inherit; }
+  .primary { background: #4E44DB; color: #ffffff; }
+  .primary:hover { background: #5d54e3; }
+  .secondary { background: transparent; color: #eee; border-color: rgba(255,255,255,.2); }
+  .secondary:hover { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.35); }
+  .danger { background: transparent; color: #d9363c; border-color: #d9363c; }
+  .danger:hover { background: rgba(217,54,60,.12); }
+  .confirm { background: #d9363c; color: #fff; border-color: #d9363c; font-size: 11px; }
+  .toolbar-btn { font-size: 11px; font-weight: 600; padding: 4px 12px; background: transparent; color: #eee; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; }
+  .toolbar-btn.active { background: #00B8CC; border-color: #00B8CC; color: #fff; }
+  .disabled { opacity: .4; cursor: default; pointer-events: none; }
+  .note { font-size: 11px; color: #8A9298; margin-top: 8px; line-height: 1.6; }
+  .lightband { background: #F6F6F7; border-radius: 10px; padding: 16px; margin-top: 8px; }
+  .lightband .primary { background: #151719; color: #fff; }
+  .lightband .primary:hover { background: #2d2a63; }
+  .lightband .secondary { color: #151719; border-color: #DCDDDE; }
+  .lightband .danger { color: #b52222; border-color: #b52222; }
+  h2, h3, .title, .ititle { font-family: 'Montserrat', system-ui, sans-serif; }
+  h2::before { content: ''; display: block; width: 28px; height: 3px; background: #CE181E; margin-bottom: 6px; border-radius: 1px; }
+</style>
+</head>
+<body>
+
+<h2>Core set — dark</h2>
+<div class="row">
+  <button class="primary">New plan</button>
+  <button class="secondary">Cancel</button>
+  <button class="danger">Delete plan</button>
+  <button class="primary disabled">Saving…</button>
+</div>
+<div class="note">One primary action per surface, max. Primary = accent fill. Everything else secondary. Danger is outline until armed.</div>
+
+<h2>Two-click confirm — the app's destructive pattern</h2>
+<div class="row">
+  <button class="danger">Delete lane</button>
+  <span style="color:#71787e">→ first click arms →</span>
+  <button class="confirm">Click to confirm — removed from 3 bars</button>
+</div>
+<div class="note">Never a native confirm() dialog. Armed state names the consequence, auto-disarms after 3s. Used for: delete lane/section/env/person/plan, clear done items, go-live markers (right-click × 2).</div>
+
+<h2>Toolbar buttons</h2>
+<div class="row">
+  <button class="toolbar-btn">Today</button>
+  <button class="toolbar-btn active">Display ▾</button>
+  <button class="toolbar-btn">Share ▾</button>
+</div>
+<div class="note">24px tall, quiet borders. Active menu = interactive-blue fill. Badges attach to rail tabs, not toolbar buttons (post-redesign).</div>
+
+<h2>Light theme</h2>
+<div class="lightband">
+  <div class="row">
+    <button class="primary">New plan</button>
+    <button class="secondary">Cancel</button>
+    <button class="danger">Delete plan</button>
+  </div>
+</div>
+
+</body>
+</html>

@@ -322,23 +322,34 @@ export default function PhaseBar({ bar, rowY }: Props) {
         </>
       )}
 
-      {/* Start-date label (rotated, on the left edge — toggled via toolbar) */}
-      {showBarDates && !editing && (
-        <text
-          x={x + (useSolidPill ? 7 : TAG_WIDTH + 6)}
-          y={y + BAR_HEIGHT / 2}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fill={labelFill}
-          fontSize={8}
-          fontWeight={700}
-          fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
-          transform={`rotate(-90, ${x + (useSolidPill ? 7 : TAG_WIDTH + 6)}, ${y + BAR_HEIGHT / 2})`}
-          style={{ pointerEvents: 'none', userSelect: 'none', opacity: 0.85 }}
-        >
-          {formatDayMonth(startDate)}
-        </text>
-      )}
+      {/* Start-date label — horizontal, tucked into the bar's left end.
+          The old rotated treatment overhung the 30px bar. Rendered only when
+          it fits between the tag and the centred label; narrow bars rely on
+          the hover tooltip, which always carries the full date range. */}
+      {showBarDates && !editing && (() => {
+        const dateStr = formatDayMonth(startDate);
+        const dateX = x + (useSolidPill ? 8 : TAG_WIDTH + 7);
+        // Conservative width estimates (no SVG text measurement needed):
+        // 10px Montserrat 700 caps ≈ 7px/char; 9px date ≈ 5.2px/char.
+        const labelLeftEdge =
+          x + displayWidth / 2 + (useSolidPill ? 0 : TAG_WIDTH / 2)
+          - (bar.label.length * 7) / 2;
+        const fits = labelLeftEdge - dateX >= dateStr.length * 5.2 + 8;
+        if (!fits) return null;
+        return (
+          <text
+            x={dateX}
+            y={y + BAR_HEIGHT / 2 + 3}
+            fill={labelFill}
+            fontSize={9}
+            fontWeight={600}
+            fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
+            style={{ pointerEvents: 'none', userSelect: 'none', opacity: 0.7 }}
+          >
+            {dateStr}
+          </text>
+        );
+      })()}
 
       {/* Label */}
       {!editing && (
@@ -349,7 +360,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
           fill={labelFill}
           fontSize={10}
           fontWeight={700}
-          fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
+          fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
           style={{ pointerEvents: 'none', userSelect: 'none' }}
         >
           {bar.label}
@@ -397,7 +408,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
                 fill="#ffffff"
                 fontSize={9}
                 fontWeight={700}
-                fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
+                fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
                 style={{ pointerEvents: 'none', userSelect: 'none', letterSpacing: 0.4 }}
               >
                 {text}
@@ -436,7 +447,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
                 fill={c.TEXT_SECONDARY}
                 fontSize={9}
                 fontWeight={600}
-                fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
+                fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
                 style={{ pointerEvents: 'none', userSelect: 'none', letterSpacing: 0.4 }}
               >
                 + env
@@ -461,7 +472,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
               textAlign: 'center',
               fontSize: 10,
               fontWeight: 700,
-              fontFamily: "'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif",
+              fontFamily: "'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif",
               color: colors.text,
               outline: 'none',
             }}
@@ -607,7 +618,9 @@ export default function PhaseBar({ bar, rowY }: Props) {
         const hasAny = chips.length > 0;
         if (!hasAny && !(isHovered || isSelected)) return null;
 
-        const chipR = 6;
+        // 16px chips: the smallest that fit two-letter initials at the type
+        // scale's 9px floor. All chip layout derives from this radius.
+        const chipR = 8;
         const step = chipR * 2 + 2;
         const maxVisible = 3;
         const visible = chips.slice(0, maxVisible);
@@ -654,10 +667,10 @@ export default function PhaseBar({ bar, rowY }: Props) {
                         y={cyChip}
                         textAnchor="middle"
                         dominantBaseline="central"
-                        fontSize={6}
+                        fontSize={9}
                         fontWeight={700}
                         fill="#ffffff"
-                        fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
+                        fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
                         style={{ userSelect: 'none' }}
                       >
                         {ch.text}
@@ -670,10 +683,10 @@ export default function PhaseBar({ bar, rowY }: Props) {
                     x={baseX + chipR + visible.length * step - chipR + 2}
                     y={cyChip}
                     dominantBaseline="central"
-                    fontSize={7}
+                    fontSize={9}
                     fontWeight={700}
                     fill={c.TEXT_SECONDARY}
-                    fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
+                    fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
                     style={{ userSelect: 'none', pointerEvents: 'none' }}
                   >
                     +{overflow}

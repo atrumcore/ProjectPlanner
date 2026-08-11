@@ -10,7 +10,16 @@
 
 /* Theme-independent tokens (dimensions, radii, fixed inks). */
 :root {
+  /* BBD brand typefaces (bundled via @fontsource, imported in main.tsx).
+     Display = Montserrat: titles, headings, eyebrows, on-bar labels.
+     Body = Open Sans: panels, menus, inputs, captions. */
+  --font-display: 'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif;
+  --font-body: 'Open Sans', Helvetica, Arial, sans-serif;
+
   --row-height: 48px;
+  /* "+ Add project/section" row height — mirrored by the timeline SVG's
+     spacer bands (ADD_ROW_HEIGHT in src/types/gantt.ts). */
+  --add-row-height: 30px;
   --header-height: 48px;
   --week-label-height: 18px;
   --project-col: 140px;
@@ -27,39 +36,39 @@
   --note-ink: #2a2620;
 }
 
-/* ===== Dark (default) ===== */
+/* ===== Dark (default) — BBD near-black (design-system v2) ===== */
 :root,
 [data-theme='dark'] {
-  /* BBD brand red — logo mark / brand moments only. Never used for
-     interactive state: red already means conflict or danger here. */
+  /* BBD brand red — logo glyph, kicker rule, brand moments only. Never used
+     for interactive state: red already means conflict or danger here. */
   --brand-accent: #ce181e;
 
   /* Surfaces */
-  --bg-app: #0b1426;          /* Midnight Express — deepest canvas */
-  --bg-header: #0d203c;       /* Dark Navy — toolbar / sticky headers */
-  --bg-surface: #102a4a;      /* cards / menus / popovers / inputs / panels */
-  --bg-surface-2: #16335a;    /* elevated / hover / list rows */
-  --bg-row-even: #0e2543;
-  --bg-row-odd: #0b1f3a;
+  --bg-app: #0b0c0e;          /* near-black canvas */
+  --bg-header: #151719;       /* BBD Process Black — toolbar / sticky headers */
+  --bg-surface: #17191c;      /* cards / menus / popovers / inputs / panels */
+  --bg-surface-2: #212429;    /* elevated / hover / list rows */
+  --bg-row-even: #131518;
+  --bg-row-odd: #101214;
 
   /* Text */
   --text-primary: #eeeeee;    /* Subtle White */
-  --text-secondary: #8aa0b8;
-  --text-muted: #6e8299;
+  --text-secondary: #8a9298;  /* BBD Cool Grey 5C */
+  --text-muted: #71787e;
   --text-header: #eeeeee;
 
-  /* Accents — BBD brand navy, lightened to read on the dark navy canvas */
-  --accent-primary: #8f87f1;
-  --accent-primary-hover: #a49df5;
-  --accent-secondary: #0098cc;      /* interactive blue */
+  /* Accents — BBD extension palette */
+  --accent-primary: #4e44db;        /* violet — primary buttons, focus */
+  --accent-primary-hover: #5d54e3;
+  --accent-secondary: #00b8cc;      /* cyan — selection, active tabs, info */
   --success: #009991;
   --warning: #cb6600;
   --error: #99001b;
-  --error-bright: #e0556b;
+  --error-bright: #d9363c;
   --contention: #c0466a;
-  --on-accent: #0b0a2a;             /* text/icon on a primary surface */
+  --on-accent: #ffffff;             /* text/icon on a primary surface */
 
-  /* Lines / borders (low-alpha light so they read on navy) */
+  /* Lines / borders (low-alpha light — separation by contrast, no shadows) */
   --grid-weekly: rgba(255, 255, 255, 0.06);
   --grid-monthly: rgba(255, 255, 255, 0.12);
   --border: rgba(255, 255, 255, 0.10);
@@ -69,38 +78,38 @@
   --hover: rgba(255, 255, 255, 0.06);
   --hover-strong: rgba(255, 255, 255, 0.12);
 
-  --week-label-color: #7e97b3;
-  --today-line: #ff8a3d;
-  --today-strip: rgba(255, 138, 61, 0.14);
-  --milestone-fill: #31bf69;
-  --milestone-stroke: #a6e9c4;
+  --week-label-color: #7e858c;
+  --today-line: #ffb224;
+  --today-strip: rgba(255, 178, 36, 0.12);
+  --milestone-fill: #46a758;
+  --milestone-stroke: #eaf6ec;
   --highlight-month: #f5a42a;
 
   --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
-/* ===== Light ===== */
+/* ===== Light — BBD light neutrals (design-system v2) ===== */
 [data-theme='light'] {
   --brand-accent: #ce181e;
 
   /* Surfaces */
-  --bg-app: #e8e4dd;
+  --bg-app: #f6f6f7;
   --bg-header: #ffffff;       /* light toolbar / sticky headers, like the live site nav */
-  --bg-surface: #fffaf3;
-  --bg-surface-2: #f5f2ec;
-  --bg-row-even: #faf9f6;
-  --bg-row-odd: #f5f2ec;
+  --bg-surface: #ffffff;
+  --bg-surface-2: #e9eaeb;
+  --bg-row-even: #fafafa;
+  --bg-row-odd: #f1f1f2;
 
   /* Text */
-  --text-primary: #1a1814;
-  --text-secondary: #5c5a54;
-  --text-muted: #888078;
-  --text-header: #1b1846;     /* BBD brand navy text on the light header */
+  --text-primary: #151719;    /* BBD Process Black */
+  --text-secondary: #5a5f64;
+  --text-muted: #8a9298;
+  --text-header: #151719;
 
-  /* Accents — BBD brand navy on light surfaces */
-  --accent-primary: #1b1846;
+  /* Accents — BBD black primary on light surfaces (per v2 buttons card) */
+  --accent-primary: #151719;
   --accent-primary-hover: #2d2a63;
-  --accent-secondary: #0277a3;
+  --accent-secondary: #00929f; /* cyan darkened for light-surface contrast */
   --success: #00897e;
   --warning: #cb6600;
   --error: #99001b;
@@ -108,24 +117,24 @@
   --contention: #7a1f3d;
   --on-accent: #ffffff;
 
-  /* Lines / borders */
-  --grid-weekly: #dedad3;
-  --grid-monthly: #c8c3ba;
-  --border: #dedad3;
-  --border-strong: #b8b1a3;
+  /* Lines / borders — BBD neutral greys */
+  --grid-weekly: #e2e3e4;
+  --grid-monthly: #c3c4c6;
+  --border: #dcddde;
+  --border-strong: #b9bbbd;
 
   /* Hover overlays (dark, for use on light surfaces) */
   --hover: rgba(0, 0, 0, 0.05);
   --hover-strong: rgba(0, 0, 0, 0.10);
 
-  --week-label-color: #888078;
-  --today-line: #ad4e0a;
-  --today-strip: rgba(253, 232, 213, 0.40);
+  --week-label-color: #8a9298;
+  --today-line: #a06700;
+  --today-strip: rgba(255, 178, 36, 0.16);
   --milestone-fill: #d5e8d4;
   --milestone-stroke: #82b366;
   --highlight-month: #f5a42a;
 
-  --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 * {
@@ -135,10 +144,147 @@
 }
 
 body {
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   background: var(--bg-app);
   color: var(--text-primary);
   overflow: hidden;
+}
+
+/* Headings and titles carry the display face (Montserrat); body copy stays
+   Open Sans. Matches the v2 design-system type card. */
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+}
+
+/* Eyebrow — the v2 label style for every small uppercase heading (type card:
+   10px Montserrat 700, +0.12em). The kicker is an eyebrow plus the BBD 28×3px
+   red rule — the brand signature for panel headers, launcher sections and
+   empty-state headings. */
+.eyebrow,
+.kicker {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.kicker::before {
+  content: '';
+  display: block;
+  width: 28px;
+  height: 3px;
+  background: var(--brand-accent);
+  border-radius: 1px;
+  margin-bottom: 6px;
+}
+
+/* Teach state — the shared empty-state pattern (v2 dialogs card): centred,
+   kicker heading, ONE sentence, at most one primary action. */
+.teach-state {
+  padding: 28px 18px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.teach-state .kicker::before {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.teach-state p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin: 8px 0 14px;
+  max-width: 260px;
+}
+
+.teach-state .teach-state-note {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 2px 0 0;
+}
+
+.btn-quiet {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.btn-quiet:hover {
+  color: var(--text-primary);
+  text-decoration: underline;
+}
+
+/* Core button set (v2 buttons card): pill silhouette, one primary per
+   surface, danger stays outline until armed (.confirm). Top-level classes —
+   usable in modals, panels and the launcher alike. */
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  padding: 7px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.btn-primary {
+  background: var(--accent-primary);
+  color: var(--on-accent);
+  border: 1px solid transparent;
+}
+
+.btn-primary:hover {
+  background: var(--accent-primary-hover);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+}
+
+.btn-secondary:hover {
+  background: var(--hover);
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--error-bright);
+  border: 1px solid var(--error-bright);
+}
+
+.btn-danger:hover {
+  background: color-mix(in srgb, var(--error-bright) 12%, transparent);
+}
+
+.btn-danger.confirm,
+.btn-secondary.confirm {
+  background: var(--error-bright);
+  border-color: var(--error-bright);
+  color: #ffffff;
+  font-size: 11px;
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-danger:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 /* Native <option> elements are OS-rendered in the open dropdown; force theme
@@ -167,33 +313,16 @@ select option {
   z-index: 100;
 }
 
-.toolbar h1 {
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0.3px;
-  margin-right: 16px;
-  white-space: nowrap;
-}
-
-/* Product name with the BBD red brand mark. */
-.toolbar-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-.toolbar-brand-mark {
-  width: 4px;
-  height: 15px;
-  border-radius: 2px;
-  background: var(--brand-accent);
+/* BBD logo (secondary variant — glyph + logotype). White artwork on dark,
+   black artwork on light; both rendered, CSS picks. */
+.bbd-logo {
+  height: 17px;
   flex-shrink: 0;
+  display: block;
 }
-
-.toolbar-filename {
-  font-weight: 400;
-  opacity: 0.75;
-  font-size: 13px;
-}
+.bbd-logo-black { display: none; }
+[data-theme='light'] .bbd-logo-white { display: none; }
+[data-theme='light'] .bbd-logo-black { display: block; }
 
 .toolbar-filename-dirty {
   color: #ffb74d;
@@ -201,14 +330,196 @@ select option {
   opacity: 1;
 }
 
-.toolbar button {
-  padding: 5px 12px;
-  border: 1px solid var(--border);
+/* Brand mark button (Home when signed in) */
+.toolbar-logo-btn {
+  display: inline-flex;
+  align-items: center;
+  background: none !important;
+  border: none !important;
+  padding: 2px 4px !important;
+  cursor: pointer;
+}
+
+/* Document chip — filename + dirty dot + caret; opens the File menu */
+/* Two classes so the size beats the generic `.toolbar button` rule. */
+.toolbar .toolbar-doc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px; /* the type card's plan-name step */
+  font-weight: 600;
+  padding: 5px 12px !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  max-width: 320px;
+}
+
+.toolbar-doc-chip:hover {
+  background: var(--hover) !important;
+  border-color: var(--border) !important;
+}
+
+.toolbar-doc-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toolbar-doc-caret {
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+/* Floating zoom cluster — bottom-right of the canvas, hidden in exports */
+.zoom-cluster {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  display: flex;
+  gap: 1px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  overflow: hidden;
+  z-index: 40;
+}
+
+.zoom-cluster button {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-family: var(--font-body);
+  padding: 5px 9px;
+  cursor: pointer;
+}
+
+.zoom-cluster button:hover {
+  background: var(--hover-strong);
+  color: var(--text-primary);
+}
+
+.gantt-container.is-exporting ~ * .zoom-cluster,
+.gantt-container.is-exporting .zoom-cluster {
+  display: none;
+}
+
+/* Invisible click-catcher behind the canvas context menu */
+.canvas-ctx-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+}
+
+/* Left panel add-affordances — the Insert menu's replacement. Fixed height:
+   the timeline SVG mirrors it as a spacer band per section, so the three
+   columns stay row-aligned. */
+.left-panel-add-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: var(--add-row-height);
+  text-align: left;
+  padding: 0 12px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+/* Spacer in the RightPanel mirroring the add rows (it has no affordance of
+   its own — Key Dependencies cells just need the same rhythm). */
+.panel-add-spacer {
+  height: var(--add-row-height);
+  flex-shrink: 0;
+}
+
+/* Exports hide the affordances; the SVG collapses its spacer bands to match
+   (ADD_ROW_HEIGHT -> 0 while isExporting). */
+.gantt-container.is-exporting .left-panel-add-row,
+.gantt-container.is-exporting .panel-add-spacer {
+  display: none;
+}
+
+.left-panel-add-row:hover {
+  color: var(--text-primary);
+  background: var(--hover);
+}
+
+.left-panel-add-section {
+  border-top: 1px solid var(--border);
+}
+
+/* Display menu: preset rows + segmented controls */
+.display-preset-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.display-preset-name {
+  font-weight: 600;
+}
+
+.display-preset-hint {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.view-menu-disclosure {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 14px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+.view-menu-disclosure:hover {
+  color: var(--text-primary);
+  background: var(--hover);
+}
+
+.display-segmented {
+  display: inline-flex;
+  margin: 2px 14px 8px;
+  border: 1px solid var(--border-strong);
   border-radius: 6px;
+  overflow: hidden;
+}
+
+.display-segmented button {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  padding: 5px 14px;
+  cursor: pointer;
+}
+
+.display-segmented button.on {
+  background: var(--accent-primary);
+  color: var(--on-accent);
+}
+
+.toolbar button {
+  padding: 5px 13px;
+  border: 1px solid var(--border);
+  border-radius: 999px; /* v2: toolbar controls are pills */
   background: var(--hover);
   color: var(--text-header);
   font-size: 11px;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-weight: 600;
+  font-family: var(--font-body);
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.12s, border-color 0.12s;
@@ -233,23 +544,6 @@ select option {
   height: 20px;
   background: var(--border);
   flex-shrink: 0;
-}
-
-.toolbar-notes-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 16px;
-  height: 16px;
-  margin-left: 4px;
-  padding: 0 4px;
-  border-radius: 8px;
-  background: var(--today-line);
-  color: #fff;
-  font-size: 9px;
-  font-weight: 700;
-  line-height: 1;
-  vertical-align: middle;
 }
 
 /* Gantt chart container */
@@ -359,8 +653,11 @@ select option {
   align-items: center;
   justify-content: center;
   color: var(--text-header);
-  font-size: 9px;
+  font-family: var(--font-display);
+  font-size: 10px;
   font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .left-panel-week-row {
@@ -386,6 +683,12 @@ select option {
   background: var(--bg-row-odd);
 }
 
+/* Hover feedback as an inset overlay — rows can carry an inline tint
+   background, which a CSS background rule could never beat. */
+.swimlane-row:hover {
+  box-shadow: inset 0 0 0 999px var(--hover);
+}
+
 .swimlane-project {
   width: var(--project-col);
   padding: 4px 8px;
@@ -406,7 +709,7 @@ select option {
   background: transparent;
   font-size: 10px;
   font-weight: 700;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   color: var(--text-primary);
   outline: none;
   resize: none;
@@ -490,7 +793,7 @@ select option {
   position: absolute;
   right: 6px;
   bottom: 3px;
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.4px;
   text-transform: uppercase;
@@ -515,7 +818,7 @@ select option {
   border: none;
   background: transparent;
   font-size: 9px;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   color: var(--text-primary);
   outline: none;
   resize: none;
@@ -548,8 +851,11 @@ select option {
   align-items: center;
   justify-content: center;
   color: var(--text-header);
-  font-size: 9px;
+  font-family: var(--font-display);
+  font-size: 10px;
   font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -584,7 +890,7 @@ select option {
   border: none;
   background: transparent;
   font-size: 9px;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   color: var(--text-primary);
   outline: none;
   resize: none;
@@ -601,24 +907,60 @@ select option {
   position: relative;
 }
 
-.timeline-wrapper::-webkit-scrollbar {
+/* One scrollbar treatment for every scrolling surface (canvas, rail panel
+   internals, launcher panes) — thin, themed thumb, no track chrome. */
+.timeline-wrapper,
+.rail-panel-body,
+.notes-panel-list,
+.people-roster,
+.people-detail,
+.env-panel-body,
+.phase-types-list,
+.launcher-sidebar,
+.launcher-main {
+  scrollbar-width: thin;
+  scrollbar-color: var(--grid-monthly) transparent;
+}
+
+.timeline-wrapper::-webkit-scrollbar,
+.rail-panel-body::-webkit-scrollbar,
+.notes-panel-list::-webkit-scrollbar,
+.people-roster::-webkit-scrollbar,
+.people-detail::-webkit-scrollbar,
+.env-panel-body::-webkit-scrollbar,
+.phase-types-list::-webkit-scrollbar,
+.launcher-sidebar::-webkit-scrollbar,
+.launcher-main::-webkit-scrollbar {
   height: 8px;
   width: 8px;
 }
 
-.timeline-wrapper::-webkit-scrollbar-thumb {
+.timeline-wrapper::-webkit-scrollbar-thumb,
+.rail-panel-body::-webkit-scrollbar-thumb,
+.notes-panel-list::-webkit-scrollbar-thumb,
+.people-roster::-webkit-scrollbar-thumb,
+.people-detail::-webkit-scrollbar-thumb,
+.env-panel-body::-webkit-scrollbar-thumb,
+.phase-types-list::-webkit-scrollbar-thumb,
+.launcher-sidebar::-webkit-scrollbar-thumb,
+.launcher-main::-webkit-scrollbar-thumb {
   background: var(--grid-monthly);
   border-radius: 4px;
 }
 
-/* Section header */
+/* Section header — eyebrow-style band with the section accent edge
+   (v2 left-panel card: uppercase Montserrat, left-aligned). */
 .section-header {
   height: var(--section-header-height);
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 14px;
+  justify-content: flex-start;
+  padding: 0 10px;
+  font-family: var(--font-display);
+  font-size: 11px;
   font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   /* Optional section tint composited over the surface, mirroring swimlane rows.
      --section-tint defaults to transparent (no-op) when no colour is set. */
   background:
@@ -634,8 +976,9 @@ select option {
 
 .section-header:hover {
   background:
+    linear-gradient(var(--hover), var(--hover)),
     linear-gradient(var(--section-tint, transparent), var(--section-tint, transparent)),
-    #1b3a63;
+    var(--bg-surface-2);
 }
 
 /* Modal overlay */
@@ -664,6 +1007,7 @@ select option {
 
 .modal h2 {
   font-size: 14px;
+  font-weight: 600; /* the type card's panel-detail step */
   margin-bottom: 16px;
   color: var(--text-primary);
 }
@@ -684,7 +1028,7 @@ select option {
   border: 1px solid var(--border);
   border-radius: 4px;
   font-size: 12px;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   margin-bottom: 12px;
   background: var(--bg-surface);
   color: var(--text-primary);
@@ -695,6 +1039,14 @@ select option {
   resize: vertical;
 }
 
+.modal input:focus,
+.modal select:focus,
+.modal textarea:focus {
+  outline: none;
+  border-color: var(--accent-secondary);
+}
+
+/* Layout only — button chrome comes from the top-level .btn-* classes. */
 .modal-actions {
   display: flex;
   gap: 8px;
@@ -702,30 +1054,21 @@ select option {
   margin-top: 8px;
 }
 
-.modal-actions button {
-  padding: 6px 16px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
+/* Quiet dismissal (v2 dialogs card: Cancel is a muted text link, never a
+   peer of the real choices). */
+.modal-cancel-link {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
   font-size: 11px;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   cursor: pointer;
+  padding: 4px 6px;
 }
 
-.modal-actions .btn-primary {
-  background: var(--accent-primary);
-  color: var(--on-accent);
-  border-color: var(--accent-primary);
-  font-weight: 700;
-}
-
-.modal-actions .btn-primary:hover {
-  background: var(--accent-primary-hover);
-  border-color: var(--accent-primary-hover);
-}
-
-.modal-actions .btn-secondary {
-  background: var(--bg-surface);
+.modal-cancel-link:hover {
   color: var(--text-primary);
+  text-decoration: underline;
 }
 
 /* Phase bar context menu */
@@ -733,8 +1076,8 @@ select option {
   position: fixed;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
   z-index: 2000;
   min-width: 160px;
   padding: 4px 0;
@@ -750,7 +1093,7 @@ select option {
 }
 
 .context-menu-item:hover {
-  background: var(--bg-row-odd);
+  background: var(--hover);
 }
 
 .context-menu-divider {
@@ -759,13 +1102,10 @@ select option {
   margin: 4px 0;
 }
 
+/* .context-menu-label typography comes from .eyebrow (applied in markup);
+   only spacing lives here. */
 .context-menu-label {
-  padding: 4px 12px 2px;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-secondary);
+  padding: 6px 12px 2px;
 }
 
 .swimlane-color-swatches {
@@ -809,12 +1149,12 @@ select option {
   position: fixed;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
   z-index: 2000;
   min-width: 200px;
   padding: 6px 0;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
 }
 
 /* Clickable action row (non-checkbox) in a dropdown menu */
@@ -830,7 +1170,7 @@ select option {
 }
 
 .menu-item-action:hover {
-  background: var(--bg-row-odd);
+  background: var(--hover);
 }
 
 .menu-item-action[aria-disabled="true"] {
@@ -843,7 +1183,7 @@ select option {
   margin-left: auto;
   font-size: 10px;
   color: var(--text-muted);
-  font-family: 'Courier New', monospace;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, Menlo, monospace;
 }
 
 /* Timeline range row inside View menu */
@@ -855,13 +1195,13 @@ select option {
 }
 
 .timeline-range-row button {
-  padding: 2px 8px;
+  padding: 2px 10px;
   border: 1px solid var(--border);
-  border-radius: 3px;
+  border-radius: 999px;
   background: var(--bg-row-even);
   font-size: 11px;
   cursor: pointer;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   color: var(--text-primary);
 }
 
@@ -885,10 +1225,11 @@ select option {
 
 .view-menu-group-label {
   padding: 4px 12px 2px;
+  font-family: var(--font-display);
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.12em;
   color: var(--text-muted);
 }
 
@@ -904,7 +1245,7 @@ select option {
 }
 
 .view-menu-item:hover {
-  background: var(--bg-row-odd);
+  background: var(--hover);
 }
 
 .view-menu-item input[type="checkbox"],
@@ -967,7 +1308,7 @@ select option {
 }
 
 .row-hover:hover {
-  fill: rgba(49, 191, 105, 0.10);
+  fill: color-mix(in srgb, var(--accent-secondary) 8%, transparent);
 }
 
 
@@ -1024,7 +1365,7 @@ select option {
   border: 1px solid var(--border);
   background: var(--bg-row-even);
   color: var(--text-secondary);
-  font-size: 7px;
+  font-size: 9px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1131,15 +1472,16 @@ select option {
   justify-content: center;
   height: 18px;
   padding: 0 8px;
-  border-radius: 9px;
+  border-radius: 999px;
   border: 1px solid rgba(0, 0, 0, 0.2);
   cursor: pointer;
+  font-family: var(--font-display);
   font-size: 9px;
   font-weight: 700;
   color: #ffffff;
   letter-spacing: 0.3px;
   text-transform: uppercase;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   transition: transform 0.1s, box-shadow 0.1s;
 }
 .env-pill-pick:hover {
@@ -1172,19 +1514,20 @@ select option {
   z-index: 2010;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
   min-width: 180px;
   padding: 4px;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
 }
 .bar-env-popover-title {
+  font-family: var(--font-display);
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   color: var(--text-secondary);
   padding: 4px 8px 6px;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.12em;
 }
 .bar-env-popover-item {
   display: flex;
@@ -1248,9 +1591,10 @@ select option {
   min-width: 210px;
 }
 .people-picker-group-label {
-  font-size: 9px;
+  font-family: var(--font-display);
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-muted);
   padding: 6px 8px 2px;
@@ -1279,10 +1623,12 @@ select option {
   font-size: 11px;
 }
 .people-panel-person-meta label {
+  font-family: var(--font-display);
   font-size: 10px;
+  font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.12em;
 }
 .people-panel-person-meta input,
 .people-panel-person-meta select {
@@ -1294,6 +1640,12 @@ select option {
   border-radius: 4px;
   min-width: 0;
   flex: 1;
+}
+
+.people-panel-person-meta input:focus,
+.people-panel-person-meta select:focus {
+  outline: none;
+  border-color: var(--accent-secondary);
 }
 .people-panel-role em {
   color: var(--text-muted);
@@ -1367,11 +1719,11 @@ select option {
   flex: 1;
   min-width: 0;
   font-size: 12px;
-  padding: 5px 9px;
+  padding: 5px 12px;
   background: var(--bg-app);
   color: var(--text-primary);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 999px;
   font-family: inherit;
 }
 .people-roster-search:focus {
@@ -1381,11 +1733,11 @@ select option {
 .people-roster-filter,
 .people-roster-add {
   font-size: 11px;
-  padding: 5px 8px;
+  padding: 5px 10px;
   background: transparent;
   color: var(--text-secondary);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 999px;
   cursor: pointer;
   font-family: inherit;
   white-space: nowrap;
@@ -1485,10 +1837,11 @@ select option {
 }
 .people-roster-unteamed {
   color: var(--text-muted);
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-weight: 700;
   font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.12em;
 }
 .people-roster-meta {
   font-size: 10px;
@@ -1551,24 +1904,25 @@ select option {
   min-width: 0;
 }
 .people-detail-kind {
+  font-family: var(--font-display);
   font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.12em;
   color: var(--text-muted);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 999px;
   padding: 1px 7px;
   flex-shrink: 0;
 }
 .people-detail-focus {
   margin-left: auto;
   font-size: 11px;
-  padding: 4px 10px;
+  padding: 4px 12px;
   background: transparent;
   color: var(--text-secondary);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 999px;
   cursor: pointer;
   font-family: inherit;
   flex-shrink: 0;
@@ -1587,10 +1941,11 @@ select option {
 }
 .people-detail-section h4 {
   margin: 0 0 6px;
+  font-family: var(--font-display);
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.12em;
   color: var(--text-secondary);
 }
 .people-detail-footer {
@@ -1622,8 +1977,8 @@ select option {
 }
 .file-update-banner button {
   font-size: 11px;
-  padding: 4px 10px;
-  border-radius: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
   cursor: pointer;
   font-family: inherit;
   white-space: nowrap;
@@ -1645,8 +2000,8 @@ select option {
 }
 
 /* Save-conflict dialog: stacked full-width choice buttons. */
-.save-conflict-text,
-.display-name-text {
+/* Shared explanatory copy inside modals (one class for all dialogs). */
+.modal-copy {
   font-size: 12px;
   color: var(--text-secondary);
   margin: 0 0 12px;
@@ -1660,10 +2015,6 @@ select option {
 .save-conflict-actions button {
   width: 100%;
   text-align: center;
-}
-.save-conflict-overwrite {
-  color: var(--error-bright, #e5484d);
-  border-color: var(--error-bright, #e5484d);
 }
 
 /* Save-attribution note beside the file name. */
@@ -1680,13 +2031,28 @@ select option {
   white-space: nowrap;
 }
 
+/* Self-contained chrome (not reliant on `.toolbar button`) so the chip works
+   identically in the toolbar and the launcher header. */
 .account-chip {
   display: inline-flex;
   align-items: center;
   gap: 7px;
   margin-left: 4px;
   max-width: 190px;
-  padding-left: 4px !important;
+  padding: 3px 12px 3px 4px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--hover);
+  color: var(--text-header);
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+.account-chip:hover {
+  background: var(--hover-strong);
+  border-color: var(--border-strong);
 }
 .account-chip-avatar {
   width: 22px;
@@ -1715,10 +2081,10 @@ select option {
   min-width: 210px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
   padding: 4px;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
 }
 .account-menu-identity {
   padding: 8px 10px 6px;
@@ -1736,9 +2102,10 @@ select option {
 }
 .account-menu-mock {
   margin-top: 4px;
+  font-family: var(--font-display);
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
@@ -1770,7 +2137,7 @@ select option {
   height: 100%;
   border: none;
   background: transparent;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   color: var(--text-primary);
   outline: none;
   line-height: 1.3;
@@ -1816,13 +2183,13 @@ select option {
   z-index: 2000;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
   padding: 4px 6px;
   display: flex;
   gap: 2px;
   align-items: center;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
 }
 
 .formatting-toolbar button {
@@ -1833,7 +2200,7 @@ select option {
   border-radius: 3px;
   background: transparent;
   cursor: pointer;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   font-size: 11px;
   color: var(--text-primary);
   display: flex;
@@ -1878,8 +2245,8 @@ select option {
   margin-top: 2px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
   z-index: 2001;
   padding: 2px;
   display: flex;
@@ -1895,22 +2262,92 @@ select option {
 
 /* ─── Notes Panel ─── */
 
-.notes-panel {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  /* width set inline via style prop (resizable) */
-  background: var(--bg-row-even);
-  border-left: 2px solid var(--border);
-  box-shadow: -4px 0 16px rgba(0,0,0,0.12);
-  z-index: 500;
+/* ─── Rail + panel shell ────────────────────────────────────────────────────
+   The right-edge rail (44px tab strip, always visible) and the single shared
+   panel shell every tab renders into. Both are in-flow siblings of
+   .gantt-container inside .app-main-row, so exports never capture them and
+   panels never float over the canvas (design-system: rail card). */
+.app-main-row {
+  flex: 1;
   display: flex;
-  flex-direction: column;
-  animation: slideInRight 200ms ease-out;
+  min-height: 0;
+  overflow: hidden;
 }
 
-.notes-panel-resize-handle {
+.rail {
+  width: 44px;
+  flex-shrink: 0;
+  background: var(--bg-header);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 10px;
+  gap: 6px;
+}
+
+.rail-tab {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rail-tab:hover {
+  background: var(--hover);
+  color: var(--text-primary);
+}
+
+.rail-tab.active {
+  background: var(--accent-secondary);
+  color: #ffffff;
+}
+
+.rail-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border-radius: 8px;
+  background: var(--contention);
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rail-badge.info {
+  background: var(--accent-secondary);
+}
+
+.rail-panel {
+  flex-shrink: 0;
+  position: relative;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.rail-panel.is-resizing {
+  user-select: none;
+}
+
+.rail-panel-resize {
   position: absolute;
   left: -4px;
   top: 0;
@@ -1918,14 +2355,12 @@ select option {
   width: 8px;
   cursor: col-resize;
   z-index: 1;
+  touch-action: none;
 }
 
-.notes-panel-resize-handle:hover,
-.notes-panel-resize-handle:active {
-  background: rgba(49, 191, 105, 0.18);
-}
-
-.notes-panel-resize-handle:hover::before {
+/* Persistent grip so the handle is discoverable without hovering; brightens
+   to the interactive accent on hover/drag (mirrors the canvas resizers). */
+.rail-panel-resize::before {
   content: '';
   position: absolute;
   left: 3px;
@@ -1933,56 +2368,54 @@ select option {
   transform: translateY(-50%);
   width: 2px;
   height: 24px;
-  background: var(--today-line);
+  background: var(--border-strong);
   border-radius: 1px;
-  opacity: 0.6;
+  opacity: 0.7;
 }
 
-@keyframes slideInRight {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
-}
-
-@keyframes slideOutRight {
-  from { transform: translateX(0); }
-  to { transform: translateX(100%); }
-}
-
-.notes-panel--closing {
-  animation: slideOutRight 200ms ease-in forwards;
-}
-
-.notes-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
+.rail-panel-resize:hover::before,
+.rail-panel.is-resizing .rail-panel-resize::before {
   background: var(--accent-secondary);
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 700;
+  opacity: 1;
+}
+
+/* The title span carries the .kicker brand device (red rule + eyebrow). */
+.rail-panel-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 
-.notes-panel-header button {
+.rail-panel-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rail-panel-header-actions button {
   background: none;
   border: none;
-  color: var(--text-header);
-  font-size: 16px;
+  color: var(--text-secondary);
+  font-size: 15px;
   cursor: pointer;
   padding: 2px 6px;
-  border-radius: 3px;
+  border-radius: 4px;
   line-height: 1;
 }
 
-.notes-panel-header button:hover {
-  background: rgba(255,255,255,0.15);
+.rail-panel-header-actions button:hover {
+  background: var(--hover-strong);
+  color: var(--text-primary);
 }
 
-.notes-panel-header-actions {
+.rail-panel-body {
+  flex: 1;
   display: flex;
-  align-items: center;
-  gap: 2px;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .notes-panel-filter-bar {
@@ -2047,7 +2480,7 @@ select option {
 }
 
 .notes-panel-add-row input:focus {
-  border-color: var(--accent-primary);
+  border-color: var(--accent-secondary);
 }
 
 .notes-panel-add-row select {
@@ -2060,6 +2493,11 @@ select option {
   color: var(--text-primary);
   max-width: 120px;
   cursor: pointer;
+}
+
+.notes-panel-add-row select:focus {
+  outline: none;
+  border-color: var(--accent-secondary);
 }
 
 .notes-panel-list {
@@ -2133,7 +2571,7 @@ select option {
 }
 
 .action-item-text-input:focus {
-  border-color: var(--accent-primary);
+  border-color: var(--accent-secondary);
 }
 
 .action-item-swimlane-tag {
@@ -2207,7 +2645,7 @@ select option {
 }
 
 .action-item-owner-input:focus {
-  border-color: var(--accent-primary);
+  border-color: var(--accent-secondary);
 }
 
 .action-item-delete {
@@ -2244,12 +2682,13 @@ select option {
 
 .notes-panel-divider {
   text-align: center;
+  font-family: var(--font-display);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-secondary);
   padding: 8px 0 4px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.12em;
 }
 
 .notes-panel-footer {
@@ -2264,7 +2703,7 @@ select option {
   color: var(--text-secondary);
   background: none;
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 999px;
   padding: 4px 10px;
   cursor: pointer;
   font-family: inherit;
@@ -2319,7 +2758,7 @@ select option {
 .swimlane-row.action-item-drop-target {
   outline: 2px solid var(--today-line);
   outline-offset: -2px;
-  background: rgba(49, 191, 105, 0.18) !important;
+  background: color-mix(in srgb, var(--accent-secondary) 16%, transparent) !important;
 }
 
 .swimlane-note-badge {
@@ -2349,25 +2788,7 @@ select option {
  * Environments & contention
  * ====================================================================== */
 
-/* Toolbar contention badge — wine, distinct from Notes' orange */
-.toolbar-env-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 16px;
-  height: 16px;
-  margin-left: 4px;
-  padding: 0 4px;
-  border-radius: 8px;
-  background: var(--contention);
-  color: #fff;
-  font-size: 9px;
-  font-weight: 700;
-  line-height: 1;
-  vertical-align: middle;
-}
-
-/* Context menu accent dot + group label (used by bar context menu env section) */
+/* Context menu accent dot (used by bar context menu env section) */
 .context-menu-color-dot {
   display: inline-block;
   width: 10px;
@@ -2376,13 +2797,6 @@ select option {
   margin-right: 6px;
   vertical-align: middle;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
-}
-.context-menu-label {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  padding: 6px 12px 2px;
 }
 
 /* Phase bar drag-time pill */
@@ -2399,7 +2813,7 @@ select option {
   overflow: hidden;
   max-width: 100%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
 }
 .phase-bar-drag-pill.clear {
   background: #1f7a44;
@@ -2408,73 +2822,8 @@ select option {
   background: var(--contention);
 }
 
-/* Environments panel — modeled on NotesPanel */
-.env-panel {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--bg-surface);
-  border-left: 1px solid var(--border);
-  box-shadow: -2px 0 12px rgba(0, 0, 0, 0.12);
-  display: flex;
-  flex-direction: column;
-  z-index: 500;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
-  animation: env-panel-slide-in 200ms ease-out;
-}
-@keyframes env-panel-slide-in {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
-}
-.env-panel--closing {
-  animation: env-panel-slide-out 200ms ease-in forwards;
-}
-@keyframes env-panel-slide-out {
-  from { transform: translateX(0); }
-  to { transform: translateX(100%); }
-}
-.env-panel-resize-handle {
-  position: absolute;
-  left: -4px;
-  top: 0;
-  bottom: 0;
-  width: 8px;
-  cursor: ew-resize;
-}
-.env-panel-resize-handle:hover::before {
-  content: '';
-  position: absolute;
-  left: 3px;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: rgba(255, 255, 255, 0.25);
-}
-
-.env-panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 14px;
-  background: var(--accent-secondary);
-  font-weight: 700;
-  font-size: 14px;
-  color: #ffffff;
-}
-.env-panel-header-actions button {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.85);
-  padding: 2px 6px;
-  border-radius: 3px;
-}
-.env-panel-header-actions button:hover {
-  background: rgba(255, 255, 255, 0.18);
-}
-
+/* Environments / People tab content (hosted in the shared .rail-panel shell;
+   the old fixed-position .env-panel shell is gone). */
 .env-panel-tabs {
   display: flex;
   gap: 2px;
@@ -2532,8 +2881,8 @@ select option {
   background: transparent;
   border: 1px dashed var(--border-strong);
   color: var(--text-secondary);
-  padding: 5px 10px;
-  border-radius: 3px;
+  padding: 5px 12px;
+  border-radius: 999px;
   cursor: pointer;
   font-size: 12px;
   white-space: nowrap;
@@ -2541,26 +2890,6 @@ select option {
 .env-panel-tab-add:hover {
   background: var(--hover);
 }
-
-.env-panel-empty {
-  padding: 24px 18px;
-  color: var(--text-secondary);
-  font-size: 13px;
-  text-align: center;
-}
-.env-panel-empty p { margin: 0 0 12px; }
-.env-panel-primary-btn {
-  background: var(--accent-primary);
-  color: var(--on-accent);
-  border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  margin-top: 4px;
-}
-.env-panel-primary-btn:hover { background: var(--accent-primary-hover); }
 
 .env-panel-body {
   flex: 1;
@@ -2575,9 +2904,11 @@ select option {
   margin-bottom: 6px;
 }
 .env-panel-identity label {
+  font-family: var(--font-display);
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.12em;
   color: var(--text-secondary);
 }
 .env-panel-identity input {
@@ -2591,7 +2922,7 @@ select option {
   outline: none;
 }
 .env-panel-identity input:focus {
-  border-color: var(--text-secondary);
+  border-color: var(--accent-secondary);
 }
 .env-panel-name {
   flex: 1;
@@ -2620,7 +2951,8 @@ select option {
   top: calc(100% + 4px);
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
   padding: 6px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -2660,12 +2992,13 @@ select option {
   margin-bottom: 8px;
 }
 .env-panel-section-header h4 {
-  font-size: 11px;
+  font-family: var(--font-display);
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--text-primary);
+  color: var(--text-secondary);
   margin: 0;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.12em;
 }
 .env-panel-section-empty {
   font-size: 11px;
@@ -2680,8 +3013,8 @@ select option {
   background: transparent;
   border: 1px solid var(--border);
   font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 3px;
+  padding: 2px 8px;
+  border-radius: 999px;
   cursor: pointer;
   color: var(--text-primary);
 }
@@ -2694,8 +3027,8 @@ select option {
   top: calc(100% + 2px);
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
   z-index: 10;
   min-width: 160px;
   padding: 4px;
@@ -2843,8 +3176,8 @@ select option {
   background: transparent;
   border: 1px solid var(--error-bright);
   color: var(--error-bright);
-  padding: 5px 10px;
-  border-radius: 3px;
+  padding: 5px 12px;
+  border-radius: 999px;
   font-size: 11px;
   cursor: pointer;
 }
@@ -2854,19 +3187,6 @@ select option {
 .env-panel-delete.confirm {
   background: var(--error-bright);
   color: #fff;
-}
-
-.env-panel-link-btn {
-  background: transparent;
-  border: 1px solid var(--border);
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 3px;
-  cursor: pointer;
-  color: var(--text-primary);
-}
-.env-panel-link-btn:hover {
-  background: var(--hover);
 }
 
 .env-panel-behaviour {
@@ -2930,12 +3250,13 @@ select option {
 .phase-types-row.dragging { opacity: 0.4; }
 .phase-types-row-header {
   background: transparent;
+  font-family: var(--font-display);
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   color: var(--text-secondary);
   padding: 4px 8px;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.12em;
 }
 .phase-types-drag-handle {
   display: inline-block;
@@ -2982,14 +3303,14 @@ select option {
 .phase-types-name:focus,
 .phase-types-label:focus {
   outline: none;
-  border-color: var(--text-primary);
-  box-shadow: 0 0 0 2px rgba(49, 191, 105, 0.35);
+  border-color: var(--accent-secondary);
 }
 .phase-types-label {
+  font-family: var(--font-display);
   font-weight: 700;
   text-transform: uppercase;
   font-size: 10px;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.12em;
 }
 
 .phase-types-usage {
@@ -3033,11 +3354,7 @@ select option {
   padding-top: 10px;
   border-top: 1px solid var(--border);
 }
-.phase-types-footer .btn-secondary.confirm {
-  background: var(--error-bright);
-  color: #fff;
-  border-color: var(--error-bright);
-}
+/* Armed confirm styling comes from the shared .btn-secondary.confirm rule. */
 
 /* ─── Floating Notes (free-positioned sticky notes on the timeline) ─── */
 
@@ -3050,7 +3367,7 @@ select option {
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.06),
     0 8px 18px rgba(0, 0, 0, 0.18);
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   color: var(--note-ink);
   z-index: 20;
   overflow: hidden;
@@ -3107,7 +3424,8 @@ select option {
   top: 22px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
   padding: 4px;
   display: grid;
   grid-template-columns: repeat(6, 1fr);
@@ -3260,7 +3578,7 @@ select option {
   overflow: hidden;
   z-index: 2101;
   animation: kfp-pop 160ms ease-out;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
 }
 
 @keyframes kfp-pop {
@@ -3299,10 +3617,12 @@ select option {
 }
 
 .key-features-popover-eyebrow {
-  font-size: 9px;
+  font-family: var(--font-display);
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
+  color: inherit; /* sits on the cyan header, not a muted surface */
   opacity: 0.80;
 }
 
@@ -3318,7 +3638,7 @@ select option {
   background: none;
   border: none;
   color: #ffffff;
-  font-size: 18px;
+  font-size: 14px;
   width: 24px;
   height: 24px;
   border-radius: 4px;
@@ -3430,7 +3750,7 @@ select option {
   flex-direction: column;
   background: var(--bg-app);
   color: var(--text-primary);
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
 }
 
 .launcher-header {
@@ -3440,30 +3760,20 @@ select option {
   padding: 0 16px;
   height: 44px;
   background: var(--bg-header);
-  border-bottom: 1px solid var(--header-divider);
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 .launcher-header h1 {
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.3px;
   margin: 0;
   color: var(--text-header);
 }
-.launcher-brand-mark {
-  width: 4px;
-  height: 15px;
-  border-radius: 2px;
-  background: var(--brand-accent);
-  flex-shrink: 0;
+.launcher-header .bbd-logo {
+  height: 18px;
 }
 .launcher-header-spacer { flex: 1; }
-.launcher-account {
-  font-size: 12px;
-  color: var(--text-header);
-  opacity: 0.75;
-}
-
 .launcher-body {
   flex: 1;
   display: grid;
@@ -3480,49 +3790,80 @@ select option {
   gap: 2px;
 }
 .launcher-sidebar-label {
+  font-family: var(--font-display);
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-muted);
   padding: 4px 10px;
 }
-.launcher-sidebar-divider {
-  height: 1px;
-  background: var(--border);
-  margin: 10px 6px;
+.launcher-sidebar-label-gap {
+  margin-top: 14px;
 }
 .launcher-team-filter {
   margin: 4px 6px 6px;
   font-size: 12px;
-  padding: 5px 9px;
+  padding: 5px 12px;
   background: var(--bg-surface);
   color: var(--text-primary);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 999px;
   font-family: inherit;
 }
+
+.launcher-team-filter:focus {
+  outline: none;
+  border-color: var(--accent-secondary);
+}
 .launcher-nav-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   width: 100%;
   text-align: left;
   background: transparent;
   border: none;
-  border-radius: var(--radius, 6px);
-  padding: 7px 10px;
+  border-radius: 6px;
+  padding: 6px 10px;
   font-size: 13px;
   color: var(--text-secondary);
   cursor: pointer;
   font-family: inherit;
+}
+.launcher-nav-item:hover { background: var(--hover); color: var(--text-primary); }
+/* Active = surface + cyan inset edge — the app's one selection language
+   (matches the rail's active tab and the design's nav mock). */
+.launcher-nav-item.active {
+  background: var(--bg-surface-2);
+  box-shadow: inset 3px 0 0 var(--accent-secondary);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.launcher-nav-label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.launcher-nav-item:hover { background: var(--hover); color: var(--text-primary); }
-.launcher-nav-item.active {
-  background: var(--accent-primary);
-  color: var(--on-accent);
-  font-weight: 600;
+.launcher-team-square {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.launcher-nav-glyph {
+  width: 20px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+  flex-shrink: 0;
 }
 
 .launcher-main {
@@ -3537,7 +3878,7 @@ select option {
   margin-bottom: 16px;
 }
 .launcher-main h2 {
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 700;
   margin: 0 0 2px;
 }
@@ -3550,15 +3891,6 @@ select option {
   border-radius: 6px;
   margin-bottom: 12px;
 }
-.launcher-empty {
-  font-size: 13px;
-  color: var(--text-secondary);
-  padding: 24px;
-  text-align: center;
-  border: 1px dashed var(--border);
-  border-radius: 8px;
-}
-
 .launcher-welcome { max-width: 560px; }
 .launcher-welcome h2 { margin-bottom: 8px; }
 .launcher-welcome p {
@@ -3576,7 +3908,7 @@ select option {
   color: var(--text-primary);
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 999px;
   padding: 7px 12px;
   cursor: pointer;
   font-family: inherit;
@@ -3584,30 +3916,47 @@ select option {
 .launcher-recent-chip:hover { border-color: var(--accent-primary); }
 .launcher-recent-where { font-size: 11px; color: var(--text-muted); }
 
+/* Plan rows are surface cards (v2 launcher mock): border, radius 8, glyph +
+   name with nested meta. */
 .launcher-plan-list { list-style: none; margin: 0; padding: 0; }
-.launcher-plan-list li {
+.launcher-plan-card {
   display: flex;
   align-items: center;
-  gap: 8px;
-  border-top: 1px solid var(--border);
+  gap: 4px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 7px;
+  padding-right: 6px;
 }
-.launcher-plan-list li:last-child { border-bottom: 1px solid var(--border); }
+.launcher-plan-card:hover {
+  border-color: var(--border-strong);
+}
 .launcher-plan-open {
   flex: 1;
   min-width: 0;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  align-items: flex-start;
+  align-items: center;
+  gap: 10px;
   background: transparent;
   border: none;
-  padding: 11px 8px;
+  padding: 10px 12px;
   cursor: pointer;
   font-family: inherit;
   text-align: left;
-  border-radius: 6px;
+  border-radius: 8px;
 }
-.launcher-plan-open:hover { background: var(--hover); }
+.launcher-plan-glyph {
+  font-size: 14px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.launcher-plan-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
 .launcher-plan-name {
   font-size: 13px;
   font-weight: 600;
@@ -3616,6 +3965,13 @@ select option {
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 100%;
+}
+.launcher-plan-meta {
+  font-size: 11px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .launcher-plan-delete {
   background: transparent;

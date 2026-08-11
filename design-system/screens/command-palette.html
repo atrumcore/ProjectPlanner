@@ -1,0 +1,59 @@
+<!-- @dsCard group="Screens" viewport="800x560" name="Command palette" subtitle="Ctrl+K · actions + jump-to-project + recent plans" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Command palette</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  * { margin: 0; box-sizing: border-box; font-family: 'Open Sans', system-ui, sans-serif; }
+  body { background: #040406; color: #eee; padding: 20px; }
+  .stage { width: 760px; height: 420px; position: relative; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; overflow: hidden; background: #0b0c0e; }
+  .dim { position: absolute; inset: 0; background: rgba(4,9,20,.55); }
+  .ghost { position: absolute; font-size: 10px; color: #223752; }
+  .pal { position: absolute; left: 50%; top: 48px; transform: translateX(-50%); width: 460px; background: #17191c; border: 1px solid rgba(255,255,255,.18); border-radius: 12px; box-shadow: 0 16px 48px rgba(0,0,0,.6); overflow: hidden; }
+  .inp { display: flex; align-items: center; gap: 8px; padding: 11px 14px; border-bottom: 1px solid rgba(255,255,255,.1); font-size: 13px; }
+  .inp .q { color: #eee; }
+  .inp .cursor { display: inline-block; width: 1px; height: 14px; background: #4E44DB; }
+  .grp { font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: .6px; color: #71787e; padding: 8px 14px 3px; }
+  .item { display: flex; align-items: center; gap: 9px; padding: 7px 14px; font-size: 12px; }
+  .item .ic { width: 16px; text-align: center; opacity: .7; font-size: 12px; }
+  .item .t { flex: 1; }
+  .item .t b { font-weight: 700; color: #8a82f5; }
+  .item .sub { font-size: 10px; color: #71787e; }
+  .item kbd { font-size: 8px; background: rgba(255,255,255,.08); border-radius: 3px; padding: 1px 5px; color: #8A9298; font-family: inherit; }
+  .item.sel { background: rgba(0,184,204,.16); box-shadow: inset 3px 0 0 #00B8CC; }
+  .item.sel .ic { opacity: 1; } .item.sel .sub { color: #9fd8e2; } .item.sel kbd { background: rgba(255,255,255,.15); color: #cdf2f7; }
+  .foot { display: flex; gap: 12px; padding: 7px 14px; border-top: 1px solid rgba(255,255,255,.1); font-size: 9px; color: #8A9298; }
+  .foot kbd { font-size: 8px; background: rgba(255,255,255,.12); border-radius: 3px; padding: 1px 4px; font-family: inherit; color: #b8bdc2; }
+  .cap { font-size: 11px; color: #8A9298; margin-top: 10px; line-height: 1.6; max-width: 760px; }
+  .cap b { color: #eee; }
+  h2, h3, .title, .ititle { font-family: 'Montserrat', system-ui, sans-serif; }
+  h2::before { content: ''; display: block; width: 28px; height: 3px; background: #CE181E; margin-bottom: 6px; border-radius: 1px; }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="ghost" style="left:30px;top:80px">— timeline canvas behind, dimmed —</div>
+  <div class="dim"></div>
+  <div class="pal">
+    <div class="inp"><span style="opacity:.5">⌕</span><span class="q">exp</span><span class="cursor"></span></div>
+    <div class="grp">Actions</div>
+    <div class="item sel"><span class="ic">⇩</span><span class="t"><b>Exp</b>ort plan as PDF</span></div>
+    <div class="item"><span class="ic">⇩</span><span class="t"><b>Exp</b>ort plan as PNG</span></div>
+    <div class="item"><span class="ic">⇩</span><span class="t"><b>Exp</b>ort swimlanes CSV</span></div>
+    <div class="grp">Go to project</div>
+    <div class="item"><span class="ic">▤</span><span class="t">Channel modernisation — <b>Exp</b>ress lane</span><span class="sub">In Progress</span></div>
+    <div class="grp">Recent plans</div>
+    <div class="item"><span class="ic">▦</span><span class="t">Platform <b>exp</b>ansion roadmap</span><span class="sub">Digital Channels</span></div>
+    <div class="foot"><span><kbd>↑↓</kbd> navigate</span><span><kbd>↵</kbd> run</span><span><kbd>Esc</kbd> close</span></div>
+  </div>
+</div>
+
+<div class="cap">
+  <b>The power-user backbone</b> — every action the menus lost is findable by name, plus jump-to-project and recent plans. Fuzzy match highlights in accent purple; selected row is a low-alpha blue wash with an inset blue edge, so the purple match stays legible on it. Groups: Actions · Go to project · Recent plans. Shortcuts shown but run from anywhere. Opens with <b>Ctrl+K</b> or the toolbar search pill; palette lands <b>before</b> the toolbar diet so nothing is ever unreachable during the transition.
+</div>
+
+</body>
+</html>

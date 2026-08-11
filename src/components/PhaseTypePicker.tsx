@@ -18,8 +18,7 @@ export default function PhaseTypePicker({ barId, svgRef, barX, barY, barWidth }:
   const environments = useGanttStore(s => s.environments);
   const phaseBars = useGanttStore(s => s.phaseBars);
   const togglePhaseTypesModal = useGanttStore(s => s.togglePhaseTypesModal);
-  const toggleEnvironmentsPanel = useGanttStore(s => s.toggleEnvironmentsPanel);
-  const environmentsPanelOpen = useGanttStore(s => s.environmentsPanelOpen);
+  const setRailTab = useGanttStore(s => s.setRailTab);
   const setBarEnvironment = useGanttStore(s => s.setBarEnvironment);
   const pickerRef = useRef<HTMLDivElement>(null);
 
@@ -92,7 +91,7 @@ export default function PhaseTypePicker({ barId, svgRef, barX, barY, barWidth }:
         ))}
         <button
           className="phase-type-edit-btn"
-          title="Edit phase types..."
+          title="Edit phase types…"
           onClick={() => {
             clearCreatingBar();
             togglePhaseTypesModal();
@@ -129,10 +128,10 @@ export default function PhaseTypePicker({ barId, svgRef, barX, barY, barWidth }:
         <div className="phase-type-picker-row">
           <button
             className="phase-type-edit-btn phase-type-edit-btn-wide"
-            title="Create environments..."
+            title="Create environments…"
             onClick={() => {
               clearCreatingBar();
-              if (!environmentsPanelOpen) toggleEnvironmentsPanel();
+              setRailTab('environments');
             }}
           >
             + add environments

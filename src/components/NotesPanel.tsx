@@ -1,8 +1,6 @@
-import { useState, useRef, useMemo, useCallback, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useGanttStore } from '../store/useGanttStore';
 import type { ActionItem } from '../types/gantt';
-import { buildNotesEmail } from '../utils/notesEmail';
 import { htmlToPlainText } from '../utils/plainText';
 
 const GENERAL_FILTER_ID = '__general__';
@@ -68,7 +66,7 @@ function ActionItemRow({ item }: { item: ActionItem }) {
                 setEditingSwimlane(false);
               }}
               onBlur={() => setEditingSwimlane(false)}
-              style={{ fontSize: 10, maxWidth: 110 }}
+              style={{ fontSize: 12, maxWidth: 110 }}
             >
               <option value="">General</option>
               {swimlanes.map(s => (
@@ -126,14 +124,15 @@ function ActionItemRow({ item }: { item: ActionItem }) {
   );
 }
 
+/**
+ * Notes tab content — hosted inside the shared RailPanel shell (which owns
+ * the width, resize handle, header and close affordance).
+ */
 export default function NotesPanel() {
   const actionItems = useGanttStore(s => s.actionItems);
   const swimlanes = useGanttStore(s => s.swimlanes);
-  const sections = useGanttStore(s => s.sections);
-  const currentFileName = useGanttStore(s => s.currentFileName);
   const addActionItem = useGanttStore(s => s.addActionItem);
   const clearDoneActionItems = useGanttStore(s => s.clearDoneActionItems);
-  const toggleNotesPanel = useGanttStore(s => s.toggleNotesPanel);
   const notesPanelSwimlaneId = useGanttStore(s => s.notesPanelSwimlaneId);
   const notesPanelFilterId = useGanttStore(s => s.notesPanelFilterId);
   const setNotesPanelFilter = useGanttStore(s => s.setNotesPanelFilter);
@@ -141,27 +140,6 @@ export default function NotesPanel() {
   const [newText, setNewText] = useState('');
   const [selectedSwimlane, setSelectedSwimlane] = useState<string | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
-  const [closing, setClosing] = useState(false);
-  const [width, setWidth] = useState(360);
-  const resizing = useRef<{ startX: number; startWidth: number } | null>(null);
-
-  const PANEL_MIN = 280;
-  const PANEL_MAX = 700;
-
-  useEffect(() => {
-    const onMove = (e: PointerEvent) => {
-      if (!resizing.current) return;
-      const delta = resizing.current.startX - e.clientX;
-      setWidth(Math.min(PANEL_MAX, Math.max(PANEL_MIN, resizing.current.startWidth + delta)));
-    };
-    const onUp = () => { resizing.current = null; };
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-    return () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-    };
-  }, []);
 
   // Init swimlane picker from store when opened via left panel [+] button
   useEffect(() => {
@@ -214,36 +192,8 @@ export default function NotesPanel() {
     setNewText('');
   }, [newText, selectedSwimlane, addActionItem]);
 
-  const handleClose = useCallback(() => setClosing(true), []);
-
-  const handleEmail = useCallback(() => {
-    const { subject, body } = buildNotesEmail(swimlanes, sections, actionItems, currentFileName);
-    const href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.location.href = href;
-  }, [swimlanes, sections, actionItems, currentFileName]);
-
-  return createPortal(
-    <div
-      className={`notes-panel${closing ? ' notes-panel--closing' : ''}`}
-      style={{ width }}
-      onAnimationEnd={() => { if (closing) toggleNotesPanel(); }}
-    >
-      <div
-        className="notes-panel-resize-handle"
-        onPointerDown={e => {
-          e.preventDefault();
-          (e.target as Element).setPointerCapture(e.pointerId);
-          resizing.current = { startX: e.clientX, startWidth: width };
-        }}
-      />
-      <div className="notes-panel-header">
-        <span>Notes & Action Items</span>
-        <div className="notes-panel-header-actions">
-          <button onClick={handleEmail} title="Email notes" aria-label="Email notes">&#x2709;</button>
-          <button onClick={handleClose} title="Close (Ctrl+Shift+N)" aria-label="Close">&times;</button>
-        </div>
-      </div>
-
+  return (
+    <>
       <div className="notes-panel-filter-bar">
         <label htmlFor="notes-filter-select">Show:</label>
         <select
@@ -289,8 +239,13 @@ export default function NotesPanel() {
           <ActionItemRow key={item.id} item={item} />
         ))}
         {filtered.length === 0 && (
-          <div style={{ padding: '20px 14px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: 12 }}>
-            {notesPanelFilterId ? 'No items matching this filter.' : 'No action items yet. Add one above.'}
+          <div className="teach-state">
+            <div className="kicker">Notes</div>
+            <p>
+              {notesPanelFilterId
+                ? 'No items match this filter.'
+                : 'Capture action items here and link them to projects — open counts show on the rail and in the left panel.'}
+            </p>
           </div>
         )}
       </div>
@@ -312,7 +267,6 @@ export default function NotesPanel() {
       <datalist id="owner-suggestions">
         {uniqueOwners.map(o => <option key={o} value={o} />)}
       </datalist>
-    </div>,
-    document.body
+    </>
   );
 }

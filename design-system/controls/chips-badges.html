@@ -1,0 +1,73 @@
+<!-- @dsCard group="Controls" name="Chips & badges" subtitle="People / teams / owners / conflict counts / status" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Chips &amp; badges</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  * { margin: 0; box-sizing: border-box; font-family: 'Open Sans', system-ui, sans-serif; }
+  body { background: #0b0c0e; color: #eee; padding: 24px; }
+  h2 { font-size: 13px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: #8A9298; margin: 22px 0 10px; }
+  h2:first-child { margin-top: 0; }
+  .row { display: flex; gap: 28px; align-items: center; flex-wrap: wrap; }
+  .demo { display: inline-flex; align-items: center; gap: 10px; }
+  .demo .cap { font-size: 11px; color: #8A9298; }
+  .avatar { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #fff; border: 1.5px solid rgba(255,255,255,.65); }
+  .team { border-radius: 5px !important; }
+  .stack { display: inline-flex; }
+  .stack .avatar { margin-left: -5px; box-shadow: 0 0 0 2px #0b0c0e; }
+  .stack .avatar:first-child { margin-left: 0; }
+  .member { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.15); border-radius: 11px; padding: 3px 10px; white-space: nowrap; }
+  .member .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .badge { display: inline-flex; align-items: center; justify-content: center; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: #c0466a; color: #fff; font-size: 9px; font-weight: 700; }
+  .badge.muted { background: #71787e; }
+  .badge.notes { background: #00B8CC; }
+  .guest { font-size: 10px; color: #8A9298; }
+  .note { font-size: 11px; color: #8A9298; margin-top: 8px; line-height: 1.6; }
+  .ctx { background: #131518; border-radius: 8px; padding: 12px 16px; display: inline-flex; gap: 24px; align-items: center; }
+  .count { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; }
+  h2, h3, .title, .ititle { font-family: 'Montserrat', system-ui, sans-serif; }
+  h2::before { content: ''; display: block; width: 28px; height: 3px; background: #CE181E; margin-bottom: 6px; border-radius: 1px; }
+</style>
+</head>
+<body>
+
+<h2>People & team avatars — the shape rule</h2>
+<div class="row">
+  <span class="demo"><span class="avatar" style="background:#d81b60">AD</span><span class="cap">person = circle, initials</span></span>
+  <span class="demo"><span class="avatar team" style="background:#5e35b1">BT</span><span class="cap">team = rounded square</span></span>
+  <span class="demo"><span class="stack">
+    <span class="avatar" style="background:#d81b60">AD</span>
+    <span class="avatar" style="background:#039be5">BN</span>
+    <span class="avatar team" style="background:#5e35b1">BT</span>
+    <span class="avatar" style="background:#212429;color:#8A9298">+2</span>
+  </span><span class="cap">stack: max 3 + overflow</span></span>
+</div>
+<div class="note">Circle vs square is the ONLY person/team differentiator — no labels needed. Real photos (M365) replace the fill, never the shape. Bars use 12px chips; panels 22px; pickers 28px.</div>
+
+<h2>Member chip (panel rosters)</h2>
+<div class="row">
+  <span class="member"><span class="dot" style="background:#d81b60"></span> Alice Dlamini · Backend Dev</span>
+  <span class="member"><span class="dot" style="background:#6d4c41"></span> Dan Visser <span class="guest">(Guest)</span></span>
+</div>
+
+<h2>Count badges</h2>
+<div class="ctx">
+  <span class="count">People <span class="badge">2</span></span>
+  <span class="count">Environments <span class="badge">1</span></span>
+  <span class="count">Notes <span class="badge notes">4</span></span>
+  <span class="count">Collapsed team <span class="badge muted">3</span></span>
+</div>
+<div class="note">Contention/double-booking counts = contention pink — always visible on rail tabs even when ribbons are toggled off (signal never hides). Notes count = interactive blue (information, not alarm). Muted grey = rolled-up counts inside collapsed groups.</div>
+
+<h2>Owner chips (lane rows)</h2>
+<div class="row">
+  <span class="demo"><span class="stack">
+    <span class="avatar team" style="background:#5e35b1;width:12px;height:12px;font-size:0;border-width:1px"></span>
+    <span class="avatar" style="background:#d81b60;width:12px;height:12px;font-size:0;border-width:1px"></span>
+  </span><span class="cap">8–12px dot strip on the project cell · click opens owner picker · tooltip lists names</span></span>
+</div>
+
+</body>
+</html>

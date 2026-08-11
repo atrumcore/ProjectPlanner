@@ -1,0 +1,204 @@
+<!-- @dsCard group="Screens" viewport="1180x580" name="Main · Delivery preset" subtitle="Bar selected · Inspector open · the everyday view" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Main · Delivery preset</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  * { margin: 0; box-sizing: border-box; font-family: 'Open Sans', system-ui, sans-serif; }
+  body { background: #040406; color: #eee; padding: 20px; }
+  .app { width: 1120px; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; overflow: hidden; background: #0b0c0e; }
+  /* toolbar */
+  .tb { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; background: #151719; border-bottom: 1px solid rgba(255,255,255,.1); }
+  .mark { height: 16px; cursor: pointer; }
+  .doc { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 6px; }
+  .doc .dirty { color: #ff8a3d; }
+  .doc .caret { font-size: 9px; color: #71787e; }
+  .btn { font-size: 11px; font-weight: 600; padding: 4px 12px; background: transparent; color: #eee; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; white-space: nowrap; font-family: inherit; }
+  .spacer { flex: 1; }
+  .search { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; color: #8A9298; border: 1px solid rgba(255,255,255,.15); border-radius: 999px; padding: 4px 12px; min-width: 140px; }
+  .search kbd { font-size: 9px; background: rgba(255,255,255,.08); border-radius: 3px; padding: 1px 5px; font-family: inherit; }
+  .chipacct { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px 2px 3px; border: 1px solid rgba(255,255,255,.18); border-radius: 6px; font-size: 11px; }
+  .av { width: 20px; height: 20px; border-radius: 50%; background: #00B8CC; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; }
+  /* main grid */
+  .main { display: flex; height: 400px; }
+  /* left panel */
+  .lp { width: 218px; background: #0b0c0e; border-right: 1px solid rgba(255,255,255,.1); font-size: 11px; flex-shrink: 0; }
+  .lp .head { height: 34px; display: flex; align-items: center; padding: 0 10px; font-size: 10px; font-weight: 800; letter-spacing: .4px; color: #8A9298; border-bottom: 1px solid rgba(255,255,255,.08); }
+  .sechead { padding: 5px 10px; background: rgba(255,255,255,.035); border-left: 3px solid #4E44DB; font-size: 10px; font-weight: 800; letter-spacing: .3px; color: #b3b8bd; }
+  .sechead.g { border-left-color: #46a758; }
+  .row { display: flex; align-items: center; padding: 0 8px 0 4px; height: 44px; border-bottom: 1px solid rgba(255,255,255,.05); position: relative; }
+  .row.odd { background: #101214; } .row.even { background: #131518; }
+  .row.selected { box-shadow: inset 3px 0 0 #00B8CC; background: #16181c; }
+  .grip { color: #4a5057; font-size: 10px; padding: 0 5px 0 2px; }
+  .rname { flex: 1; font-weight: 600; font-size: 11px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rname small { display: block; font-weight: 400; font-size: 9px; color: #8A9298; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .own { display: flex; gap: 2px; position: absolute; left: 20px; bottom: 2px; }
+  .own span { width: 7px; height: 7px; border-radius: 50%; border: 1px solid rgba(255,255,255,.6); }
+  .own .tm { border-radius: 2px; }
+  .nb { min-width: 14px; height: 14px; border-radius: 7px; background: #00B8CC; color: #fff; font-size: 8px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .addrow { padding: 5px 10px; color: #5a6067; font-size: 10px; }
+  /* canvas */
+  .cv { flex: 1; position: relative; background: #0b0c0e; overflow: hidden; }
+  .months { display: flex; height: 20px; border-bottom: 1px solid rgba(255,255,255,.1); font-size: 9px; font-weight: 700; color: #8A9298; }
+  .months div { flex: 1; display: flex; align-items: center; justify-content: center; border-right: 1px solid rgba(255,255,255,.06); }
+  .wk { position: absolute; top: 34px; bottom: 0; width: 12px; background: rgba(255,255,255,.03); }
+  .today { position: absolute; top: 20px; bottom: 0; left: 258px; width: 2px; background: #ffb224; opacity: .9; }
+  .todaylbl { position: absolute; top: 21px; left: 262px; font-size: 8px; font-weight: 800; color: #ffb224; }
+  .weeks { display: flex; height: 14px; border-bottom: 1px solid rgba(255,255,255,.08); font-size: 7px; color: #5a6067; }
+  .weeks div { flex: 1; display: flex; align-items: center; justify-content: center; }
+  .lane { position: absolute; left: 0; right: 0; height: 44px; }
+  .bar { position: absolute; top: 8px; height: 28px; background: #212429; border-radius: 7px; display: flex; align-items: center; font-size: 9px; font-weight: 700; }
+  .bar .tag { width: 4px; height: 100%; border-radius: 6px 0 0 6px; flex-shrink: 0; }
+  .bar .dt { font-size: 7px; opacity: .8; writing-mode: vertical-rl; transform: rotate(180deg); margin-left: 3px; }
+  .bar .lbl { padding: 0 6px; white-space: nowrap; overflow: hidden; }
+  .envdot { position: absolute; top: 2px; right: 3px; width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid #fff; }
+  .ribbon { position: absolute; bottom: 1px; height: 4px; border-radius: 2px; background: #e57394; border: .5px solid rgba(255,255,255,.4); }
+  .golive { position: absolute; top: 6px; width: 16px; height: 16px; transform: rotate(45deg); background: #46a758; border: 2px solid #fff; border-radius: 3px; }
+  .selbar { border: 2px solid #eee !important; }
+  .zoom { position: absolute; right: 12px; bottom: 10px; display: flex; gap: 1px; background: #17191c; border: 1px solid rgba(255,255,255,.15); border-radius: 6px; overflow: hidden; font-size: 10px; }
+  .zoom span { padding: 4px 8px; color: #8A9298; }
+  .zoom span:hover { background: rgba(255,255,255,.06); }
+  /* inspector panel + rail */
+  .insp { width: 230px; background: #17191c; border-left: 1px solid rgba(255,255,255,.1); font-size: 11px; flex-shrink: 0; display: flex; flex-direction: column; }
+  .insp .phead { padding: 8px 12px; font-size: 11px; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,.1); display: flex; justify-content: space-between; }
+  .insp .phead span:last-child { color: #71787e; }
+  .insp .pbody { padding: 10px 12px; }
+  .eyebrow { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #71787e; margin-bottom: 4px; }
+  .ititle { font-size: 13px; font-weight: 700; }
+  .isub { font-size: 10px; color: #8A9298; margin-bottom: 8px; }
+  .frow { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,.06); font-size: 10px; }
+  .frow label { color: #8A9298; }
+  .frow .val { font-weight: 600; }
+  .chips { display: flex; gap: 3px; }
+  .iav { width: 16px; height: 16px; border-radius: 50%; color: #fff; font-size: 6px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,.5); }
+  .conflict { margin-top: 8px; padding: 6px 8px; background: rgba(192,70,106,.15); border: 1px solid #c0466a; border-radius: 6px; font-size: 9px; color: #e0879e; }
+  .iacts { display: flex; gap: 5px; margin-top: 10px; flex-wrap: wrap; }
+  .iacts button { font-size: 9px; font-weight: 600; padding: 3px 8px; background: transparent; color: #eee; border: 1px solid rgba(255,255,255,.2); border-radius: 5px; }
+  .iacts .danger { color: #d9363c; border-color: rgba(217,54,60,.5); }
+  .rail { width: 40px; background: #151719; border-left: 1px solid rgba(255,255,255,.1); display: flex; flex-direction: column; align-items: center; padding-top: 8px; gap: 5px; flex-shrink: 0; }
+  .tab { width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; color: #8A9298; position: relative; font-size: 13px; }
+  .tab.active { background: #00B8CC; color: #fff; }
+  .tab .bdg { position: absolute; top: -3px; right: -3px; min-width: 13px; height: 13px; border-radius: 7px; background: #c0466a; color: #fff; font-size: 7px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 2px; }
+  .tab .bdg.blue { background: #00B8CC; }
+  .cap { font-size: 11px; color: #8A9298; margin-top: 10px; line-height: 1.6; max-width: 1100px; }
+  .cap b { color: #eee; }
+  h2, h3, .title, .ititle { font-family: 'Montserrat', system-ui, sans-serif; }
+  h2::before { content: ''; display: block; width: 28px; height: 3px; background: #CE181E; margin-bottom: 6px; border-radius: 1px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="tb">
+    <img class="mark" src="../assets/logos/bbd_logo_white.svg" alt="BBD">
+    <span class="doc">2026 Priority Roadmap <span class="dirty">•</span> <span class="caret">▾</span></span>
+    <button class="btn">Today</button>
+    <span class="spacer"></span>
+    <button class="btn">Display ▾</button>
+    <button class="btn">Share ▾</button>
+    <span class="search">Search…<span style="flex:1"></span><kbd>Ctrl K</kbd></span>
+    <span class="chipacct"><span class="av">SS</span> Streicher</span>
+  </div>
+  <div class="main">
+    <div class="lp">
+      <div class="head">PROJECTS</div>
+      <div class="sechead">IN PROGRESS</div>
+      <div class="row even selected">
+        <span class="grip">⠿</span>
+        <span class="rname">Channel modernisation<small>SSO rollout · Bulk import…</small></span>
+        <span class="own"><span class="tm" style="background:#5e35b1"></span><span style="background:#d81b60"></span></span>
+        <span class="nb">3</span>
+      </div>
+      <div class="row odd">
+        <span class="grip">⠿</span>
+        <span class="rname">Wave 2 delivery<small>Payments API…</small></span>
+        <span class="own"><span style="background:#039be5"></span></span>
+      </div>
+      <div class="row even">
+        <span class="grip">⠿</span>
+        <span class="rname">Data platform uplift<small>Lakehouse migration…</small></span>
+      </div>
+      <div class="addrow">＋ Add project</div>
+      <div class="sechead g">NEXT UP</div>
+      <div class="row odd">
+        <span class="grip">⠿</span>
+        <span class="rname">Reporting rebuild</span>
+      </div>
+      <div class="addrow">＋ Add project</div>
+      <div class="addrow" style="border-top:1px solid rgba(255,255,255,.07)">＋ Add section</div>
+    </div>
+    <div class="cv">
+      <div class="months"><div>FEB 2026</div><div>MAR 2026</div><div>APR 2026</div><div>MAY 2026</div></div>
+      <div class="weeks"><div>2</div><div>9</div><div>16</div><div>23</div><div>2</div><div>9</div><div>16</div><div>23</div><div>30</div><div>6</div><div>13</div><div>20</div><div>27</div><div>4</div><div>11</div><div>18</div><div>25</div></div>
+      <div class="wk" style="left:64px"></div><div class="wk" style="left:140px"></div><div class="wk" style="left:216px"></div><div class="wk" style="left:292px"></div><div class="wk" style="left:368px"></div><div class="wk" style="left:444px"></div><div class="wk" style="left:520px"></div><div class="wk" style="left:596px"></div>
+      <div class="today"></div><div class="todaylbl">TODAY</div>
+      <!-- lane 1: selected bar -->
+      <div class="lane" style="top:56px">
+        <div class="bar selbar" style="left:20px;width:200px;border:1px solid rgba(203,102,0,.5)">
+          <span class="tag" style="background:#cb6600"></span><span class="dt">3 Feb</span><span class="lbl">DEVELOPMENT</span>
+          <span class="envdot" style="background:#43a047"></span>
+        </div>
+        <div class="bar" style="left:236px;width:130px;border:1px solid rgba(0,153,145,.5)">
+          <span class="tag" style="background:#009991"></span><span class="dt">14 Apr</span><span class="lbl">SIT</span>
+          <span class="envdot" style="background:#fb8c00"></span>
+        </div>
+        <div class="ribbon" style="left:290px;width:76px"></div>
+        <div class="golive" style="left:430px"></div>
+      </div>
+      <!-- lane 2 -->
+      <div class="lane" style="top:100px">
+        <div class="bar" style="left:60px;width:150px;border:1px solid rgba(63,81,181,.5)">
+          <span class="tag" style="background:#3f51b5"></span><span class="dt">17 Feb</span><span class="lbl">ANALYSIS</span>
+        </div>
+        <div class="bar" style="left:226px;width:170px;border:1px solid rgba(203,102,0,.5)">
+          <span class="tag" style="background:#cb6600"></span><span class="dt">30 Mar</span><span class="lbl">DEVELOPMENT</span>
+          <span class="envdot" style="background:#fb8c00"></span>
+        </div>
+        <div class="ribbon" style="left:290px;width:76px"></div>
+      </div>
+      <!-- lane 3 -->
+      <div class="lane" style="top:144px">
+        <div class="bar" style="left:110px;width:250px;border:1px solid rgba(94,53,177,.5)">
+          <span class="tag" style="background:#5e35b1"></span><span class="dt">2 Mar</span><span class="lbl">MIGRATION</span>
+        </div>
+      </div>
+      <!-- lane 4 -->
+      <div class="lane" style="top:210px">
+        <div class="bar" style="left:300px;width:180px;border:1px solid rgba(63,81,181,.5)">
+          <span class="tag" style="background:#3f51b5"></span><span class="dt">20 Apr</span><span class="lbl">ANALYSIS</span>
+        </div>
+      </div>
+      <div class="zoom"><span>−</span><span>100%</span><span>+</span><span>⤢</span></div>
+    </div>
+    <div class="insp">
+      <div class="phead">Inspector <span>×</span></div>
+      <div class="pbody">
+        <div class="eyebrow">Bar</div>
+        <div class="ititle">Development</div>
+        <div class="isub">Channel modernisation</div>
+        <div class="frow"><label>Phase</label><span class="val" style="color:#f2914a">Development ▾</span></div>
+        <div class="frow"><label>Start</label><span class="val">3 Feb 2026</span></div>
+        <div class="frow"><label>Duration</label><span class="val">54 days</span></div>
+        <div class="frow"><label>Environment</label><span class="val">QA ▾</span></div>
+        <div class="frow"><label>People</label><span class="chips"><span class="iav" style="background:#d81b60">AD</span><span class="iav" style="background:#039be5">BN</span><span class="iav" style="background:#212429;color:#8A9298">+</span></span></div>
+        <div class="conflict">QA also used by Wave 2 SIT · wk 10–12 →</div>
+        <div class="iacts"><button>Rename</button><button>Colour</button><button class="danger">Delete bar</button></div>
+      </div>
+    </div>
+    <div class="rail">
+      <div class="tab active">ⓘ</div>
+      <div class="tab">☰<span class="bdg blue">4</span></div>
+      <div class="tab">▣<span class="bdg">1</span></div>
+      <div class="tab">◉<span class="bdg">2</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="cap">
+  <b>The everyday view.</b> Delivery preset: start dates, env dots and contention ribbons on; people chips off. Clicking the Development bar selected it (white outline) and the Inspector shows its properties — the same information the old flow scattered across right-click menus and double-click modals. Left panel row mirrors the selection. Rail badges stay live (1 env contention, 2 double-bookings) even though people chips aren't drawn in this preset. Zoom floats bottom-right on the canvas — outside <code>.gantt-container</code>, so exports never capture it or the rail.
+</div>
+
+</body>
+</html>

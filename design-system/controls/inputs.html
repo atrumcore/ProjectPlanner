@@ -1,0 +1,60 @@
+<!-- @dsCard group="Controls" name="Inputs & selection" subtitle="Text / search / select / segmented / inline edit" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Inputs &amp; selection</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  * { margin: 0; box-sizing: border-box; font-family: 'Open Sans', system-ui, sans-serif; }
+  body { background: #0b0c0e; color: #eee; padding: 24px; }
+  h2 { font-size: 13px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: #8A9298; margin: 22px 0 10px; }
+  h2:first-child { margin-top: 0; }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #71787e; display: block; margin-bottom: 4px; }
+  input, select { font-size: 12px; padding: 7px 10px; background: #17191c; color: #eee; border: 1px solid rgba(255,255,255,.15); border-radius: 6px; font-family: inherit; width: 200px; }
+  input:focus, select:focus { outline: none; border-color: #00B8CC; }
+  .seg { display: inline-flex; border: 1px solid rgba(255,255,255,.18); border-radius: 6px; overflow: hidden; }
+  .seg button { font-size: 11px; font-weight: 600; padding: 6px 14px; background: transparent; color: #8A9298; border: none; cursor: pointer; font-family: inherit; }
+  .seg button.on { background: #4E44DB; color: #ffffff; }
+  .inline { font-size: 13px; font-weight: 600; border-bottom: 1px dashed transparent; cursor: text; display: inline-block; }
+  .inline:hover { border-bottom-color: #8A9298; }
+  .inline-editing { font-size: 13px; font-weight: 600; background: #17191c; border: 1px solid #00B8CC; border-radius: 4px; padding: 2px 6px; width: auto; }
+  .note { font-size: 11px; color: #8A9298; margin-top: 8px; line-height: 1.6; }
+  h2, h3, .title, .ititle { font-family: 'Montserrat', system-ui, sans-serif; }
+  h2::before { content: ''; display: block; width: 28px; height: 3px; background: #CE181E; margin-bottom: 6px; border-radius: 1px; }
+</style>
+</head>
+<body>
+
+<h2>Text & search</h2>
+<div class="row">
+  <div><label>Plan name</label><input value="2026 Priority Roadmap"></div>
+  <div><label>Search (rail, launcher, palette)</label><input type="search" placeholder="Search people, roles, teams…"></div>
+</div>
+<div class="note">32px tall · surface fill · focus ring = interactive-blue border, no glow. Placeholders are examples, not labels.</div>
+
+<h2>Select</h2>
+<div class="row">
+  <div><label>Phase type</label><select><option>Development</option><option>Analysis &amp; Design</option><option>UAT</option></select></div>
+  <div><label>Team</label><select><option>Backend Team</option><option>No team</option></select></div>
+</div>
+
+<h2>Segmented — exactly-one choices</h2>
+<div class="row">
+  <div><label>Bar style</label><div class="seg"><button class="on">Tagged</button><button>Solid</button></div></div>
+  <div><label>Theme</label><div class="seg"><button class="on">Dark</button><button>Light</button></div></div>
+  <div><label>Behaviour (environments)</label><div class="seg"><button class="on">Exclusive</button><button>Shared</button></div></div>
+</div>
+<div class="note">Replaces radio pairs in menus. Two–three options max; more than that is a select.</div>
+
+<h2>Inline edit — click-to-edit pattern</h2>
+<div class="row">
+  <span class="inline">Alice Dlamini</span>
+  <span style="color:#71787e">→ click →</span>
+  <input class="inline-editing" value="Alice Dlamini" style="width:130px">
+</div>
+<div class="note">Names, roles, labels edit in place: hover shows dashed underline, click swaps to input, Enter/blur commits, Esc cancels. Used in panels, Inspector, and bar labels (double-click).</div>
+
+</body>
+</html>

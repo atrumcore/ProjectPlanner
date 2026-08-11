@@ -1,5 +1,4 @@
-import { useState, useRef, useMemo, useCallback, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useGanttStore } from '../store/useGanttStore';
 import type { Environment, PhaseType } from '../types/gantt';
 import { ENV_COLOR_PRESETS } from '../types/gantt';
@@ -7,9 +6,10 @@ import { getPhaseDef } from '../data/phasePresets';
 import { getContentions } from '../utils/contention';
 import { htmlToPlainText } from '../utils/plainText';
 
-const PANEL_MIN = 320;
-const PANEL_MAX = 720;
-
+/**
+ * Environments tab content — hosted inside the shared RailPanel shell (which
+ * owns the width, resize handle, header and close affordance).
+ */
 export default function EnvironmentsPanel() {
   const environments = useGanttStore(s => s.environments);
   const swimlanes = useGanttStore(s => s.swimlanes);
@@ -21,17 +21,13 @@ export default function EnvironmentsPanel() {
   const removeEnvironment = useGanttStore(s => s.removeEnvironment);
   const setEnvironmentExclusive = useGanttStore(s => s.setEnvironmentExclusive);
   const setBarEnvironment = useGanttStore(s => s.setBarEnvironment);
-  const toggleEnvironmentsPanel = useGanttStore(s => s.toggleEnvironmentsPanel);
   const setEnvironmentFocus = useGanttStore(s => s.setEnvironmentFocus);
   const selectBar = useGanttStore(s => s.selectBar);
 
   const [activeId, setActiveId] = useState<string | null>(environments[0]?.id ?? null);
-  const [closing, setClosing] = useState(false);
-  const [width, setWidth] = useState(420);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
-  const resizing = useRef<{ startX: number; startWidth: number } | null>(null);
 
   // Keep activeId valid as environments come and go.
   useEffect(() => {
@@ -44,21 +40,12 @@ export default function EnvironmentsPanel() {
 
   useEffect(() => { setConfirmDelete(false); }, [activeId]);
 
-  // Resize
+  // Armed delete auto-disarms after 3s (v2 buttons card).
   useEffect(() => {
-    const onMove = (e: PointerEvent) => {
-      if (!resizing.current) return;
-      const delta = resizing.current.startX - e.clientX;
-      setWidth(Math.min(PANEL_MAX, Math.max(PANEL_MIN, resizing.current.startWidth + delta)));
-    };
-    const onUp = () => { resizing.current = null; };
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-    return () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-    };
-  }, []);
+    if (!confirmDelete) return;
+    const t = setTimeout(() => setConfirmDelete(false), 3000);
+    return () => clearTimeout(t);
+  }, [confirmDelete]);
 
   const contentions = useMemo(
     () => getContentions({ environments, swimlanes, phaseBars }),
@@ -85,8 +72,6 @@ export default function EnvironmentsPanel() {
     () => activeEnv ? contentions.filter(c => c.envId === activeEnv.id) : [],
     [contentions, activeEnv]
   );
-
-  const handleClose = useCallback(() => setClosing(true), []);
 
   const handleAddEnv = useCallback(() => {
     const id = addEnvironment('');
@@ -130,28 +115,8 @@ export default function EnvironmentsPanel() {
     window.dispatchEvent(new CustomEvent('gantt:scroll-to-bar', { detail: { barId: barAId } }));
   }, [selectBar]);
 
-  return createPortal(
-    <div
-      className={`env-panel${closing ? ' env-panel--closing' : ''}`}
-      style={{ width }}
-      onAnimationEnd={() => { if (closing) toggleEnvironmentsPanel(); }}
-    >
-      <div
-        className="env-panel-resize-handle"
-        onPointerDown={e => {
-          e.preventDefault();
-          (e.target as Element).setPointerCapture(e.pointerId);
-          resizing.current = { startX: e.clientX, startWidth: width };
-        }}
-      />
-
-      <div className="env-panel-header">
-        <span>Environments</span>
-        <div className="env-panel-header-actions">
-          <button onClick={handleClose} title="Close (Ctrl+Shift+E)" aria-label="Close">&times;</button>
-        </div>
-      </div>
-
+  return (
+    <>
       {/* Tabs */}
       <div className="env-panel-tabs">
         {environments.map(e => {
@@ -178,10 +143,10 @@ export default function EnvironmentsPanel() {
 
       {/* Body */}
       {!activeEnv ? (
-        <div className="env-panel-empty">
-          <p>No environments yet.</p>
-          <p>Create one for each shared infrastructure (Dev, QA, PREPROD, …) and then map phase types to them.</p>
-          <button onClick={handleAddEnv} className="env-panel-primary-btn">Create environment</button>
+        <div className="teach-state">
+          <div className="kicker">Environments</div>
+          <p>Give each shared environment (Dev, QA, PREPROD…) a lane claim, and overlapping bookings get flagged automatically.</p>
+          <button onClick={handleAddEnv} className="btn-primary">Create environment</button>
         </div>
       ) : (
         <div className="env-panel-body">
@@ -350,7 +315,6 @@ export default function EnvironmentsPanel() {
           </div>
         </div>
       )}
-    </div>,
-    document.body
+    </>
   );
 }

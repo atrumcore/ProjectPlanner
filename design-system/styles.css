@@ -1,0 +1,24 @@
+/* BBD Planner v2 — BBD-brand-aligned tokens */
+@font-face { font-family: 'Montserrat'; src: url('fonts/Montserrat-Regular.otf') format('opentype'); font-weight: 400; }
+@font-face { font-family: 'Montserrat'; src: url('fonts/Montserrat-Medium.otf') format('opentype'); font-weight: 500; }
+@font-face { font-family: 'Montserrat'; src: url('fonts/Montserrat-SemiBold.otf') format('opentype'); font-weight: 600; }
+@font-face { font-family: 'Montserrat'; src: url('fonts/Montserrat-Bold.otf') format('opentype'); font-weight: 700 800; }
+@font-face { font-family: 'Open Sans'; src: url('fonts/open-sans-normal-normal.ttf') format('truetype'); font-weight: 400 500; }
+@font-face { font-family: 'Open Sans'; src: url('fonts/open-sans-bold-normal.ttf') format('truetype'); font-weight: 600 800; }
+:root {
+  /* surfaces — dark-first, BBD near-black */
+  --bg-app: #0b0c0e; --bg-page: #040406; --bg-header: #151719; --bg-surface: #17191c; --bg-surface-2: #212429;
+  /* text */
+  --text: #eeeeee; --text-secondary: #8A9298; --text-muted: #71787e;
+  /* brand */
+  --bbd-red: #CE181E; --bbd-black: #151719;
+  /* interactive (BBD extension palette) */
+  --accent-primary: #4E44DB; --accent-primary-hover: #5d54e3; --accent-primary-text: #8a82f5;
+  --interactive-blue: #00B8CC;
+  /* semantic */
+  --danger: #d9363c; --conflict: #c0466a; --conflict-ribbon: #e57394; --today: #ffb224;
+  /* chrome */
+  --hairline: rgba(255,255,255,.08);
+  --font-display: 'Montserrat', system-ui, sans-serif; --font-body: 'Open Sans', system-ui, sans-serif;
+}
+a { color: #8a82f5; } a:hover { color: #a49df5; }

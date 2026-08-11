@@ -19,8 +19,7 @@ export default function ContextMenu({ x, y, barId, currentEnvId, onChangePhase, 
   const phaseTypes = useGanttStore(s => s.phaseTypes);
   const environments = useGanttStore(s => s.environments);
   const togglePhaseTypesModal = useGanttStore(s => s.togglePhaseTypesModal);
-  const toggleEnvironmentsPanel = useGanttStore(s => s.toggleEnvironmentsPanel);
-  const environmentsPanelOpen = useGanttStore(s => s.environmentsPanelOpen);
+  const setRailTab = useGanttStore(s => s.setRailTab);
   const setBarEnvironment = useGanttStore(s => s.setBarEnvironment);
 
   // Clamp to viewport after first render
@@ -49,7 +48,7 @@ export default function ContextMenu({ x, y, barId, currentEnvId, onChangePhase, 
   return (
     <div ref={ref} className="context-menu" style={{ left: pos.left, top: pos.top }}>
       <div className="context-menu-item" onClick={onEditLabel}>
-        Edit Label
+        Edit label
       </div>
       <div className="context-menu-divider" />
       {phaseTypes.map(t => (
@@ -73,7 +72,7 @@ export default function ContextMenu({ x, y, barId, currentEnvId, onChangePhase, 
         + Manage phase types…
       </div>
       <div className="context-menu-divider" />
-      <div className="context-menu-label">Environment</div>
+      <div className="context-menu-label eyebrow">Environment</div>
       <div
         className="context-menu-item"
         onClick={() => {
@@ -104,7 +103,7 @@ export default function ContextMenu({ x, y, barId, currentEnvId, onChangePhase, 
         style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}
         onClick={() => {
           onClose();
-          if (!environmentsPanelOpen) toggleEnvironmentsPanel();
+          setRailTab('environments');
         }}
       >
         + Manage environments…

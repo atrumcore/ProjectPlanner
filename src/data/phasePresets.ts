@@ -6,7 +6,7 @@ type PresetMap = Record<string, PhaseColorScheme>;
 /**
  * Default phase-type colours — a categorical palette chosen so adjacent
  * phases stay distinguishable on both themes (users can recolour any type):
- *   analysis/concept → blue · development → orange
+ *   analysis/concept → cyan (BBD 3115C) · development → orange
  *   sit → teal · uat → green · live → crimson · custom → slate
  *
  * In the tagged-bar render, `fill` is the **tag colour** (the small coloured
@@ -16,22 +16,22 @@ type PresetMap = Record<string, PhaseColorScheme>;
  * it uses the exact #99001B.
  */
 const DARK_PRESETS: PresetMap = {
-  analysis: { fill: '#0098cc', stroke: '#006a90', text: '#ffffff', label: 'ANALYSIS & DESIGN' },
+  analysis: { fill: '#00b8cc', stroke: '#006570', text: '#ffffff', label: 'ANALYSIS & DESIGN' },
   development: { fill: '#cb6600', stroke: '#8a4500', text: '#ffffff', label: 'DEVELOPMENT' },
   sit: { fill: '#009991', stroke: '#00665f', text: '#ffffff', label: 'SIT' },
   uat: { fill: '#31bf69', stroke: '#1f8f4d', text: '#07261a', label: 'UAT' },
   live: { fill: '#d23a52', stroke: '#99001b', text: '#ffffff', label: 'LIVE' },
-  concept: { fill: '#0098cc', stroke: '#006a90', text: '#ffffff', label: 'CONCEPTUALISATION' },
-  custom: { fill: '#8aa0b8', stroke: '#4a5a72', text: '#07140b', label: 'CUSTOM' },
+  concept: { fill: '#00b8cc', stroke: '#006570', text: '#ffffff', label: 'CONCEPTUALISATION' },
+  custom: { fill: '#8a9298', stroke: '#4a5057', text: '#07140b', label: 'CUSTOM' },
 };
 
 const LIGHT_PRESETS: PresetMap = {
-  analysis: { fill: '#0098cc', stroke: '#006a90', text: '#ffffff', label: 'ANALYSIS & DESIGN' },
+  analysis: { fill: '#00b8cc', stroke: '#006570', text: '#ffffff', label: 'ANALYSIS & DESIGN' },
   development: { fill: '#cb6600', stroke: '#8a4500', text: '#ffffff', label: 'DEVELOPMENT' },
   sit: { fill: '#009991', stroke: '#00665f', text: '#ffffff', label: 'SIT' },
   uat: { fill: '#31bf69', stroke: '#1f8f4d', text: '#07261a', label: 'UAT' },
   live: { fill: '#99001b', stroke: '#5e0011', text: '#ffffff', label: 'LIVE' },
-  concept: { fill: '#0098cc', stroke: '#006a90', text: '#ffffff', label: 'CONCEPTUALISATION' },
+  concept: { fill: '#00b8cc', stroke: '#006570', text: '#ffffff', label: 'CONCEPTUALISATION' },
   custom: { fill: '#c2ccd6', stroke: '#6b7c92', text: '#1a1814', label: 'CUSTOM' },
 };
 
@@ -48,13 +48,13 @@ const PRESETS_BY_THEME: Record<ThemeName, PresetMap> = {
  * own colour, which we never override.
  */
 const KNOWN_BUILTIN_FILLS: Record<string, Set<string>> = {
-  analysis: new Set(['#f5e6a3', '#f5c84b', '#0098cc', '#3e7e99', '#cfe6f1']),
+  analysis: new Set(['#f5e6a3', '#f5c84b', '#0098cc', '#00b8cc', '#3e7e99', '#cfe6f1']),
   development: new Set(['#fcdea4', '#f2914a', '#cb6600', '#bd7a40', '#f1ddc4']),
   sit: new Set(['#c6e9c6', '#5fd98a', '#009991', '#3e867f', '#cfe7e4']),
   uat: new Set(['#beddfa', '#56c2e8', '#31bf69', '#4e9168', '#d6efdf']),
   live: new Set(['#f8baba', '#e8657a', '#d23a52', '#99001b', '#a85563', '#f1d4d9']),
-  concept: new Set(['#f5e6a3', '#4fd3c9', '#0098cc', '#3e7e99', '#cfe6f1']),
-  custom: new Set(['#e0e0e0', '#b8c4d4', '#8aa0b8', '#c2ccd6', '#6e7e92', '#dde3ea']),
+  concept: new Set(['#f5e6a3', '#4fd3c9', '#0098cc', '#00b8cc', '#3e7e99', '#cfe6f1']),
+  custom: new Set(['#e0e0e0', '#b8c4d4', '#8aa0b8', '#8a9298', '#c2ccd6', '#6e7e92', '#dde3ea']),
 };
 
 /** Phase colour presets for a theme (defaults to the active theme). */
@@ -82,8 +82,8 @@ export const FALLBACK_PHASE_DEF: PhaseTypeDef = {
   id: '__missing__',
   name: 'Missing',
   label: 'MISSING',
-  fill: '#8aa0b8',
-  stroke: '#4a5a72',
+  fill: '#8a9298',
+  stroke: '#4a5057',
   text: '#07140b',
   order: 999,
 };

@@ -4,10 +4,10 @@
   box-sizing: border-box;
 }
 
+/* Font family and background come from App.css tokens (var(--font-body),
+   var(--bg-app)) — one source of truth for both. */
 body {
   margin: 0;
-  font-family: 'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif;
-  background: #0b1426;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

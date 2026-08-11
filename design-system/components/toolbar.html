@@ -1,0 +1,75 @@
+<!-- @dsCard group="App components" viewport="960x420" name="Toolbar" subtitle="7 controls · signed in & out · both themes" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Toolbar</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  * { margin: 0; box-sizing: border-box; font-family: 'Open Sans', system-ui, sans-serif; }
+  body { background: #0b0c0e; color: #eee; padding: 24px; }
+  h2 { font-size: 12px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: #8A9298; margin: 20px 0 8px; }
+  h2:first-child { margin-top: 0; }
+  .tb { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; background: #151719; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; }
+  .mark { height: 16px; cursor: pointer; }
+  .doc { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 6px; cursor: pointer; }
+  .doc:hover { background: rgba(255,255,255,.07); }
+  .doc .dirty { color: #ff8a3d; }
+  .doc .caret { font-size: 9px; color: #71787e; }
+  .btn { font-size: 11px; font-weight: 600; padding: 4px 12px; background: transparent; color: #eee; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; cursor: pointer; white-space: nowrap; font-family: inherit; }
+  .spacer { flex: 1; }
+  .search { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; color: #8A9298; border: 1px solid rgba(255,255,255,.15); border-radius: 999px; padding: 4px 12px; min-width: 150px; cursor: pointer; }
+  .search kbd { font-size: 9px; background: rgba(255,255,255,.08); border-radius: 3px; padding: 1px 5px; font-family: inherit; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px 2px 3px; border: 1px solid rgba(255,255,255,.18); border-radius: 6px; font-size: 11px; cursor: pointer; }
+  .av { width: 20px; height: 20px; border-radius: 50%; background: #00B8CC; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; }
+  .light { background: #ffffff; border-color: #DCDDDE; color: #151719; }
+  .light .btn { color: #151719; border-color: #DCDDDE; }
+  .light .search { color: #5a5a5f; border-color: #DCDDDE; }
+  .light .doc:hover { background: rgba(0,0,0,.05); }
+  .cap { font-size: 11px; color: #8A9298; margin-top: 8px; line-height: 1.6; }
+  h2, h3, .title, .ititle { font-family: 'Montserrat', system-ui, sans-serif; }
+  h2::before { content: ''; display: block; width: 28px; height: 3px; background: #CE181E; margin-bottom: 6px; border-radius: 1px; }
+</style>
+</head>
+<body>
+
+<h2>Signed in · dark (default)</h2>
+<div class="tb">
+  <img class="mark" src="../assets/logos/bbd_logo_white.svg" alt="BBD" title="Home">
+  <button class="btn">‹ Home</button>
+  <span class="doc">2026 Priority Roadmap <span class="dirty">•</span> <span class="caret">▾</span></span>
+  <button class="btn">Today</button>
+  <span class="spacer"></span>
+  <button class="btn">Display ▾</button>
+  <button class="btn">Share ▾</button>
+  <span class="search">Search…<span style="flex:1"></span><kbd>Ctrl K</kbd></span>
+  <span class="chip"><span class="av">SS</span> Streicher</span>
+</div>
+<div class="cap">① brand mark + <b>‹ Home</b> pill (signed in) — navigation back to the launcher must be labelled; the logo alone is an invisible convention, so it stays clickable as a bonus only · ② document chip opens the File menu; dirty dot lives here; tooltip = "saved by Alice · 09:12" · ③ Today · ④ Display (presets) · ⑤ Share (exports) · ⑥ palette · ⑦ account. Gone: File/Insert/View buttons, three panel buttons (→ rail), zoom (→ floating cluster), Undo/Redo (→ shortcuts + palette).</div>
+
+<h2>Signed out</h2>
+<div class="tb">
+  <img class="mark" src="../assets/logos/bbd_logo_white.svg" alt="BBD">
+  <span class="doc">Untitled <span class="caret">▾</span></span>
+  <button class="btn">Today</button>
+  <span class="spacer"></span>
+  <button class="btn">Display ▾</button>
+  <button class="btn">Share ▾</button>
+  <span class="search">Search…<span style="flex:1"></span><kbd>Ctrl K</kbd></span>
+  <button class="btn">Sign in</button>
+</div>
+
+<h2>Light theme</h2>
+<div class="tb light">
+  <img class="mark" src="../assets/logos/bbd-logo-dark.svg" alt="BBD">
+  <span class="doc" style="font-weight:700">2026 Priority Roadmap <span class="caret">▾</span></span>
+  <button class="btn">Today</button>
+  <span class="spacer"></span>
+  <button class="btn">Display ▾</button>
+  <button class="btn">Share ▾</button>
+  <span class="search">Search…<span style="flex:1"></span><kbd>Ctrl K</kbd></span>
+  <span class="chip" style="border-color:#DCDDDE"><span class="av" style="background:#151719">SS</span> Streicher</span>
+</div>
+
+</body>
+</html>

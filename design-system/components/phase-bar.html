@@ -1,0 +1,73 @@
+<!-- @dsCard group="App components" viewport="940x640" name="Phase bar anatomy" subtitle="Adornments per preset · hover-peek · conflict states" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Phase bar anatomy</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  * { margin: 0; box-sizing: border-box; font-family: 'Open Sans', system-ui, sans-serif; }
+  body { background: #0b0c0e; color: #eee; padding: 24px; }
+  h2 { font-size: 12px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: #8A9298; margin: 26px 0 10px; }
+  h2:first-child { margin-top: 0; }
+  .lane { position: relative; height: 84px; background: #131518; border-radius: 6px; margin-bottom: 8px; }
+  .bar { position: absolute; top: 26px; height: 32px; background: #212429; border: 1px solid rgba(203,102,0,.5); border-radius: 8px; display: flex; align-items: stretch; }
+  .bar.tall { height: 44px; top: 20px; }
+  .tag { width: 5px; background: #cb6600; border-radius: 7px 0 0 7px; flex-shrink: 0; }
+  .inner { display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 0 22px 0 7px; min-width: 0; }
+  .lbl { font-size: 10px; font-weight: 700; font-family: 'Montserrat', system-ui, sans-serif; letter-spacing: .3px; line-height: 1; white-space: nowrap; }
+  .dts { font-size: 8px; color: #8A9298; line-height: 1; white-space: nowrap; }
+  .envdot { position: absolute; top: 4px; right: 5px; width: 9px; height: 9px; border-radius: 50%; background: #43a047; border: 1.5px solid #0b0c0e; }
+  .chips { display: flex; gap: 3px; }
+  .chips span { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 0 1.5px #212429; }
+  .ribbon-b { position: absolute; top: 63px; height: 5px; border-radius: 3px; background: #e57394; }
+  .ribbon-t { position: absolute; top: 12px; height: 5px; border-radius: 3px; background: #e879ab; }
+  .pill { position: absolute; top: 1px; left: 22px; font-size: 9px; font-weight: 700; background: #43a047; color: #fff; border-radius: 999px; padding: 1px 8px; letter-spacing: .4px; }
+  .pill.conflict { background: #c0466a; font-weight: 800; }
+  .pill.clear { background: #009991; font-weight: 800; }
+  .selected { border: 2px solid #eee; box-shadow: 0 0 3px rgba(0,0,0,.3); }
+  .cap { font-size: 11px; color: #8A9298; margin: 4px 0 0; line-height: 1.55; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 24px; align-items: start; }
+  h2, h3, .title, .ititle { font-family: 'Montserrat', system-ui, sans-serif; }
+  h2::before { content: ''; display: block; width: 28px; height: 3px; background: #CE181E; margin-bottom: 6px; border-radius: 1px; }
+</style>
+</head>
+<body>
+
+<h2>Resting state per preset — same bar, three densities</h2>
+<div class="grid">
+<div>
+  <div class="lane"><div class="bar" style="left:16px;width:220px"><span class="tag"></span><span class="inner"><span class="lbl">DEVELOPMENT</span></span></div></div>
+  <div class="cap"><b>Minimal</b> — the bar, nothing else. New plans start here.</div>
+</div>
+<div>
+  <div class="lane"><div class="bar tall" style="left:16px;width:220px"><span class="tag"></span><span class="inner"><span class="lbl">DEVELOPMENT</span><span class="dts">3 Feb → 21 Mar</span></span><span class="envdot"></span></div><div class="ribbon-b" style="left:100px;width:90px;top:69px"></div></div>
+  <div class="cap"><b>Delivery (default)</b> — + start date, env dot, env-contention ribbon (below).</div>
+</div>
+<div>
+  <div class="lane"><div class="bar tall" style="left:16px;width:220px"><span class="tag"></span><span class="inner"><span class="lbl">DEVELOPMENT</span><span class="chips"><span style="background:#d81b60"></span><span style="background:#039be5"></span></span></span><span class="envdot"></span></div><div class="ribbon-b" style="left:100px;width:90px;top:69px"></div><div class="ribbon-t" style="left:60px;width:80px"></div></div>
+  <div class="cap"><b>Workload</b> — + people chips on a second row inside the bar, double-booking ribbon (top). Date labels off — chips take that row.</div>
+</div>
+<div>
+  <div class="lane"><div class="bar tall selected" style="left:16px;width:220px"><span class="tag"></span><span class="inner"><span class="lbl">DEVELOPMENT</span><span class="chips"><span style="background:#d81b60"></span><span style="background:#039be5"></span></span></span><span class="envdot"></span></div><div class="pill">QA ENV</div></div>
+  <div class="cap"><b>Hover / selected — full peek in ANY preset.</b> The bar you're pointing at always shows everything: env pill, chips, dates. Clutter rules apply to the crowd, not the subject.</div>
+</div>
+</div>
+
+<h2>Ribbon geometry — two conflict systems, never colliding</h2>
+<div class="lane">
+  <div class="bar" style="left:16px;width:260px"><span class="tag"></span><span class="inner"><span class="lbl">SIT</span></span></div>
+  <div class="ribbon-t" style="left:76px;width:120px;top:18px"></div>
+  <div class="ribbon-b" style="left:136px;width:120px"></div>
+</div>
+<div class="cap">Double-booking (people) rides <b>above</b> the bar · env contention rides <b>below</b>. Both day-snapped to the overlap range, coloured by the contended resource, brightened for dark canvas.</div>
+
+<h2>Drag feedback — always on, every preset</h2>
+<div class="grid">
+  <div><div class="lane"><div class="bar" style="left:16px;width:180px;border-color:rgba(0,153,145,.5)"><span class="tag" style="background:#009991"></span><span class="inner"><span class="lbl">SIT</span></span></div><div class="pill clear" style="top:4px">CLEAR</div></div></div>
+  <div><div class="lane"><div class="bar" style="left:16px;width:180px;border-color:rgba(0,153,145,.5)"><span class="tag" style="background:#009991"></span><span class="inner"><span class="lbl">SIT</span></span></div><div class="pill conflict" style="top:4px">CONFLICT (QA, Alice)</div></div></div>
+</div>
+<div class="cap">Live while dragging a bar that has an exclusive env or assignees: green CLEAR / pink CONFLICT naming every contended resource. This is the tool's core promise — it never moves silently into a clash.</div>
+
+</body>
+</html>

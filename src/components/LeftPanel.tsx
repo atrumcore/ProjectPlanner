@@ -9,6 +9,7 @@ import RichTextEditor from './RichTextEditor';
 import FeaturesCell from './FeaturesCell';
 import KeyFeaturesPopover from './KeyFeaturesPopover';
 import PeoplePickerPopover from './PeoplePickerPopover';
+import AddSwimlaneModal from './AddSwimlaneModal';
 import { htmlToPlainText } from '../utils/plainText';
 
 interface Props {
@@ -61,6 +62,9 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
   // Swimlane owner picker (people/teams allocation for the whole project)
   const [ownerPicker, setOwnerPicker] = useState<{ laneId: string; x: number; y: number } | null>(null);
 
+  // "+ Add project" modal, preselecting the section whose row was clicked
+  const [addLaneSectionId, setAddLaneSectionId] = useState<string | null>(null);
+
   // Swimlane right-click context menu
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; laneId: string } | null>(null);
   const [ctxPos, setCtxPos] = useState({ left: 0, top: 0 });
@@ -73,6 +77,18 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
   const [confirmDeleteSection, setConfirmDeleteSection] = useState(false);
   const secCtxRef = useRef<HTMLDivElement>(null);
+
+  // Armed deletes auto-disarm after 3s (v2 buttons card).
+  useEffect(() => {
+    if (!confirmDelete) return;
+    const t = setTimeout(() => setConfirmDelete(false), 3000);
+    return () => clearTimeout(t);
+  }, [confirmDelete]);
+  useEffect(() => {
+    if (!confirmDeleteSection) return;
+    const t = setTimeout(() => setConfirmDeleteSection(false), 3000);
+    return () => clearTimeout(t);
+  }, [confirmDeleteSection]);
 
   // Clamp swimlane context menu to viewport
   useEffect(() => {
@@ -330,7 +346,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
           Project
         </div>
         <div className="left-panel-header-cell" style={{ flex: 1 }}>
-          Key Features
+          Key features
         </div>
       </div>
       <div className="left-panel-week-row" />
@@ -358,8 +374,11 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
                 autoFocus
                 defaultValue={section.label}
                 style={{
-                  border: 'none', background: 'transparent', textAlign: 'center',
-                  fontSize: 16, fontWeight: 700, outline: '1px solid var(--border)',
+                  border: 'none', background: 'transparent', textAlign: 'left',
+                  fontFamily: 'var(--font-display)', fontSize: 11, fontWeight: 700,
+                  letterSpacing: '0.12em', textTransform: 'uppercase',
+                  color: 'var(--text-primary)',
+                  outline: '1px solid var(--accent-secondary)',
                   borderRadius: 4, padding: '2px 8px', width: '60%',
                 }}
                 onBlur={e => {
@@ -377,8 +396,22 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
             )}
           </div>
           {lanes.map((lane, i) => renderRow(lane, i, lanes))}
+          <button
+            className="left-panel-add-row"
+            onClick={() => setAddLaneSectionId(section.id)}
+            title={`Add a project lane to ${section.label}`}
+          >
+            ＋ Add project
+          </button>
         </div>
       ))}
+      <button
+        className="left-panel-add-row left-panel-add-section"
+        onClick={() => addSection('New Section')}
+        title="Add a section band below the last one"
+      >
+        ＋ Add section
+      </button>
 
       {/* Swimlane context menu */}
       {ctxMenu && (
@@ -399,7 +432,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
               setCtxMenu(null);
             }}
           >
-            Add Phase Bar
+            Add phase bar
           </div>
           <div
             className="context-menu-item"
@@ -422,7 +455,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
               setCtxMenu(null);
             }}
           >
-            Assign Owners…
+            Assign owners…
           </div>
           <div className="context-menu-divider" />
           {sections
@@ -443,7 +476,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
             ))
           }
           <div className="context-menu-divider" />
-          <div className="context-menu-label">Row Colour</div>
+          <div className="context-menu-label eyebrow">Row colour</div>
           <div className="swimlane-color-swatches">
             <button
               className={`swimlane-color-swatch swimlane-color-clear${
@@ -484,7 +517,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
               }
             }}
           >
-            {confirmDelete ? 'Click again to confirm' : 'Delete Swimlane'}
+            {confirmDelete ? 'Click again to confirm' : 'Delete swimlane'}
           </div>
         </div>
       )}
@@ -503,7 +536,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
               setSecCtxMenu(null);
             }}
           >
-            Add Swimlane
+            Add swimlane
           </div>
           <div
             className="context-menu-item"
@@ -512,7 +545,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
               setSecCtxMenu(null);
             }}
           >
-            Rename Section
+            Rename section
           </div>
           <div
             className="context-menu-item"
@@ -521,10 +554,10 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
               setSecCtxMenu(null);
             }}
           >
-            Add Section Below
+            Add section below
           </div>
           <div className="context-menu-divider" />
-          <div className="context-menu-label">Section Colour</div>
+          <div className="context-menu-label eyebrow">Section colour</div>
           <div className="swimlane-color-swatches">
             <button
               className={`swimlane-color-swatch swimlane-color-clear${
@@ -567,7 +600,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
                   }
                 }}
               >
-                {confirmDeleteSection ? 'Click again to confirm' : 'Delete Section'}
+                {confirmDeleteSection ? 'Click again to confirm' : 'Delete section'}
               </div>
             </>
           )}
@@ -606,6 +639,14 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
           />
         );
       })()}
+
+      {/* "+ Add project" modal (per-section rows above) */}
+      {addLaneSectionId && (
+        <AddSwimlaneModal
+          initialSectionId={addLaneSectionId}
+          onClose={() => setAddLaneSectionId(null)}
+        />
+      )}
     </div>
   );
 });

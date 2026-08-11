@@ -9,6 +9,9 @@ import Toolbar from './Toolbar';
 import NotesPanel from './NotesPanel';
 import EnvironmentsPanel from './EnvironmentsPanel';
 import PeoplePanel from './PeoplePanel';
+import Rail from './rail/Rail';
+import RailPanel from './rail/RailPanel';
+import InspectorTab from './rail/InspectorTab';
 import FileUpdateBanner from './FileUpdateBanner';
 import SaveConflictModal from './SaveConflictModal';
 import DisplayNameModal from './DisplayNameModal';
@@ -21,10 +24,9 @@ import { buildNotesEmail } from '../utils/notesEmail';
 import { buildSwimlaneCsv } from '../utils/swimlaneExport';
 import { useThemeColors } from '../theme/ThemeContext';
 import {
-  FLOATING_NOTE_DEFAULT_WIDTH,
-  FLOATING_NOTE_DEFAULT_HEIGHT,
   ROW_HEIGHT,
   EXPORT_ROW_HEIGHT,
+  WEEK_WIDTH,
 } from '../types/gantt';
 import { ExportLayoutContext } from './ExportLayoutContext';
 
@@ -32,6 +34,13 @@ const LEFT_DEFAULT = 304;
 const LEFT_MIN = 80;
 const RIGHT_DEFAULT = 180;
 const RIGHT_MIN = 60;
+
+const RAIL_TITLES = {
+  inspector: 'Inspector',
+  notes: 'Notes & Action Items',
+  environments: 'Environments & Contention',
+  people: 'People & Teams',
+} as const;
 
 export default function GanttChart() {
   const themeColors = useThemeColors();
@@ -82,14 +91,11 @@ export default function GanttChart() {
   const saveFileAs = useGanttStore(s => s.saveFileAs);
   const openFile = useGanttStore(s => s.openFile);
   const newFile = useGanttStore(s => s.newFile);
-  const notesPanelOpen = useGanttStore(s => s.notesPanelOpen);
-  const toggleNotesPanel = useGanttStore(s => s.toggleNotesPanel);
-  const environmentsPanelOpen = useGanttStore(s => s.environmentsPanelOpen);
-  const toggleEnvironmentsPanel = useGanttStore(s => s.toggleEnvironmentsPanel);
+  const railTab = useGanttStore(s => s.railTab);
+  const setRailTab = useGanttStore(s => s.setRailTab);
+  const toggleRailTab = useGanttStore(s => s.toggleRailTab);
   const environmentFocusId = useGanttStore(s => s.environmentFocusId);
   const setEnvironmentFocus = useGanttStore(s => s.setEnvironmentFocus);
-  const peoplePanelOpen = useGanttStore(s => s.peoplePanelOpen);
-  const togglePeoplePanel = useGanttStore(s => s.togglePeoplePanel);
   const peopleFocus = useGanttStore(s => s.peopleFocus);
   const setPeopleFocus = useGanttStore(s => s.setPeopleFocus);
   const phaseTypesModalOpen = useGanttStore(s => s.phaseTypesModalOpen);
@@ -272,17 +278,17 @@ export default function GanttChart() {
       }
       if (mod && e.shiftKey && key === 'n') {
         e.preventDefault();
-        toggleNotesPanel();
+        toggleRailTab('notes');
         return;
       }
       if (mod && e.shiftKey && key === 'e') {
         e.preventDefault();
-        toggleEnvironmentsPanel();
+        toggleRailTab('environments');
         return;
       }
       if (mod && e.shiftKey && key === 'p') {
         e.preventDefault();
-        togglePeoplePanel();
+        toggleRailTab('people');
         return;
       }
       if (mod && key === 'n') {
@@ -299,7 +305,16 @@ export default function GanttChart() {
         || target.isContentEditable;
       if (inTextField) return;
 
-      if (mod && key === 'z') {
+      if (mod && key === 'i' && !e.shiftKey) {
+        // Below the text-field guard on purpose: Ctrl+I stays italics while
+        // typing in rich-text fields.
+        e.preventDefault();
+        toggleRailTab('inspector');
+      } else if (mod && key === 'z' && e.shiftKey) {
+        // Ctrl+Shift+Z = redo (must be checked before plain Ctrl+Z).
+        e.preventDefault();
+        redo();
+      } else if (mod && key === 'z') {
         e.preventDefault();
         undo();
       } else if (mod && key === 'y') {
@@ -315,14 +330,16 @@ export default function GanttChart() {
           setEnvironmentFocus(null);
         } else if (peopleFocus) {
           setPeopleFocus(null);
-        } else {
+        } else if (selectedBarId) {
           selectBar(null);
+        } else if (railTab) {
+          setRailTab(null);
         }
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [undo, redo, selectedBarId, removePhaseBar, selectBar, saveFile, saveFileAs, openFile, newFile, toggleNotesPanel, toggleEnvironmentsPanel, togglePeoplePanel, environmentFocusId, setEnvironmentFocus, peopleFocus, setPeopleFocus]);
+  }, [undo, redo, selectedBarId, removePhaseBar, selectBar, saveFile, saveFileAs, openFile, newFile, toggleRailTab, railTab, setRailTab, environmentFocusId, setEnvironmentFocus, peopleFocus, setPeopleFocus]);
 
   const handleSpacePanStart = useCallback((e: React.PointerEvent) => {
     if (spaceHeld.current && e.button === 0) {
@@ -502,19 +519,6 @@ export default function GanttChart() {
     URL.revokeObjectURL(url);
   }, [swimlanes, sections, phaseBars, phaseTypes, timeline, people, teams, exportBaseName]);
 
-  // Drop a new floating note into the visible center of the timeline so the
-  // user always sees it appear, no matter where they've scrolled.
-  const handleAddFloatingNote = useCallback(() => {
-    const el = timelineBodyRef.current;
-    if (!el) {
-      addFloatingNote(40, 40);
-      return;
-    }
-    const cx = el.scrollLeft + el.clientWidth / 2 - FLOATING_NOTE_DEFAULT_WIDTH / 2;
-    const cy = el.scrollTop + el.clientHeight / 2 - FLOATING_NOTE_DEFAULT_HEIGHT / 2;
-    addFloatingNote(cx, cy);
-  }, [addFloatingNote]);
-
   const scrollToToday = useCallback(() => {
     if (!timelineBodyRef.current) return;
     const todayOffset = getTodayWeekOffset(timeline.startMonth, timeline.startYear);
@@ -523,11 +527,32 @@ export default function GanttChart() {
     timelineBodyRef.current.scrollLeft = todayX - containerWidth / 2;
   }, [timeline.startMonth, timeline.startYear, timeline.weekWidthPx]);
 
+  // Right-click on empty canvas: bars/milestones stop propagation for their
+  // own menus, so this only fires on the background.
+  const [canvasCtxMenu, setCanvasCtxMenu] = useState<{ x: number; y: number } | null>(null);
+  const handleCanvasContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setCanvasCtxMenu({ x: e.clientX, y: e.clientY });
+  }, []);
+
+  const addNoteAtCanvasPoint = useCallback(() => {
+    if (!canvasCtxMenu) return;
+    const el = timelineBodyRef.current;
+    if (!el) { addFloatingNote(40, 40); setCanvasCtxMenu(null); return; }
+    const rect = el.getBoundingClientRect();
+    addFloatingNote(
+      el.scrollLeft + canvasCtxMenu.x - rect.left,
+      el.scrollTop + canvasCtxMenu.y - rect.top,
+    );
+    setCanvasCtxMenu(null);
+  }, [canvasCtxMenu, addFloatingNote]);
+
 
   return (
     <ExportLayoutContext.Provider value={{ rowHeight: isExporting ? EXPORT_ROW_HEIGHT : ROW_HEIGHT, isExporting }}>
-    <Toolbar onScrollToToday={scrollToToday} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} onExportPNG={exportPNG} onExportPDF={exportPDF} onExportSwimlanes={exportSwimlanes} onEmailNotes={emailNotes} onAddFloatingNote={handleAddFloatingNote} onSetDisplayName={() => setShowNameModal(true)} />
+    <Toolbar onScrollToToday={scrollToToday} onExportPNG={exportPNG} onExportPDF={exportPDF} onExportSwimlanes={exportSwimlanes} onEmailNotes={emailNotes} onSetDisplayName={() => setShowNameModal(true)} />
     <FileUpdateBanner />
+    <div className="app-main-row">
     <div className={`gantt-container${isExporting ? ' is-exporting' : ''}`} ref={ganttRef}>
       {/* Left panel */}
       {!leftCollapsed && (
@@ -557,7 +582,7 @@ export default function GanttChart() {
 
       {/* Timeline center. Overflow lives in CSS (.timeline-center) so export
           mode can override it. */}
-      <div className="timeline-center" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 200 }}>
+      <div className="timeline-center" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 200, position: 'relative' }}>
         <TimelineHeader
           totalWeeks={timeline.totalWeeks}
           startMonth={timeline.startMonth}
@@ -572,9 +597,19 @@ export default function GanttChart() {
           onPointerMove={handlePanMove}
           onPointerUp={handlePanEnd}
           onPointerCancel={handlePanEnd}
+          onContextMenu={handleCanvasContextMenu}
           style={{ flex: 1 }}
         >
           <TimelineContent />
+        </div>
+        {/* Floating zoom cluster — hidden while exporting (App.css). The
+            middle button shows the LIVE zoom level and resets it. */}
+        <div className="zoom-cluster">
+          <button onClick={zoomOut} title="Zoom out (Ctrl+Scroll)">&minus;</button>
+          <button onClick={zoomReset} title="Reset zoom to 100%">
+            {Math.round((timeline.weekWidthPx / WEEK_WIDTH) * 100)}%
+          </button>
+          <button onClick={zoomIn} title="Zoom in (Ctrl+Scroll)">+</button>
         </div>
       </div>
 
@@ -604,9 +639,35 @@ export default function GanttChart() {
         />
       )}
     </div>
-    {notesPanelOpen && <NotesPanel />}
-    {environmentsPanelOpen && <EnvironmentsPanel />}
-    {peoplePanelOpen && <PeoplePanel />}
+
+    {/* Rail panel + strip — in-flow, outside .gantt-container so exports
+        never capture them. One panel at a time; a single RailPanel instance
+        hosts every tab so the chosen width survives tab switches. */}
+    {railTab && (
+      <RailPanel
+        title={RAIL_TITLES[railTab]}
+        onClose={() => setRailTab(null)}
+        headerActions={railTab === 'notes'
+          ? <button onClick={emailNotes} title="Email notes" aria-label="Email notes">&#x2709;</button>
+          : undefined}
+      >
+        {railTab === 'inspector' && <InspectorTab />}
+        {railTab === 'notes' && <NotesPanel />}
+        {railTab === 'environments' && <EnvironmentsPanel />}
+        {railTab === 'people' && <PeoplePanel />}
+      </RailPanel>
+    )}
+    <Rail />
+    </div>
+    {canvasCtxMenu && (
+      <>
+        <div className="canvas-ctx-scrim" onClick={() => setCanvasCtxMenu(null)} onContextMenu={e => { e.preventDefault(); setCanvasCtxMenu(null); }} />
+        <div className="context-menu" style={{ left: canvasCtxMenu.x, top: canvasCtxMenu.y, position: 'fixed' }}>
+          <div className="context-menu-item" onClick={addNoteAtCanvasPoint}>Add note here</div>
+          <div className="context-menu-item" onClick={() => { scrollToToday(); setCanvasCtxMenu(null); }}>Scroll to today</div>
+        </div>
+      </>
+    )}
     {phaseTypesModalOpen && <ManagePhaseTypesModal />}
     <SaveConflictModal />
     {showNameModal && !signedIn && <DisplayNameModal onClose={() => setShowNameModal(false)} />}

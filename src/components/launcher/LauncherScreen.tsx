@@ -1,15 +1,28 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useGanttStore } from '../../store/useGanttStore';
-import { useAuthStore } from '../../auth/useAuthStore';
 import { graph, type GraphPlanFile, type GraphTeam } from '../../graph';
 import type { PlanContainer, PlanRef } from '../../types/planSource';
 import { getRecentPlans, forgetPlan } from '../../utils/mru';
 import { formatSavedAt } from '../../utils/dateUtils';
+import { useModalDismiss } from '../../hooks/useModalDismiss';
+import { initials } from '../../utils/initials';
+import { PEOPLE_COLOR_PRESETS } from '../../types/gantt';
+import AccountChip from '../AccountChip';
+import logoWhite from '../../assets/bbd-logo-white.svg';
+import logoBlack from '../../assets/bbd-logo-black.svg';
 
 /** What the middle pane is showing. */
 type Selection = { kind: 'team'; team: GraphTeam } | { kind: 'drafts' };
 
 const DRAFTS_CONTAINER: PlanContainer = { type: 'drafts' };
+
+/** Stable colour for a team square — hashed from the immutable team id, so a
+ * rename never recolours it. Graph teams carry no colour of their own. */
+function teamColor(teamId: string): string {
+  let h = 0;
+  for (let i = 0; i < teamId.length; i++) h = (h * 31 + teamId.charCodeAt(i)) >>> 0;
+  return PEOPLE_COLOR_PRESETS[h % PEOPLE_COLOR_PRESETS.length];
+}
 
 /**
  * Home screen for signed-in users: pick a Team (or your drafts) and open a
@@ -17,7 +30,6 @@ const DRAFTS_CONTAINER: PlanContainer = { type: 'drafts' };
  * that is created lazily the first time somebody saves a plan there.
  */
 export default function LauncherScreen() {
-  const account = useAuthStore(s => s.account);
   const openGraphPlan = useGanttStore(s => s.openGraphPlan);
   const createGraphPlan = useGanttStore(s => s.createGraphPlan);
   const openFile = useGanttStore(s => s.openFile);
@@ -34,6 +46,15 @@ export default function LauncherScreen() {
   const [busy, setBusy] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [recents, setRecents] = useState<PlanRef[]>(() => getRecentPlans());
+  // Name prompt for a new plan (replaces window.prompt).
+  const [newPlanPrompt, setNewPlanPrompt] = useState<{ suggested: string } | null>(null);
+
+  // Armed delete auto-disarms after 3s (v2 buttons card).
+  useEffect(() => {
+    if (!confirmDeleteId) return;
+    const t = setTimeout(() => setConfirmDeleteId(null), 3000);
+    return () => clearTimeout(t);
+  }, [confirmDeleteId]);
 
   // Load the Teams list once.
   useEffect(() => {
@@ -105,15 +126,19 @@ export default function LauncherScreen() {
     setBusy(false);
   }, [openGraphPlan]);
 
-  const handleNewPlan = useCallback(async () => {
+  const handleNewPlan = useCallback(() => {
     if (!container) return;
     const suggested = selection?.kind === 'team' ? `${selection.team.displayName} roadmap` : 'Untitled plan';
-    const name = window.prompt('Name for the new plan', suggested);
-    if (!name?.trim()) return;
+    setNewPlanPrompt({ suggested });
+  }, [container, selection]);
+
+  const handleCreatePlan = useCallback(async (name: string) => {
+    setNewPlanPrompt(null);
+    if (!container || !name.trim()) return;
     setBusy(true);
     await createGraphPlan(container, name.trim());
     setBusy(false);
-  }, [container, createGraphPlan, selection]);
+  }, [container, createGraphPlan]);
 
   const handleDelete = useCallback(async (file: GraphPlanFile) => {
     if (confirmDeleteId !== file.itemId) { setConfirmDeleteId(file.itemId); return; }
@@ -133,16 +158,17 @@ export default function LauncherScreen() {
   return (
     <div className="launcher">
       <div className="launcher-header">
-        <span className="launcher-brand-mark" aria-hidden="true" />
-        <h1>BBD Project Planner</h1>
+        <img className="bbd-logo bbd-logo-white" src={logoWhite} alt="BBD" />
+        <img className="bbd-logo bbd-logo-black" src={logoBlack} alt="BBD" />
+        <h1>Project Planner</h1>
         <div className="launcher-header-spacer" />
-        {account && <span className="launcher-account">{account.name}</span>}
+        <AccountChip />
       </div>
 
       <div className="launcher-body">
         {/* Sidebar: teams + personal areas */}
         <aside className="launcher-sidebar">
-          <div className="launcher-sidebar-label">Your teams</div>
+          <div className="launcher-sidebar-label kicker">Your teams</div>
           {teamsError && <div className="launcher-error">{teamsError}</div>}
           {!teams && !teamsError && <div className="launcher-muted">Loading…</div>}
           {teams && teams.length > 4 && (
@@ -160,26 +186,32 @@ export default function LauncherScreen() {
               className={`launcher-nav-item${selection?.kind === 'team' && selection.team.id === team.id ? ' active' : ''}`}
               onClick={() => selectContainer({ kind: 'team', team })}
             >
-              {team.displayName}
+              <span className="launcher-team-square" style={{ background: teamColor(team.id) }} aria-hidden="true">
+                {initials(team.displayName)}
+              </span>
+              <span className="launcher-nav-label">{team.displayName}</span>
             </button>
           ))}
           {visibleTeams?.length === 0 && <div className="launcher-muted">No matching teams.</div>}
 
-          <div className="launcher-sidebar-divider" />
+          <div className="launcher-sidebar-label kicker launcher-sidebar-label-gap">Personal</div>
           <button
             className={`launcher-nav-item${selection?.kind === 'drafts' ? ' active' : ''}`}
             onClick={() => selectContainer({ kind: 'drafts' })}
           >
-            My drafts
+            <span className="launcher-nav-glyph" aria-hidden="true">▤</span>
+            <span className="launcher-nav-label">My drafts</span>
           </button>
           <button className="launcher-nav-item" onClick={() => { void openFile(); }}>
-            Open local file…
+            <span className="launcher-nav-glyph" aria-hidden="true">▢</span>
+            <span className="launcher-nav-label">Open local file…</span>
           </button>
           <button
             className="launcher-nav-item"
             onClick={() => { newFile(); setAppView('plan'); }}
           >
-            New unsaved plan
+            <span className="launcher-nav-glyph" aria-hidden="true">＋</span>
+            <span className="launcher-nav-label">New unsaved plan</span>
           </button>
         </aside>
 
@@ -231,23 +263,36 @@ export default function LauncherScreen() {
               {plansError && <div className="launcher-error">{plansError}</div>}
               {!plans && !plansError && <div className="launcher-muted">Loading plans…</div>}
               {plans?.length === 0 && (
-                <div className="launcher-empty">
-                  No plans here yet. <strong>New plan</strong> creates the first one.
+                <div className="teach-state">
+                  <div className="kicker">No plans yet</div>
+                  <p>
+                    {selection.kind === 'drafts'
+                      ? 'Drafts are private work-in-progress plans, stored in your OneDrive.'
+                      : 'The first plan saved here creates the team’s Roadmaps folder for everyone.'}
+                  </p>
+                  <button className="btn-primary" disabled={busy} onClick={() => { void handleNewPlan(); }}>
+                    New plan
+                  </button>
                 </div>
               )}
 
               <ul className="launcher-plan-list">
                 {plans?.map(file => (
-                  <li key={file.itemId}>
+                  <li key={file.itemId} className="launcher-plan-card">
                     <button
                       className="launcher-plan-open"
                       disabled={busy}
                       onClick={() => { if (container) void handleOpen(file, container); }}
                     >
-                      <span className="launcher-plan-name">{file.name.replace(/\.json$/i, '')}</span>
-                      <span className="launcher-muted">
-                        {file.lastModifiedBy ? `Saved by ${file.lastModifiedBy}` : 'Saved'}
-                        {formatSavedAt(file.lastModifiedIso) ? ` · ${formatSavedAt(file.lastModifiedIso)}` : ''}
+                      <span className="launcher-plan-glyph" aria-hidden="true">
+                        {selection.kind === 'drafts' ? '▤' : '▦'}
+                      </span>
+                      <span className="launcher-plan-text">
+                        <span className="launcher-plan-name">{file.name.replace(/\.json$/i, '')}</span>
+                        <span className="launcher-plan-meta">
+                          {file.lastModifiedBy ? `Saved by ${file.lastModifiedBy}` : 'Saved'}
+                          {formatSavedAt(file.lastModifiedIso) ? ` · ${formatSavedAt(file.lastModifiedIso)}` : ''}
+                        </span>
                       </span>
                     </button>
                     <button
@@ -264,6 +309,44 @@ export default function LauncherScreen() {
             </>
           )}
         </section>
+      </div>
+
+      {newPlanPrompt && (
+        <NewPlanModal
+          suggested={newPlanPrompt.suggested}
+          onCreate={handleCreatePlan}
+          onClose={() => setNewPlanPrompt(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+/** Small name prompt for a new plan — replaces window.prompt(). */
+function NewPlanModal({ suggested, onCreate, onClose }: {
+  suggested: string;
+  onCreate: (name: string) => void;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState(suggested);
+  const dialogProps = useModalDismiss(onClose);
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()} {...dialogProps}>
+        <h2>New plan</h2>
+        <label>Plan name</label>
+        <input
+          autoFocus
+          value={name}
+          onChange={e => setName(e.target.value)}
+          onFocus={e => e.target.select()}
+          onKeyDown={e => { if (e.key === 'Enter') onCreate(name); }}
+        />
+        <div className="modal-actions">
+          <button className="btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn-primary" onClick={() => onCreate(name)}>Create</button>
+        </div>
       </div>
     </div>
   );

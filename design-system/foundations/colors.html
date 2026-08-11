@@ -1,0 +1,114 @@
+<!-- @dsCard group="Foundations" name="Colour tokens" subtitle="BBD near-black surfaces · red as signal · extension palette for interaction" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Colour tokens · BBD v2</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  * { margin: 0; box-sizing: border-box; font-family: 'Open Sans', system-ui, sans-serif; }
+  body { background: #040406; color: #eee; padding: 24px; }
+  h2 { font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #8A9298; margin: 22px 0 10px; font-family: 'Montserrat', system-ui, sans-serif; }
+  h2:first-child { margin-top: 0; }
+  h2::before { content: ''; display: block; width: 28px; height: 3px; background: #CE181E; margin-bottom: 6px; border-radius: 1px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+  .sw { border-radius: 12px; padding: 10px; border: 1px solid rgba(255,255,255,.08); }
+  .sw b { display: block; font-size: 11px; font-weight: 700; }
+  .sw span { font-size: 10px; opacity: .75; font-family: ui-monospace, monospace; }
+  .note { font-size: 11px; color: #8A9298; margin-top: 8px; line-height: 1.6; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .row.labelled { gap: 24px; padding-bottom: 16px; }
+  .dot { width: 34px; height: 34px; border-radius: 8px; border: 1px solid rgba(255,255,255,.2); position: relative; }
+  .dot i { position: absolute; top: 38px; left: 50%; transform: translateX(-50%); font-style: normal; font-size: 8px; white-space: nowrap; color: #8A9298; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .panel-dark { background: #040406; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 14px; }
+  .panel-light { background: #F6F6F7; color: #151719; border-radius: 12px; padding: 14px; }
+  .panel-light .sw { border-color: rgba(0,0,0,.08); }
+  .panel-light h3, .panel-dark h3 { font-size: 12px; font-weight: 800; margin-bottom: 8px; font-family: 'Montserrat', system-ui, sans-serif; }
+</style>
+</head>
+<body>
+
+<h2>Brand</h2>
+<div class="grid">
+  <div class="sw" style="background:#CE181E"><b>BBD red</b><span>#CE181E · logo glyph, kicker rule, danger — never interactive, never a wash</span></div>
+  <div class="sw" style="background:#151719"><b>BBD black</b><span>#151719 · core dark surface</span></div>
+  <div class="sw" style="background:#040406"><b>Near-black</b><span>#040406 · app background</span></div>
+</div>
+<div class="note">Red is a signal, not a fill — the kicker rule, the logo glyph, single-word emphasis, destructive actions. Interaction colour comes from the extension palette below.</div>
+
+<h2>Surfaces · dark (default) vs light</h2>
+<div class="pair">
+  <div class="panel-dark">
+    <h3>Dark</h3>
+    <div class="grid">
+      <div class="sw" style="background:#0b0c0e"><b>bg-app</b><span>#0B0C0E</span></div>
+      <div class="sw" style="background:#151719"><b>bg-header</b><span>#151719</span></div>
+      <div class="sw" style="background:#17191c"><b>bg-surface</b><span>#17191C</span></div>
+      <div class="sw" style="background:#212429"><b>bg-surface-2</b><span>#212429</span></div>
+    </div>
+    <div class="note">text #EEEEEE · secondary #8A9298 · muted #71787E · hairline white@8% · no drop shadows on dark — separation by contrast</div>
+  </div>
+  <div class="panel-light">
+    <h3>Light</h3>
+    <div class="grid">
+      <div class="sw" style="background:#F6F6F7"><b>bg-app</b><span>#F6F6F7</span></div>
+      <div class="sw" style="background:#ffffff"><b>bg-header</b><span>#FFFFFF</span></div>
+      <div class="sw" style="background:#ffffff;border:1px solid #DCDDDE"><b>bg-surface</b><span>#FFFFFF</span></div>
+      <div class="sw" style="background:#DCDDDE"><b>bg-surface-2</b><span>#DCDDDE</span></div>
+    </div>
+    <div class="note" style="color:#5a5a5f">text #151719 · hairline black@8% · shadows allowed, subtle (0 4px 16px @8%)</div>
+  </div>
+</div>
+
+<h2>Interactive · from the BBD extension palette</h2>
+<div class="grid">
+  <div class="sw" style="background:#4E44DB"><b>Violet — primary</b><span>#4E44DB · primary buttons, focus</span></div>
+  <div class="sw" style="background:#00B8CC;color:#04282c"><b>Cyan — interactive</b><span>#00B8CC · selection, active tabs, info badges</span></div>
+  <div class="sw" style="background:#37309C"><b>Indigo</b><span>#37309C · reserved / charts</span></div>
+  <div class="sw" style="background:#25898E"><b>Teal</b><span>#25898E · reserved / charts</span></div>
+</div>
+<div class="note">Mapping from v1: purple #8F87F1 → violet #4E44DB · blue #0098CC → cyan #00B8CC. The cool tones never overtake the red.</div>
+
+<h2>Semantic</h2>
+<div class="grid">
+  <div class="sw" style="background:#d9363c"><b>Danger</b><span>#D9363C · destructive actions (red family, brightened for dark)</span></div>
+  <div class="sw" style="background:#c0466a"><b>Contention</b><span>#C0466A · conflict badges + ribbons — distinct from danger red on purpose</span></div>
+  <div class="sw" style="background:#009991"><b>Success / clear</b><span>#009991</span></div>
+  <div class="sw" style="background:#ffb224;color:#231F20"><b>Today</b><span>#FFB224 · canvas today line (kept from v1 — flag for brand review)</span></div>
+</div>
+
+<h2>Categorical palettes · canvas (conservative — unchanged from v1)</h2>
+<div class="pair" style="grid-template-columns:1fr 1fr 1fr">
+  <div>
+    <div class="note" style="margin:0 0 6px">Phase types (defaults, user-recolourable)</div>
+    <div class="row labelled">
+      <div class="dot" style="background:#00B8CC"><i>analysis</i></div>
+      <div class="dot" style="background:#cb6600"><i>development</i></div>
+      <div class="dot" style="background:#009991"><i>sit</i></div>
+      <div class="dot" style="background:#46a758"><i>live</i></div>
+      <div class="dot" style="background:#e5484d"><i>custom</i></div>
+      <div class="dot" style="background:#8A9298"><i>custom</i></div>
+    </div>
+  </div>
+  <div>
+    <div class="note" style="margin:0 0 6px">People &amp; teams</div>
+    <div class="row">
+      <div class="dot" style="background:#d81b60"></div><div class="dot" style="background:#4E44DB"></div>
+      <div class="dot" style="background:#039be5"></div><div class="dot" style="background:#25898E"></div>
+      <div class="dot" style="background:#7cb342"></div><div class="dot" style="background:#f57c00"></div>
+    </div>
+  </div>
+  <div>
+    <div class="note" style="margin:0 0 6px">Environments</div>
+    <div class="row">
+      <div class="dot" style="background:#e53935"></div><div class="dot" style="background:#f57c00"></div>
+      <div class="dot" style="background:#fbc02d"></div><div class="dot" style="background:#43a047"></div>
+      <div class="dot" style="background:#00B8CC"></div><div class="dot" style="background:#1e88e5"></div>
+    </div>
+  </div>
+</div>
+<div class="note">The SVG canvas keeps its categorical hues (constraint 1); only the two swatches that duplicated v1 interactive colours were remapped to their BBD equivalents.</div>
+
+</body>
+</html>

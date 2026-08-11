@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState, useCallback, useEffect } from 'react';
 import { useGanttStore } from '../store/useGanttStore';
-import { BAR_HEIGHT, BAR_RADIUS, SECTION_HEADER_HEIGHT, SWIMLANE_TINT_ALPHA } from '../types/gantt';
+import { ADD_ROW_HEIGHT, BAR_HEIGHT, BAR_RADIUS, SECTION_HEADER_HEIGHT, SWIMLANE_TINT_ALPHA } from '../types/gantt';
 import { useExportLayout } from './ExportLayoutContext';
 import { getTodayWeekOffset, getMonthsFromWeeks, getHolidayWeekOffsets, getWeekendDayRanges, getCalendarWeekBoundaries } from '../utils/dateUtils';
 import { getPhaseDef } from '../data/phasePresets';
@@ -58,12 +58,20 @@ export default function TimelineContent() {
 
   // Row height grows during export so Key Features lists fit; the SVG reads it
   // from context so its bars/rows stay aligned with the DOM panels' rows.
-  const { rowHeight: ROW_HEIGHT } = useExportLayout();
+  const { rowHeight: ROW_HEIGHT, isExporting } = useExportLayout();
+
+  // The left panel renders a "+ Add project" row after each section's lanes
+  // (and "+ Add section" at the bottom). The SVG mirrors that height as a
+  // spacer band per section so rows stay aligned; both collapse in exports.
+  const addRowH = isExporting ? 0 : ADD_ROW_HEIGHT;
 
   const weekWidth = timeline.weekWidthPx;
   const totalRows = sectionedLanes.reduce((sum, sl) => sum + sl.lanes.length, 0);
   const gridWidth = timeline.totalWeeks * weekWidth;
-  const contentHeight = totalRows * ROW_HEIGHT + sectionedLanes.length * SECTION_HEADER_HEIGHT;
+  const contentHeight =
+    totalRows * ROW_HEIGHT
+    + sectionedLanes.length * (SECTION_HEADER_HEIGHT + addRowH)
+    + addRowH; // trailing "+ Add section" row
 
   // Build a map: swimlaneId -> y offset
   const swimlaneYMap = useMemo(() => {
@@ -75,9 +83,10 @@ export default function TimelineContent() {
         map.set(lane.id, y);
         y += ROW_HEIGHT;
       }
+      y += addRowH;
     }
     return map;
-  }, [sectionedLanes, ROW_HEIGHT]);
+  }, [sectionedLanes, ROW_HEIGHT, addRowH]);
 
   const todayOffset = getTodayWeekOffset(timeline.startMonth, timeline.startYear);
 
@@ -286,6 +295,7 @@ export default function TimelineContent() {
         }))}
         weekWidth={weekWidth}
         rowHeight={ROW_HEIGHT}
+        addRowHeight={addRowH}
         monthSpans={monthSpans}
         holidays={holidays}
         weekendSpans={weekendSpans}
@@ -472,7 +482,7 @@ export default function TimelineContent() {
           x={gridWidth / 2} y={contentHeight / 2}
           textAnchor="middle" dominantBaseline="middle"
           fill={c.TEXT_SECONDARY} fontSize={13}
-          fontFamily="'Figtree', 'Aptos Display', Helvetica, Arial, sans-serif"
+          fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
           opacity={0.5} style={{ pointerEvents: 'none' }}
         >
           Click and drag to create a phase bar

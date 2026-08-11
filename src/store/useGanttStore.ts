@@ -13,6 +13,7 @@ import type {
   PhaseTypeDef,
   FloatingNote,
   FileMeta,
+  RailTab,
 } from '../types/gantt';
 import type { PlanSource, PlanContainer, PlanMarker } from '../types/planSource';
 import { graph, GraphConflictError, type GraphPlanFile } from '../graph';
@@ -29,6 +30,7 @@ import {
   FLOATING_NOTE_MIN_HEIGHT,
 } from '../types/gantt';
 import { pickNextEnvColor } from '../utils/contention';
+import { PRESET_MATRIX } from '../data/displayPresets';
 import { getBuiltinPhaseTypes, getPhaseDef, deriveColorScheme, applyThemePresetsToBuiltins } from '../data/phasePresets';
 import type { ThemeName } from '../theme/colors';
 import { getDaysInMonth } from '../utils/dateUtils';
@@ -121,8 +123,14 @@ interface GanttActions {
   removeFloatingNote: (id: string) => void;
   beginFloatingNoteDrag: () => void;
 
+  // Rail (right-edge tab strip; one panel at a time)
+  /** Open a specific tab's panel, or null to close. Leaving the notes tab
+   * clears its lane filter, matching the old panel-close behaviour. */
+  setRailTab: (tab: RailTab | null) => void;
+  /** Open the tab, or close the panel if it's already the active tab. */
+  toggleRailTab: (tab: RailTab) => void;
+
   // Notes panel
-  toggleNotesPanel: () => void;
   openNotesPanelForSwimlane: (swimlaneId: string) => void;
   openNotesPanelFiltered: (swimlaneId: string) => void;
   setNotesPanelFilter: (id: string | null) => void;
@@ -135,7 +143,6 @@ interface GanttActions {
   reorderEnvironments: (orderedIds: string[]) => void;
   setEnvironmentExclusive: (envId: string, exclusive: boolean) => void;
   setBarEnvironment: (barId: string, envId: string | null) => void;
-  toggleEnvironmentsPanel: () => void;
   setEnvironmentFocus: (envId: string | null) => void;
   setHoveredBar: (id: string | null) => void;
 
@@ -153,7 +160,6 @@ interface GanttActions {
   /** Merge people & teams from another plan's JSON export (by id; existing
    * entries win). Returns how many were added, or null on parse failure. */
   importPeopleFromJSON: (json: string) => { people: number; teams: number } | null;
-  togglePeoplePanel: () => void;
   setPeopleFocus: (focus: { kind: 'person' | 'team'; id: string } | null) => void;
 
   // Phase types
@@ -179,6 +185,9 @@ interface GanttActions {
   togglePeopleIndicators: () => void;
   togglePeopleContention: () => void;
   setBarStyle: (style: import('../types/gantt').BarStyle) => void;
+  /** Apply a display preset's toggle matrix in one step. The active preset is
+   * derived (matchDisplayPreset), never stored. */
+  setDisplayPreset: (preset: import('../data/displayPresets').DisplayPreset) => void;
 
   // Persistence
   saveToStorage: () => void;
@@ -252,12 +261,10 @@ const defaultState: GanttState = {
   lastUsedPhaseType: 'development',
   creatingBarId: null,
   isSpaceHeld: false,
-  notesPanelOpen: false,
+  railTab: null,
   notesPanelSwimlaneId: null,
   notesPanelFilterId: null,
-  environmentsPanelOpen: false,
   environmentFocusId: null,
-  peoplePanelOpen: false,
   peopleFocus: null,
   hoveredBarId: null,
   phaseTypesModalOpen: false,
@@ -867,21 +874,27 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
     pushUndo(get());
   },
 
-  // === Notes panel ===
-  toggleNotesPanel: () => set(state => ({
-    notesPanelOpen: !state.notesPanelOpen,
-    notesPanelSwimlaneId: null,
-    notesPanelFilterId: state.notesPanelOpen ? null : state.notesPanelFilterId,
+  // === Rail ===
+  setRailTab: (tab) => set(state => ({
+    railTab: tab,
+    // Leaving the notes tab drops its lane filter and seed, matching the old
+    // notes-panel close behaviour.
+    ...(state.railTab === 'notes' && tab !== 'notes'
+      ? { notesPanelFilterId: null, notesPanelSwimlaneId: null }
+      : {}),
   })),
 
+  toggleRailTab: (tab) => get().setRailTab(get().railTab === tab ? null : tab),
+
+  // === Notes panel ===
   openNotesPanelForSwimlane: (swimlaneId) => set({
-    notesPanelOpen: true,
+    railTab: 'notes',
     notesPanelSwimlaneId: swimlaneId,
     notesPanelFilterId: null,
   }),
 
   openNotesPanelFiltered: (swimlaneId) => set({
-    notesPanelOpen: true,
+    railTab: 'notes',
     notesPanelFilterId: swimlaneId,
     notesPanelSwimlaneId: swimlaneId,
   }),
@@ -962,10 +975,6 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
     }));
     get().saveToStorage();
   },
-
-  toggleEnvironmentsPanel: () => set(state => ({
-    environmentsPanelOpen: !state.environmentsPanelOpen,
-  })),
 
   setEnvironmentFocus: (envId) => set({ environmentFocusId: envId }),
 
@@ -1120,10 +1129,6 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
     }
   },
 
-  togglePeoplePanel: () => set(state => ({
-    peoplePanelOpen: !state.peoplePanelOpen,
-  })),
-
   setPeopleFocus: (focus) => set({ peopleFocus: focus }),
 
   // === Phase types ===
@@ -1218,6 +1223,11 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
 
   toggleWeekends: () => {
     set(state => ({ showWeekends: !state.showWeekends }));
+    get().saveToStorage();
+  },
+
+  setDisplayPreset: (preset) => {
+    set({ ...PRESET_MATRIX[preset] });
     get().saveToStorage();
   },
 
