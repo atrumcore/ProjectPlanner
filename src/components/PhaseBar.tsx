@@ -322,50 +322,55 @@ export default function PhaseBar({ bar, rowY }: Props) {
         </>
       )}
 
-      {/* Start-date label — horizontal, tucked into the bar's left end.
-          The old rotated treatment overhung the 30px bar. Rendered only when
-          it fits between the tag and the centred label; narrow bars rely on
-          the hover tooltip, which always carries the full date range. */}
-      {showBarDates && !editing && (() => {
+      {/* Date + label — left-aligned per the v2 phase-bar card: the start
+          date (when enabled) always leads, the label follows and truncates
+          with an ellipsis to fit. Every bar wide enough to hold "23 Mar"
+          shows its date; only physically-too-narrow bars fall back to the
+          hover tooltip (which always carries the full range).
+          Widths are conservative estimates — 9px date ≈ 5.2px/char, 10px
+          Montserrat 700 caps ≈ 6.8px/char — so no SVG measurement is needed. */}
+      {!editing && (() => {
+        const innerLeft = x + (useSolidPill ? 8 : TAG_WIDTH + 7);
+        const availW = x + displayWidth - 8 - innerLeft;
         const dateStr = formatDayMonth(startDate);
-        const dateX = x + (useSolidPill ? 8 : TAG_WIDTH + 7);
-        // Conservative width estimates (no SVG text measurement needed):
-        // 10px Montserrat 700 caps ≈ 7px/char; 9px date ≈ 5.2px/char.
-        const labelLeftEdge =
-          x + displayWidth / 2 + (useSolidPill ? 0 : TAG_WIDTH / 2)
-          - (bar.label.length * 7) / 2;
-        const fits = labelLeftEdge - dateX >= dateStr.length * 5.2 + 8;
-        if (!fits) return null;
+        const dateW = dateStr.length * 5.2;
+        const showDate = showBarDates && availW >= dateW;
+        const labelAvail = availW - (showDate ? dateW + 8 : 0);
+        const maxChars = Math.floor(labelAvail / 6.8);
+        const label = bar.label.length <= maxChars
+          ? bar.label
+          : maxChars >= 2 ? `${bar.label.slice(0, maxChars - 1)}…` : '';
         return (
-          <text
-            x={dateX}
-            y={y + BAR_HEIGHT / 2 + 3}
-            fill={labelFill}
-            fontSize={9}
-            fontWeight={600}
-            fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
-            style={{ pointerEvents: 'none', userSelect: 'none', opacity: 0.7 }}
-          >
-            {dateStr}
-          </text>
+          <>
+            {showDate && (
+              <text
+                x={innerLeft}
+                y={y + BAR_HEIGHT / 2 + 3}
+                fill={labelFill}
+                fontSize={9}
+                fontWeight={600}
+                fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
+                style={{ pointerEvents: 'none', userSelect: 'none', opacity: 0.7 }}
+              >
+                {dateStr}
+              </text>
+            )}
+            {label && (
+              <text
+                x={innerLeft + (showDate ? dateW + 8 : 0)}
+                y={y + BAR_HEIGHT / 2 + 3}
+                fill={labelFill}
+                fontSize={10}
+                fontWeight={700}
+                fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
+                style={{ pointerEvents: 'none', userSelect: 'none' }}
+              >
+                {label}
+              </text>
+            )}
+          </>
         );
       })()}
-
-      {/* Label */}
-      {!editing && (
-        <text
-          x={x + displayWidth / 2 + (useSolidPill ? 0 : TAG_WIDTH / 2)}
-          y={y + BAR_HEIGHT / 2 + 3}
-          textAnchor="middle"
-          fill={labelFill}
-          fontSize={10}
-          fontWeight={700}
-          fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
-          style={{ pointerEvents: 'none', userSelect: 'none' }}
-        >
-          {bar.label}
-        </text>
-      )}
 
       {/* Floating env-name pill above the bar — name reveal on hover/select. */}
       {!editing && !dragPill && showEnvIndicators && (() => {
