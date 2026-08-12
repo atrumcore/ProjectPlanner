@@ -12,6 +12,8 @@ import PeoplePanel from './PeoplePanel';
 import Rail from './rail/Rail';
 import RailPanel from './rail/RailPanel';
 import InspectorTab from './rail/InspectorTab';
+import ClaudeChat from './claude/ClaudeChat';
+import { useClaudeStore } from '../claude/useClaudeStore';
 import FileUpdateBanner from './FileUpdateBanner';
 import SaveConflictModal from './SaveConflictModal';
 import DisplayNameModal from './DisplayNameModal';
@@ -40,6 +42,7 @@ const RAIL_TITLES = {
   notes: 'Notes & Action Items',
   environments: 'Environments & Contention',
   people: 'People & Teams',
+  claude: 'Claude Assistant',
 } as const;
 
 export default function GanttChart() {
@@ -94,6 +97,8 @@ export default function GanttChart() {
   const railTab = useGanttStore(s => s.railTab);
   const setRailTab = useGanttStore(s => s.setRailTab);
   const toggleRailTab = useGanttStore(s => s.toggleRailTab);
+  const claudeHasChat = useClaudeStore(s => s.messages.length > 0);
+  const clearClaudeChat = useClaudeStore(s => s.clearChat);
   const environmentFocusId = useGanttStore(s => s.environmentFocusId);
   const setEnvironmentFocus = useGanttStore(s => s.setEnvironmentFocus);
   const peopleFocus = useGanttStore(s => s.peopleFocus);
@@ -289,6 +294,11 @@ export default function GanttChart() {
       if (mod && e.shiftKey && key === 'p') {
         e.preventDefault();
         toggleRailTab('people');
+        return;
+      }
+      if (mod && e.shiftKey && key === 'c') {
+        e.preventDefault();
+        toggleRailTab('claude');
         return;
       }
       if (mod && key === 'n') {
@@ -649,12 +659,15 @@ export default function GanttChart() {
         onClose={() => setRailTab(null)}
         headerActions={railTab === 'notes'
           ? <button onClick={emailNotes} title="Email notes" aria-label="Email notes">&#x2709;</button>
-          : undefined}
+          : railTab === 'claude' && claudeHasChat
+            ? <button className="claude-clear-btn" onClick={clearClaudeChat} title="Clear conversation">Clear</button>
+            : undefined}
       >
         {railTab === 'inspector' && <InspectorTab />}
         {railTab === 'notes' && <NotesPanel />}
         {railTab === 'environments' && <EnvironmentsPanel />}
         {railTab === 'people' && <PeoplePanel />}
+        {railTab === 'claude' && <ClaudeChat />}
       </RailPanel>
     )}
     <Rail />
