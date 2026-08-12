@@ -3991,3 +3991,222 @@ select option {
   border-color: var(--error-bright);
   font-size: 11px;
 }
+
+/* ─── Claude assistant (rail tab) ───────────────────────────────────────────
+   Lives in the shared right-edge RailPanel like every other tab. Chat classes
+   below are panel-only; buttons/empty states reuse the shared .btn-* and
+   .teach-state patterns. */
+.claude-clear-btn {
+  font-size: 11px !important;
+  font-family: var(--font-body);
+}
+
+.claude-chat-root {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.claude-chat {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.claude-msg {
+  max-width: 94%;
+  padding: 8px 11px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.claude-msg.user {
+  align-self: flex-end;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+}
+
+.claude-msg.assistant {
+  align-self: flex-start;
+  border: 1px solid var(--border);
+}
+
+.claude-msg.is-error {
+  border-color: var(--error-bright);
+  color: var(--error-bright);
+}
+
+.claude-msg-applied {
+  margin-top: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--success);
+}
+
+.claude-streaming {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.claude-thinking {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.claude-stream-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.claude-stream-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-secondary);
+  animation: claude-pulse 1.2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes claude-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+.claude-stop-btn {
+  margin-left: auto;
+  font-size: 11px;
+  padding: 3px 12px;
+}
+
+.claude-proposal {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--card-radius);
+  background: var(--bg-surface-2);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.claude-diff-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.claude-diff-chip {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--hover);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.claude-diff-removals {
+  font-size: 11px;
+  color: var(--error-bright);
+  line-height: 1.5;
+}
+
+.claude-warning {
+  font-size: 11px;
+  color: var(--warning);
+  line-height: 1.5;
+}
+
+.claude-proposal-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 2px;
+}
+
+.claude-proposal-actions .btn-quiet {
+  margin-top: 0;
+}
+
+.claude-composer {
+  border-top: 1px solid var(--border);
+  padding: 10px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.claude-composer textarea {
+  resize: vertical;
+  min-height: 56px;
+  max-height: 180px;
+  background: var(--bg-app);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.claude-composer textarea:focus {
+  outline: none;
+  border-color: var(--accent-secondary);
+}
+
+.claude-composer-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.claude-composer-hint {
+  flex: 1;
+  text-align: right;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.claude-key-link {
+  margin-top: 0;
+  white-space: nowrap;
+}
+
+.claude-key-form input {
+  width: 100%;
+  max-width: 260px;
+  background: var(--bg-app);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+.claude-key-form input:focus {
+  outline: none;
+  border-color: var(--accent-secondary);
+}
+
+.claude-key-error {
+  color: var(--error-bright) !important;
+}

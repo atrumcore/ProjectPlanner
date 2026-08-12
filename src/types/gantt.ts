@@ -196,7 +196,7 @@ export type BarStyle = 'tagged' | 'legacy';
 
 /** Tabs on the right-edge rail. One panel open at a time; the strip itself is
  * always visible. Order mirrors the old toolbar buttons. */
-export type RailTab = 'inspector' | 'notes' | 'environments' | 'people';
+export type RailTab = 'inspector' | 'notes' | 'environments' | 'people' | 'claude';
 
 export interface GanttState {
   sections: Section[];
