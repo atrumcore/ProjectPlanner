@@ -21,6 +21,7 @@ import { PEOPLE_COLOR_PRESETS } from '../../types/gantt';
 import { getDateAtWeekOffset } from '../../utils/dateUtils';
 import { featuresArrayToHtml } from '../../utils/htmlSanitize';
 import type { AiPlanDoc, AiProject } from './aiPlan';
+import { isProjectRef } from './aiPlan';
 
 /** Shape of `JSON.parse(exportToJSON())`. Named fields are the ones this
  * module reads or replaces; everything else rides along via the index
@@ -308,6 +309,31 @@ export function aiPlanToDoc(plan: AiPlanDoc, baseDoc: ExportedDoc): ConvertResul
   const orderInSection = new Map<string, number>();
 
   for (const project of plan.projects) {
+    // Compact "unchanged" reference: copy the project and everything on its
+    // row verbatim from the base document (position still follows the array).
+    if (isProjectRef(project)) {
+      const baseLane = baseLaneById.get(project.id);
+      if (!baseLane) {
+        warnings.push(`Unchanged-project reference "${project.id}" doesn't match anything — skipped.`);
+        continue;
+      }
+      const baseSection = baseDoc.sections.find(s => s.id === baseLane.section);
+      const sectionId = ensureSection(baseSection?.label ?? baseLane.section, false);
+      const order = orderInSection.get(sectionId) ?? 0;
+      orderInSection.set(sectionId, order + 1);
+      swimlanes.push({ ...baseLane, section: sectionId, order });
+      for (const bar of baseDoc.phaseBars) {
+        if (bar.swimlaneId !== baseLane.id) continue;
+        phaseBars.push({ ...bar });
+        // Register so cross-project dependencies can still target these bars.
+        barIdByRef.set(bar.id, bar.id);
+      }
+      for (const ms of baseDoc.milestones) {
+        if (ms.swimlaneId === baseLane.id) milestones.push({ ...ms });
+      }
+      continue;
+    }
+
     if (!project.name.trim()) {
       warnings.push('Skipped a project with an empty name.');
       continue;

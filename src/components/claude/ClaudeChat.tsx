@@ -90,12 +90,23 @@ function ProposalCard({ pending }: { pending: PendingProposal }) {
 function StreamingRow() {
   const thinkingText = useClaudeStore(s => s.thinkingText);
   const progressChars = useClaudeStore(s => s.progressChars);
+  const streamStartedAt = useClaudeStore(s => s.streamStartedAt);
   const cancel = useClaudeStore(s => s.cancel);
+
+  // Tick once a second so the elapsed time visibly proves the run is alive.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const elapsedSec = streamStartedAt ? Math.max(0, Math.floor((now - streamStartedAt) / 1000)) : 0;
+  const elapsed = `${Math.floor(elapsedSec / 60)}:${String(elapsedSec % 60).padStart(2, '0')}`;
 
   const tail = thinkingText.slice(-THINKING_TAIL_CHARS);
   const label = progressChars > 0
-    ? `Drafting plan… ${(progressChars / 1024).toFixed(1)} KB`
-    : 'Thinking…';
+    ? `Drafting plan… ${(progressChars / 1024).toFixed(1)} KB · ${elapsed}`
+    : `Thinking… ${elapsed}`;
 
   return (
     <div className="claude-streaming">
@@ -105,6 +116,12 @@ function StreamingRow() {
         <span>{label}</span>
         <button className="btn-secondary claude-stop-btn" onClick={cancel}>Stop</button>
       </div>
+      {elapsedSec > 45 && (
+        <div className="claude-stream-note">
+          Still working — big plans take a couple of minutes. The size counter
+          shows the draft growing.
+        </div>
+      )}
     </div>
   );
 }

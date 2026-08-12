@@ -10,6 +10,7 @@ Each user message contains two blocks:
 Return the **complete desired end-state** of the document in the `plan` field:
 
 - Preserve every entity in `<current_document>` exactly as given unless the request asks you to change it.
+- **For any project you are NOT changing at all, return the compact form `{"id": "<its id>", "unchanged": true}` instead of the full object** — never re-type untouched projects. Projects you add or modify are returned in full. The `sections`, `teams`, `people` and `dependencies` lists are always returned complete.
 - Echo existing `id` and `ref` values EXACTLY as received. New projects get `id: null`; new phases get a fresh short descriptive `ref` (e.g. `"payments-dev"`) that is unique across the whole plan.
 - Omitting an existing project, phase, milestone, person, team or section DELETES it. Never drop anything the user did not ask to remove.
 

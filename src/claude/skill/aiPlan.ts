@@ -48,6 +48,20 @@ export interface AiProject {
   milestones: AiMilestone[];
 }
 
+/** Compact stand-in for a project the model isn't changing: the converter
+ * copies the project (and its phases/milestones) from the current document
+ * verbatim. Keeps responses fast — the model doesn't re-type untouched work. */
+export interface AiProjectRef {
+  id: string;
+  unchanged: true;
+}
+
+export type AiProjectEntry = AiProject | AiProjectRef;
+
+export function isProjectRef(p: AiProjectEntry): p is AiProjectRef {
+  return 'unchanged' in p && p.unchanged === true;
+}
+
 export interface AiPlanDoc {
   /** Calendar date the timeline starts; the app anchors to the 1st of that
    * month. Kept from the current document unless the document is empty. */
@@ -56,7 +70,7 @@ export interface AiPlanDoc {
   sections: { name: string }[];
   teams: { name: string }[];
   people: { name: string; role: string | null; teamName: string | null }[];
-  projects: AiProject[];
+  projects: AiProjectEntry[];
   /** Finish-to-start arrows between phases, by phase ref. */
   dependencies: { fromRef: string; toRef: string }[];
 }
@@ -120,6 +134,17 @@ const PROJECT_SCHEMA = {
   additionalProperties: false,
 };
 
+const PROJECT_REF_SCHEMA = {
+  type: 'object',
+  description: 'Stand-in for an existing project you are not changing at all — echo its id and set unchanged:true instead of re-typing it.',
+  properties: {
+    id: { type: 'string' },
+    unchanged: { const: true },
+  },
+  required: ['id', 'unchanged'],
+  additionalProperties: false,
+};
+
 export const AI_PLAN_RESPONSE_SCHEMA = {
   type: 'object',
   properties: {
@@ -159,7 +184,7 @@ export const AI_PLAN_RESPONSE_SCHEMA = {
             additionalProperties: false,
           },
         },
-        projects: { type: 'array', items: PROJECT_SCHEMA },
+        projects: { type: 'array', items: { anyOf: [PROJECT_SCHEMA, PROJECT_REF_SCHEMA] } },
         dependencies: {
           type: 'array',
           items: {

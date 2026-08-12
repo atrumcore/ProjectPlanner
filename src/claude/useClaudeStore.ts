@@ -63,6 +63,8 @@ interface ClaudeState {
    * on every request so the conversation prefix stays cache-valid. */
   history: ChatTurn[];
   status: 'idle' | 'streaming';
+  /** Epoch ms when the in-flight request started (null when idle). */
+  streamStartedAt: number | null;
   thinkingText: string;
   progressChars: number;
   pending: PendingProposal | null;
@@ -86,6 +88,7 @@ export const useClaudeStore = create<ClaudeState>((set, get) => ({
   messages: [],
   history: [],
   status: 'idle',
+  streamStartedAt: null,
   thinkingText: '',
   progressChars: 0,
   pending: null,
@@ -117,6 +120,7 @@ export const useClaudeStore = create<ClaudeState>((set, get) => ({
     const abort = new AbortController();
     set(s => ({
       status: 'streaming',
+      streamStartedAt: Date.now(),
       error: null,
       thinkingText: '',
       progressChars: 0,
@@ -144,6 +148,7 @@ export const useClaudeStore = create<ClaudeState>((set, get) => ({
       const messageId = uid();
       set(s => ({
         status: 'idle',
+        streamStartedAt: null,
         abort: null,
         thinkingText: '',
         progressChars: 0,
@@ -159,7 +164,7 @@ export const useClaudeStore = create<ClaudeState>((set, get) => ({
     } catch (err) {
       const failure = describeClaudeFailure(err);
       if (failure.kind === 'aborted') {
-        set({ status: 'idle', abort: null, thinkingText: '', progressChars: 0 });
+        set({ status: 'idle', streamStartedAt: null, abort: null, thinkingText: '', progressChars: 0 });
         return;
       }
       if (failure.kind === 'auth') {
@@ -167,6 +172,7 @@ export const useClaudeStore = create<ClaudeState>((set, get) => ({
       }
       set(s => ({
         status: 'idle',
+        streamStartedAt: null,
         abort: null,
         thinkingText: '',
         progressChars: 0,
@@ -205,7 +211,7 @@ export const useClaudeStore = create<ClaudeState>((set, get) => ({
     get().abort?.abort();
     set({
       messages: [], history: [], pending: null, error: null,
-      thinkingText: '', progressChars: 0, status: 'idle', abort: null,
+      thinkingText: '', progressChars: 0, status: 'idle', streamStartedAt: null, abort: null,
     });
   },
 }));

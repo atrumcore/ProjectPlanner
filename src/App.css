@@ -4094,6 +4094,12 @@ select option {
   padding: 3px 12px;
 }
 
+.claude-stream-note {
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
 .claude-proposal {
   border: 1px solid var(--border-strong);
   border-radius: var(--card-radius);
