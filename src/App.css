@@ -3992,6 +3992,69 @@ select option {
   font-size: 11px;
 }
 
+/* ─── Key Dependencies (rail tab) ───────────────────────────────────────────
+   Browse/edit every project's dependencies without the on-canvas column
+   (collapsed by default; export force-opens it). Rows open the shared
+   KeyFeaturesPopover editor. */
+.deps-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 14px 16px;
+}
+
+.deps-panel-section {
+  margin-bottom: 14px;
+}
+
+.deps-panel-section-label {
+  padding: 8px 0 6px;
+}
+
+.deps-panel-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: linear-gradient(var(--row-tint, transparent), var(--row-tint, transparent)), var(--bg-surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+.deps-panel-row:hover {
+  border-color: var(--border-strong);
+  background: linear-gradient(var(--row-tint, transparent), var(--row-tint, transparent)), var(--bg-surface-2);
+}
+
+.deps-panel-project {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.deps-panel-html {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.deps-panel-html ul,
+.deps-panel-html ol {
+  margin: 2px 0 0;
+  padding-left: 16px;
+}
+
+.deps-panel-empty {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
 /* ─── Claude assistant (rail tab) ───────────────────────────────────────────
    Lives in the shared right-edge RailPanel like every other tab. Chat classes
    below are panel-only; buttons/empty states reuse the shared .btn-* and

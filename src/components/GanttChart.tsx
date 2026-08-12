@@ -9,6 +9,7 @@ import Toolbar from './Toolbar';
 import NotesPanel from './NotesPanel';
 import EnvironmentsPanel from './EnvironmentsPanel';
 import PeoplePanel from './PeoplePanel';
+import DependenciesPanel from './DependenciesPanel';
 import Rail from './rail/Rail';
 import RailPanel from './rail/RailPanel';
 import InspectorTab from './rail/InspectorTab';
@@ -42,8 +43,22 @@ const RAIL_TITLES = {
   notes: 'Notes & Action Items',
   environments: 'Environments & Contention',
   people: 'People & Teams',
+  dependencies: 'Key Dependencies',
   claude: 'Claude Assistant',
 } as const;
+
+/** The on-canvas Key Dependencies column starts collapsed (day-to-day editing
+ * lives in the rail tab; export force-opens the column), and the user's
+ * choice is remembered. */
+const RIGHT_COLLAPSED_KEY = 'bbd-planner-right-collapsed';
+function loadRightCollapsed(): boolean {
+  try {
+    const v = localStorage.getItem(RIGHT_COLLAPSED_KEY);
+    return v === null ? true : v === '1';
+  } catch {
+    return true;
+  }
+}
 
 export default function GanttChart() {
   const themeColors = useThemeColors();
@@ -65,7 +80,13 @@ export default function GanttChart() {
   const [leftWidth, setLeftWidth] = useState(LEFT_DEFAULT);
   const [rightWidth, setRightWidth] = useState(RIGHT_DEFAULT);
   const [leftCollapsed, setLeftCollapsed] = useState(false);
-  const [rightCollapsed, setRightCollapsed] = useState(false);
+  const [rightCollapsed, setRightCollapsed] = useState(loadRightCollapsed);
+
+  // Persist only deliberate choices (toggle button / drag-open) — NOT the
+  // transient force-open that export capture performs and restores.
+  const persistRightCollapsed = useCallback((collapsed: boolean) => {
+    try { localStorage.setItem(RIGHT_COLLAPSED_KEY, collapsed ? '1' : '0'); } catch { /* ignore */ }
+  }, []);
 
   // Store width before collapse so we can restore
   const leftWidthBeforeCollapse = useRef(LEFT_DEFAULT);
@@ -129,11 +150,13 @@ export default function GanttChart() {
     if (rightCollapsed) {
       setRightWidth(rightWidthBeforeCollapse.current);
       setRightCollapsed(false);
+      persistRightCollapsed(false);
     } else {
       rightWidthBeforeCollapse.current = rightWidth;
       setRightCollapsed(true);
+      persistRightCollapsed(true);
     }
-  }, [rightCollapsed, rightWidth]);
+  }, [rightCollapsed, rightWidth, persistRightCollapsed]);
 
   // Resize handle drag
   const handleResizeStart = useCallback((side: 'left' | 'right', e: React.PointerEvent) => {
@@ -153,9 +176,12 @@ export default function GanttChart() {
     } else {
       // Right panel: dragging left makes it bigger
       setRightWidth(Math.max(RIGHT_MIN, resizeStartWidth.current - dx));
-      if (rightCollapsed) setRightCollapsed(false);
+      if (rightCollapsed) {
+        setRightCollapsed(false);
+        persistRightCollapsed(false);
+      }
     }
-  }, [leftCollapsed, rightCollapsed]);
+  }, [leftCollapsed, rightCollapsed, persistRightCollapsed]);
 
   const handleResizeEnd = useCallback(() => {
     resizing.current = null;
@@ -299,6 +325,11 @@ export default function GanttChart() {
       if (mod && e.shiftKey && key === 'c') {
         e.preventDefault();
         toggleRailTab('claude');
+        return;
+      }
+      if (mod && e.shiftKey && key === 'd') {
+        e.preventDefault();
+        toggleRailTab('dependencies');
         return;
       }
       if (mod && key === 'n') {
@@ -667,6 +698,7 @@ export default function GanttChart() {
         {railTab === 'notes' && <NotesPanel />}
         {railTab === 'environments' && <EnvironmentsPanel />}
         {railTab === 'people' && <PeoplePanel />}
+        {railTab === 'dependencies' && <DependenciesPanel />}
         {railTab === 'claude' && <ClaudeChat />}
       </RailPanel>
     )}

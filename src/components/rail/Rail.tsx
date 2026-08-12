@@ -57,6 +57,15 @@ const PeopleIcon = (
   </svg>
 );
 
+/** Chain link — key dependencies. */
+const DependenciesIcon = (
+  <svg {...ICON_PROPS} aria-hidden="true">
+    <path d="M6.8 9.2 L9.2 6.8" />
+    <path d="M8.4 5.2 9.7 3.9a2.3 2.3 0 0 1 3.3 3.3L11.7 8.5" />
+    <path d="M7.6 10.8 6.3 12.1a2.3 2.3 0 0 1-3.3-3.3L4.3 7.5" />
+  </svg>
+);
+
 /** Four-point spark — the Claude assistant. */
 const ClaudeIcon = (
   <svg {...ICON_PROPS} aria-hidden="true">
@@ -75,6 +84,7 @@ const TABS: TabDef[] = [
   { id: 'notes', icon: NotesIcon, title: 'Notes & Action Items (Ctrl+Shift+N)' },
   { id: 'environments', icon: EnvironmentsIcon, title: 'Environments & Contention (Ctrl+Shift+E)' },
   { id: 'people', icon: PeopleIcon, title: 'People & Teams (Ctrl+Shift+P)' },
+  { id: 'dependencies', icon: DependenciesIcon, title: 'Key Dependencies (Ctrl+Shift+D)' },
   { id: 'claude', icon: ClaudeIcon, title: 'Claude assistant (Ctrl+Shift+C)' },
 ];
 
