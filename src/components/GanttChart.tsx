@@ -35,8 +35,9 @@ import { ExportLayoutContext } from './ExportLayoutContext';
 
 const LEFT_DEFAULT = 304;
 const LEFT_MIN = 80;
+/** Width of the export-only Key Dependencies column (no longer resizable —
+ * it never appears on screen). */
 const RIGHT_DEFAULT = 180;
-const RIGHT_MIN = 60;
 
 const RAIL_TITLES = {
   inspector: 'Inspector',
@@ -46,19 +47,6 @@ const RAIL_TITLES = {
   dependencies: 'Key Dependencies',
   claude: 'Claude Assistant',
 } as const;
-
-/** The on-canvas Key Dependencies column starts collapsed (day-to-day editing
- * lives in the rail tab; export force-opens the column), and the user's
- * choice is remembered. */
-const RIGHT_COLLAPSED_KEY = 'bbd-planner-right-collapsed';
-function loadRightCollapsed(): boolean {
-  try {
-    const v = localStorage.getItem(RIGHT_COLLAPSED_KEY);
-    return v === null ? true : v === '1';
-  } catch {
-    return true;
-  }
-}
 
 export default function GanttChart() {
   const themeColors = useThemeColors();
@@ -78,26 +66,17 @@ export default function GanttChart() {
 
   // Resizable panel widths
   const [leftWidth, setLeftWidth] = useState(LEFT_DEFAULT);
-  const [rightWidth, setRightWidth] = useState(RIGHT_DEFAULT);
   const [leftCollapsed, setLeftCollapsed] = useState(false);
-  const [rightCollapsed, setRightCollapsed] = useState(loadRightCollapsed);
-
-  // Persist only deliberate choices (toggle button / drag-open) — NOT the
-  // transient force-open that export capture performs and restores.
-  const persistRightCollapsed = useCallback((collapsed: boolean) => {
-    try { localStorage.setItem(RIGHT_COLLAPSED_KEY, collapsed ? '1' : '0'); } catch { /* ignore */ }
-  }, []);
 
   // Store width before collapse so we can restore
   const leftWidthBeforeCollapse = useRef(LEFT_DEFAULT);
-  const rightWidthBeforeCollapse = useRef(RIGHT_DEFAULT);
 
   // Drag-to-pan state
   const isPanning = useRef(false);
   const panStart = useRef({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
 
   // Resize drag state
-  const resizing = useRef<'left' | 'right' | null>(null);
+  const resizing = useRef<'left' | null>(null);
   const resizeStartX = useRef(0);
   const resizeStartWidth = useRef(0);
 
@@ -146,42 +125,22 @@ export default function GanttChart() {
     }
   }, [leftCollapsed, leftWidth]);
 
-  const toggleRightCollapse = useCallback(() => {
-    if (rightCollapsed) {
-      setRightWidth(rightWidthBeforeCollapse.current);
-      setRightCollapsed(false);
-      persistRightCollapsed(false);
-    } else {
-      rightWidthBeforeCollapse.current = rightWidth;
-      setRightCollapsed(true);
-      persistRightCollapsed(true);
-    }
-  }, [rightCollapsed, rightWidth, persistRightCollapsed]);
-
-  // Resize handle drag
-  const handleResizeStart = useCallback((side: 'left' | 'right', e: React.PointerEvent) => {
+  // Resize handle drag (left panel only — the dependencies column is
+  // export-only and has no on-screen handle).
+  const handleResizeStart = useCallback((e: React.PointerEvent) => {
     e.preventDefault();
-    resizing.current = side;
+    resizing.current = 'left';
     resizeStartX.current = e.clientX;
-    resizeStartWidth.current = side === 'left' ? leftWidth : rightWidth;
+    resizeStartWidth.current = leftWidth;
     (e.target as Element).setPointerCapture(e.pointerId);
-  }, [leftWidth, rightWidth]);
+  }, [leftWidth]);
 
   const handleResizeMove = useCallback((e: React.PointerEvent) => {
     if (!resizing.current) return;
     const dx = e.clientX - resizeStartX.current;
-    if (resizing.current === 'left') {
-      setLeftWidth(Math.max(LEFT_MIN, resizeStartWidth.current + dx));
-      if (leftCollapsed) setLeftCollapsed(false);
-    } else {
-      // Right panel: dragging left makes it bigger
-      setRightWidth(Math.max(RIGHT_MIN, resizeStartWidth.current - dx));
-      if (rightCollapsed) {
-        setRightCollapsed(false);
-        persistRightCollapsed(false);
-      }
-    }
-  }, [leftCollapsed, rightCollapsed, persistRightCollapsed]);
+    setLeftWidth(Math.max(LEFT_MIN, resizeStartWidth.current + dx));
+    if (leftCollapsed) setLeftCollapsed(false);
+  }, [leftCollapsed]);
 
   const handleResizeEnd = useCallback(() => {
     resizing.current = null;
@@ -417,13 +376,13 @@ export default function GanttChart() {
     const prevScrollLeft = body?.scrollLeft ?? 0;
     const prevScrollTop = body?.scrollTop ?? 0;
     const prevLeftCollapsed = leftCollapsed;
-    const prevRightCollapsed = rightCollapsed;
 
     try {
       // Enter export mode (batched into one render): include the full plan by
-      // forcing collapsed panels open, and start from the top-left origin.
+      // forcing the collapsed left panel open, and start from the top-left
+      // origin. `isExporting` also mounts the Key Dependencies column, which
+      // exists only for the exported image.
       if (prevLeftCollapsed) setLeftCollapsed(false);
-      if (prevRightCollapsed) setRightCollapsed(false);
       setScrollLeft(0);
       if (body) { body.scrollLeft = 0; body.scrollTop = 0; }
       setIsExporting(true);
@@ -468,11 +427,10 @@ export default function GanttChart() {
       // reverts every CSS override at once.
       setIsExporting(false);
       if (prevLeftCollapsed) setLeftCollapsed(true);
-      if (prevRightCollapsed) setRightCollapsed(true);
       if (body) { body.scrollLeft = prevScrollLeft; body.scrollTop = prevScrollTop; }
       setScrollLeft(prevScrollLeft);
     }
-  }, [themeColors, leftCollapsed, rightCollapsed]);
+  }, [themeColors, leftCollapsed]);
 
   // Base name for exported files: the open document's name (sans .json), else
   // a sensible default. Keeps downloads identifiable instead of a generic name.
@@ -607,7 +565,7 @@ export default function GanttChart() {
       {/* Left resize handle + collapse toggle */}
       <div
         className="resize-handle"
-        onPointerDown={e => handleResizeStart('left', e)}
+        onPointerDown={handleResizeStart}
         onPointerMove={handleResizeMove}
         onPointerUp={handleResizeEnd}
         onPointerCancel={handleResizeEnd}
@@ -654,31 +612,11 @@ export default function GanttChart() {
         </div>
       </div>
 
-      {/* Right resize handle + collapse toggle */}
-      <div
-        className="resize-handle"
-        onPointerDown={e => handleResizeStart('right', e)}
-        onPointerMove={handleResizeMove}
-        onPointerUp={handleResizeEnd}
-        onPointerCancel={handleResizeEnd}
-      >
-        <button
-          className="collapse-btn collapse-btn-right"
-          onClick={toggleRightCollapse}
-          title={rightCollapsed ? 'Show right panel' : 'Hide right panel'}
-        >
-          {rightCollapsed ? '\u25C0' : '\u25B6'}
-        </button>
-      </div>
-
-      {/* Right panel */}
-      {!rightCollapsed && (
-        <RightPanel
-          ref={rightRef}
-          onScroll={top => syncScroll('right', top)}
-          width={rightWidth}
-        />
-      )}
+      {/* Key Dependencies column \u2014 EXPORT ONLY. Reading and editing happen in
+          the rail tab (Ctrl+Shift+D); the column exists purely so exported
+          PNG/PDF plans still carry each project's dependencies for readers
+          who only ever see the picture. */}
+      {isExporting && <RightPanel ref={rightRef} onScroll={() => {}} width={RIGHT_DEFAULT} />}
     </div>
 
     {/* Rail panel + strip — in-flow, outside .gantt-container so exports

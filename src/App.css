@@ -1394,11 +1394,6 @@ select option {
   border-radius: 4px 0 0 4px;
 }
 
-.collapse-btn-right {
-  right: -7px;
-  border-radius: 0 4px 4px 0;
-}
-
 /* Drag handle for swimlane reorder */
 .swimlane-drag-handle {
   width: 20px;
