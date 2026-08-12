@@ -14,8 +14,8 @@
  */
 
 import type {
-  Dependency, Milestone, Person, PhaseBar, Section, Swimlane, Team,
-  TimelineConfig, PhaseTypeDef,
+  Dependency, DependencyItem, Milestone, Person, PhaseBar, Section, Swimlane,
+  Team, TimelineConfig, PhaseTypeDef,
 } from '../../types/gantt';
 import { PEOPLE_COLOR_PRESETS } from '../../types/gantt';
 import { getDateAtWeekOffset } from '../../utils/dateUtils';
@@ -36,6 +36,7 @@ export interface ExportedDoc {
   people: Person[];
   phaseTypes: PhaseTypeDef[];
   timeline: TimelineConfig;
+  dependencyItems: DependencyItem[];
   [key: string]: unknown;
 }
 
@@ -45,6 +46,8 @@ export interface PlanDiff {
   modifiedProjects: string[];
   phaseCount: number;
   milestoneCount: number;
+  /** Outstanding dependencies in the proposed plan. */
+  dependencyCount: number;
   addedPeople: string[];
   removedPeople: string[];
   addedTeams: string[];
@@ -158,7 +161,11 @@ export function docToAiPlan(doc: ExportedDoc): AiPlanDoc {
     name: lane.projectName,
     section: sectionById.get(lane.section)?.label ?? lane.section,
     featureBullets: htmlToBullets(lane.keyFeatures),
-    dependencyBullets: htmlToBullets(lane.keyDependencies),
+    // Dependencies are shared items; project them as this lane's outstanding
+    // ones so Claude sees per-project text in the format it reasons about.
+    dependencyBullets: (doc.dependencyItems ?? [])
+      .filter(d => !d.done && d.swimlaneIds.includes(lane.id))
+      .map(d => d.text),
     ownerPersonNames: lane.assigneeIds.map(id => personById.get(id)?.name).filter((n): n is string => !!n),
     ownerTeamNames: lane.teamIds.map(id => teamById.get(id)?.name).filter((n): n is string => !!n),
     phases: (barsByLane.get(lane.id) ?? [])
@@ -307,6 +314,8 @@ export function aiPlanToDoc(plan: AiPlanDoc, baseDoc: ExportedDoc): ConvertResul
   const milestones: Milestone[] = [];
   const barIdByRef = new Map<string, string>();
   const orderInSection = new Map<string, number>();
+  /** Dependency texts per surviving lane, rebuilt into shared items below. */
+  const depTextsByLane = new Map<string, string[]>();
 
   for (const project of plan.projects) {
     // Compact "unchanged" reference: copy the project and everything on its
@@ -331,6 +340,10 @@ export function aiPlanToDoc(plan: AiPlanDoc, baseDoc: ExportedDoc): ConvertResul
       for (const ms of baseDoc.milestones) {
         if (ms.swimlaneId === baseLane.id) milestones.push({ ...ms });
       }
+      // Keep this lane's existing dependency links verbatim.
+      depTextsByLane.set(baseLane.id, (baseDoc.dependencyItems ?? [])
+        .filter(d => !d.done && d.swimlaneIds.includes(baseLane.id))
+        .map(d => d.text));
       continue;
     }
 
@@ -347,7 +360,9 @@ export function aiPlanToDoc(plan: AiPlanDoc, baseDoc: ExportedDoc): ConvertResul
       id: baseLane?.id ?? uid(),
       projectName: project.name.trim(),
       keyFeatures: featuresArrayToHtml(project.featureBullets.filter(b => b.trim())),
-      keyDependencies: featuresArrayToHtml(project.dependencyBullets.filter(b => b.trim())),
+      // Legacy field — dependencies live in shared items now, and the store
+      // re-derives this text on export.
+      keyDependencies: '',
       section: sectionId,
       order,
       assigneeIds: project.ownerPersonNames.filter(n => n.trim()).map(n => ensurePerson(n, null, null, false)),
@@ -356,6 +371,7 @@ export function aiPlanToDoc(plan: AiPlanDoc, baseDoc: ExportedDoc): ConvertResul
     // New lanes get no tint by default (matches manual add behaviour).
     if (baseLane?.color) lane.color = baseLane.color;
     swimlanes.push(lane);
+    depTextsByLane.set(lane.id, project.dependencyBullets.map(b => b.trim()).filter(Boolean));
 
     /* -- Phases → bars -- */
     for (const phase of project.phases) {
@@ -440,6 +456,40 @@ export function aiPlanToDoc(plan: AiPlanDoc, baseDoc: ExportedDoc): ConvertResul
     dependencies.push({ id: existing?.id ?? uid(), fromBarId, toBarId });
   }
 
+  /* -- 6b. Dependency items ------------------------------------------ */
+  // Claude only ever sees OUTSTANDING, project-linked dependencies, so those
+  // are the only ones it may rewrite. Cleared items and plan-level ones are
+  // preserved untouched — otherwise every applied plan would silently wipe
+  // them. Identical text across projects collapses into one shared item.
+  const baseDepItems = baseDoc.dependencyItems ?? [];
+  const survivingLaneIds = new Set(swimlanes.map(l => l.id));
+  const rebuiltByText = new Map<string, DependencyItem>();
+  const nowIso = new Date().toISOString();
+  for (const [laneId, texts] of depTextsByLane) {
+    for (const text of texts) {
+      const key = norm(text);
+      let item = rebuiltByText.get(key);
+      if (!item) {
+        const prior = baseDepItems.find(d => !d.done && norm(d.text) === key);
+        item = {
+          id: prior?.id ?? uid(),
+          text,
+          swimlaneIds: [],
+          done: false,
+          owner: prior?.owner ?? '',
+          createdAt: prior?.createdAt ?? nowIso,
+        };
+        rebuiltByText.set(key, item);
+      }
+      if (!item.swimlaneIds.includes(laneId)) item.swimlaneIds.push(laneId);
+    }
+  }
+  const preservedDeps = baseDepItems
+    .filter(d => (d.done || d.swimlaneIds.length === 0) && !rebuiltByText.has(norm(d.text)))
+    // Drop links to projects the plan no longer contains.
+    .map(d => ({ ...d, swimlaneIds: d.swimlaneIds.filter(id => survivingLaneIds.has(id)) }));
+  const dependencyItems = [...preservedDeps, ...rebuiltByText.values()];
+
   /* -- 7. Timeline length -------------------------------------------- */
   let maxEnd = 0;
   for (const bar of phaseBars) maxEnd = Math.max(maxEnd, bar.startWeek + bar.durationWeeks);
@@ -461,6 +511,7 @@ export function aiPlanToDoc(plan: AiPlanDoc, baseDoc: ExportedDoc): ConvertResul
     phaseBars,
     milestones,
     dependencies,
+    dependencyItems,
     teams,
     people,
     timeline,
@@ -474,7 +525,8 @@ export function aiPlanToDoc(plan: AiPlanDoc, baseDoc: ExportedDoc): ConvertResul
 /* Diff                                                                */
 /* ------------------------------------------------------------------ */
 
-/** Per-lane bundle used to detect modifications (lane + its bars + milestones). */
+/** Per-lane bundle used to detect modifications (lane + its bars, milestones
+ * and outstanding dependencies). */
 function laneBundle(doc: ExportedDoc, laneId: string): string {
   const lane = doc.swimlanes.find(l => l.id === laneId);
   const bars = doc.phaseBars
@@ -485,8 +537,15 @@ function laneBundle(doc: ExportedDoc, laneId: string): string {
     .filter(m => m.swimlaneId === laneId)
     .map(m => m.week)
     .sort((a, b) => a - b);
+  const deps = (doc.dependencyItems ?? [])
+    .filter(d => !d.done && d.swimlaneIds.includes(laneId))
+    .map(d => d.text)
+    .sort();
   // Milestone ids are regenerated on every convert, so compare weeks only.
-  return JSON.stringify({ lane: { ...lane, order: 0 }, bars, ms });
+  // `keyDependencies` is legacy/derived — exclude it or every lane reads as
+  // modified once the store re-derives it.
+  const { keyDependencies: _legacy, ...laneRest } = lane ?? ({} as Swimlane);
+  return JSON.stringify({ lane: { ...laneRest, order: 0 }, bars, ms, deps });
 }
 
 function buildDiff(base: ExportedDoc, next: ExportedDoc): PlanDiff {
@@ -523,6 +582,7 @@ function buildDiff(base: ExportedDoc, next: ExportedDoc): PlanDiff {
     modifiedProjects,
     phaseCount: next.phaseBars.length,
     milestoneCount: next.milestones.length,
+    dependencyCount: (next.dependencyItems ?? []).filter(d => !d.done).length,
     addedPeople: [...nextPeople.values()].filter(p => !basePeople.has(p.id)).map(p => p.name),
     removedPeople: [...basePeople.values()].filter(p => !nextPeople.has(p.id)).map(p => p.name),
     addedTeams: [...nextTeams.values()].filter(t => !baseTeams.has(t.id)).map(t => t.name),

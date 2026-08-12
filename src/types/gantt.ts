@@ -66,6 +66,28 @@ export interface ActionItem {
   createdAt: string;
 }
 
+/**
+ * Something the plan is waiting on from outside — a vendor contract, an
+ * upstream API, a signed-off spec. Distinct from `Dependency`, which is a
+ * finish-to-start arrow between two phase bars.
+ *
+ * One item can block SEVERAL projects (that's the point: "Core banking API
+ * v3" is one dependency, not one per project), so it carries a list of
+ * swimlane ids rather than living on a swimlane. An empty list means it
+ * blocks the plan generally rather than any one project.
+ */
+export interface DependencyItem {
+  id: string;
+  text: string;
+  /** Projects blocked by this. Empty = plan-level. */
+  swimlaneIds: string[];
+  /** Cleared / satisfied. Done items stay for the record but stop counting. */
+  done: boolean;
+  /** Who is chasing it. '' when unassigned (mirrors ActionItem.owner). */
+  owner: string;
+  createdAt: string;
+}
+
 export type SwimlaneSection = string;
 
 export interface Section {
@@ -88,7 +110,11 @@ export interface Swimlane {
   id: string;
   projectName: string;
   keyFeatures: string; // HTML string (rich text)
-  keyDependencies: string; // HTML string (rich text)
+  /** LEGACY (pre-v8): dependencies used to live here as per-project rich text.
+   * Migrated into shared `DependencyItem`s on load; still written on export as
+   * derived HTML so older builds and saved files keep showing something. Read
+   * it only in migration and export code — never as the source of truth. */
+  keyDependencies: string;
   section: SwimlaneSection;
   order: number;
   /** Optional user-chosen row tint (hex, e.g. '#3e63dd'). Applied as a
@@ -205,6 +231,7 @@ export interface GanttState {
   milestones: Milestone[];
   dependencies: Dependency[];
   actionItems: ActionItem[];
+  dependencyItems: DependencyItem[];
   floatingNotes: FloatingNote[];
   environments: Environment[];
   teams: Team[];
@@ -234,6 +261,9 @@ export interface GanttState {
   railTab: RailTab | null;
   notesPanelSwimlaneId: string | null;
   notesPanelFilterId: string | null;
+  /** Scopes the Key Dependencies panel to one project (set by the per-row
+   * badge on the canvas). null = show everything. */
+  dependenciesFilterId: string | null;
   environmentFocusId: string | null;
   /** Focused resource in people focus mode — dims bars not assigned to it. */
   peopleFocus: { kind: 'person' | 'team'; id: string } | null;

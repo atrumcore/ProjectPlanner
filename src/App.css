@@ -621,7 +621,8 @@ select option {
 .gantt-container.is-exporting .collapse-btn,
 .gantt-container.is-exporting .swimlane-features-more,
 .gantt-container.is-exporting .swimlane-add-note-btn,
-.gantt-container.is-exporting .swimlane-note-badge {
+.gantt-container.is-exporting .swimlane-note-badge,
+.gantt-container.is-exporting .swimlane-dep-badge {
   display: none !important;
 }
 
@@ -2779,6 +2780,31 @@ select option {
   background: #ffa060;
 }
 
+/* Outstanding-dependency count. Sits left of the note badge, in the warning
+   hue so "blocked" reads differently from "has action items". */
+.swimlane-dep-badge {
+  position: absolute;
+  bottom: 3px;
+  right: 23px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--warning);
+  color: #1a1408;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  border: none;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.swimlane-dep-badge:hover {
+  filter: brightness(1.15);
+}
+
 /* ========================================================================
  * Environments & contention
  * ====================================================================== */
@@ -3988,66 +4014,181 @@ select option {
 }
 
 /* ─── Key Dependencies (rail tab) ───────────────────────────────────────────
-   Browse/edit every project's dependencies without the on-canvas column
-   (collapsed by default; export force-opens it). Rows open the shared
-   KeyFeaturesPopover editor. */
-.deps-panel {
+   Shared dependency items — one item can block several projects, so each row
+   carries project chips rather than living under a project heading. Reuses
+   the notes panel's filter bar / add row / list / divider chrome so the two
+   tracking tabs read as one family. */
+.dep-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.dep-row.done {
+  opacity: 0.55;
+}
+
+.dep-row.done .dep-row-text {
+  text-decoration: line-through;
+}
+
+.dep-row-checkbox {
+  margin-top: 2px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.dep-row-content {
   flex: 1;
-  overflow-y: auto;
-  padding: 10px 14px 16px;
-}
-
-.deps-panel-section {
-  margin-bottom: 14px;
-}
-
-.deps-panel-section-label {
-  padding: 8px 0 6px;
-}
-
-.deps-panel-row {
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  gap: 4px;
-  width: 100%;
-  text-align: left;
-  padding: 8px 10px;
-  margin-bottom: 6px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: linear-gradient(var(--row-tint, transparent), var(--row-tint, transparent)), var(--bg-surface);
-  color: var(--text-primary);
-  cursor: pointer;
-  font-family: var(--font-body);
+  gap: 5px;
 }
 
-.deps-panel-row:hover {
-  border-color: var(--border-strong);
-  background: linear-gradient(var(--row-tint, transparent), var(--row-tint, transparent)), var(--bg-surface-2);
+.dep-row-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
 }
 
-.deps-panel-project {
+.dep-row-text {
+  flex: 1;
   font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-primary);
+  cursor: text;
+  overflow-wrap: anywhere;
+}
+
+.dep-row-text-input {
+  flex: 1;
+  font-size: 12px;
+  font-family: var(--font-body);
+  padding: 2px 6px;
+  border: 1px solid var(--accent-secondary);
+  border-radius: 4px;
+  background: var(--bg-app);
+  color: var(--text-primary);
+}
+
+.dep-row-delete {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1;
+  padding: 1px 5px;
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.dep-row-delete:hover {
+  color: var(--error-bright);
+  background: var(--hover);
+}
+
+.dep-row-delete.confirm {
+  font-size: 10px;
   font-weight: 600;
+  color: #ffffff;
+  background: var(--error-bright);
 }
 
-.deps-panel-html {
-  font-size: 11px;
-  line-height: 1.5;
+/* Meta line: which projects this blocks, plus who's chasing it. */
+.dep-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+}
+
+.dep-chip {
+  font-size: 10px;
+  font-family: var(--font-body);
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-surface-2);
   color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.deps-panel-html ul,
-.deps-panel-html ol {
-  margin: 2px 0 0;
-  padding-left: 16px;
+.dep-chip:hover {
+  border-color: var(--error-bright);
+  color: var(--error-bright);
 }
 
-.deps-panel-empty {
-  font-size: 11px;
+.dep-chip-x {
+  opacity: 0.5;
+}
+
+.dep-chip:hover .dep-chip-x {
+  opacity: 1;
+}
+
+.dep-chip-none {
+  font-size: 10px;
   font-style: italic;
   color: var(--text-muted);
+}
+
+.dep-link-btn {
+  font-size: 10px;
+  font-family: var(--font-body);
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px dashed var(--border-strong);
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.dep-link-btn:hover {
+  color: var(--accent-secondary);
+  border-color: var(--accent-secondary);
+}
+
+.dep-link-select,
+.dep-owner-input {
+  font-size: 10px;
+  font-family: var(--font-body);
+  padding: 2px 4px;
+  border: 1px solid var(--accent-secondary);
+  border-radius: 4px;
+  background: var(--bg-app);
+  color: var(--text-primary);
+  max-width: 140px;
+}
+
+.dep-owner {
+  font-size: 10px;
+  font-family: var(--font-body);
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: var(--hover);
+  color: var(--text-secondary);
+  cursor: pointer;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.dep-owner.empty {
+  background: none;
+  color: var(--text-muted);
+}
+
+.dep-owner:hover {
+  color: var(--text-primary);
+  background: var(--hover-strong);
 }
 
 /* ─── Claude assistant (rail tab) ───────────────────────────────────────────

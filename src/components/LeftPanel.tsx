@@ -37,6 +37,8 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
   const people = useGanttStore(s => s.people);
   const teams = useGanttStore(s => s.teams);
   const setSwimlaneOwners = useGanttStore(s => s.setSwimlaneOwners);
+  const dependencyItems = useGanttStore(s => s.dependencyItems);
+  const openDependenciesForSwimlane = useGanttStore(s => s.openDependenciesForSwimlane);
 
   const sectionedLanes = useSectionedLanes(sections, swimlanes);
 
@@ -50,6 +52,17 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
     }
     return map;
   }, [actionItems]);
+
+  // Outstanding dependency counts per swimlane. One dependency blocking three
+  // projects counts on all three rows — that's the point of sharing.
+  const depCountMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const d of dependencyItems) {
+      if (d.done) continue;
+      for (const id of d.swimlaneIds) map.set(id, (map.get(id) || 0) + 1);
+    }
+    return map;
+  }, [dependencyItems]);
 
   // Drag reorder
   const [dragId, setDragId] = useState<string | null>(null);
@@ -298,6 +311,15 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
               title={`${noteCountMap.get(lane.id)} open action item(s) — click to view`}
             >
               {noteCountMap.get(lane.id)}
+            </button>
+          )}
+          {(depCountMap.get(lane.id) || 0) > 0 && (
+            <button
+              className="swimlane-dep-badge"
+              onClick={e => { e.stopPropagation(); openDependenciesForSwimlane(lane.id); }}
+              title={`${depCountMap.get(lane.id)} outstanding dependenc(ies) — click to view`}
+            >
+              {depCountMap.get(lane.id)}
             </button>
           )}
           {(() => {

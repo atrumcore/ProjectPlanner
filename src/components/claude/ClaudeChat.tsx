@@ -55,6 +55,7 @@ function ProposalCard({ pending }: { pending: PendingProposal }) {
   if (diff.modifiedProjects.length) chips.push(`${diff.modifiedProjects.length} updated`);
   if (diff.phaseCount) chips.push(`${diff.phaseCount} phase${diff.phaseCount > 1 ? 's' : ''}`);
   if (diff.milestoneCount) chips.push(`${diff.milestoneCount} milestone${diff.milestoneCount > 1 ? 's' : ''}`);
+  if (diff.dependencyCount) chips.push(`${diff.dependencyCount} dependenc${diff.dependencyCount > 1 ? 'ies' : 'y'}`);
   if (diff.addedPeople.length) chips.push(`+${diff.addedPeople.length} people`);
   if (diff.addedTeams.length) chips.push(`+${diff.addedTeams.length} team${diff.addedTeams.length > 1 ? 's' : ''}`);
   if (diff.timelineChange) chips.push(diff.timelineChange);

@@ -4,6 +4,7 @@ import type {
   Swimlane,
   PhaseBar,
   ActionItem,
+  DependencyItem,
   TimelineConfig,
   SwimlaneSection,
   Section,
@@ -55,11 +56,12 @@ const MAX_HISTORY = 50;
 
 // Single version stamp written by BOTH localStorage autosave and file export.
 // History: v2 real-calendar model · v5 env exclusive flag · v6 bar environmentId
-// · v7 teams/people + bar/lane assigneeIds+teamIds.
+// · v7 teams/people + bar/lane assigneeIds+teamIds · v8 shared DependencyItems
+// (per-project keyDependencies text → items that can block several projects).
 // Bump when the schema changes and add a matching migration in loadFromStorage /
 // importFromJSON (they run idempotent field migrations regardless of version;
 // the only hard gate is `< 2`, which discards pre-real-calendar data).
-const SCHEMA_VERSION = 7;
+const SCHEMA_VERSION = 8;
 
 interface GanttActions {
   // Sections
@@ -114,6 +116,15 @@ interface GanttActions {
   updateActionItem: (id: string, updates: Partial<ActionItem>) => void;
   removeActionItem: (id: string) => void;
   clearDoneActionItems: () => void;
+
+  // Key dependencies (shared across projects)
+  addDependencyItem: (text: string, swimlaneIds?: string[]) => void;
+  updateDependencyItem: (id: string, updates: Partial<DependencyItem>) => void;
+  removeDependencyItem: (id: string) => void;
+  /** Link/unlink one project on a dependency (the sharing affordance). */
+  toggleDependencyItemProject: (id: string, swimlaneId: string) => void;
+  /** Open the Key Dependencies rail tab scoped to one project. */
+  openDependenciesForSwimlane: (swimlaneId: string | null) => void;
 
   // Floating notes (free-positioned sticky notes)
   addFloatingNote: (x: number, y: number) => string;
@@ -234,6 +245,7 @@ const defaultState: GanttState = {
   milestones: [],
   dependencies: [],
   actionItems: [],
+  dependencyItems: [],
   floatingNotes: [],
   environments: [],
   teams: [],
@@ -264,6 +276,7 @@ const defaultState: GanttState = {
   railTab: null,
   notesPanelSwimlaneId: null,
   notesPanelFilterId: null,
+  dependenciesFilterId: null,
   environmentFocusId: null,
   peopleFocus: null,
   hoveredBarId: null,
@@ -316,6 +329,7 @@ function snapshot(state: GanttState): GanttState {
     milestones: state.milestones,
     dependencies: state.dependencies,
     actionItems: state.actionItems,
+    dependencyItems: state.dependencyItems,
     floatingNotes: state.floatingNotes,
     environments: state.environments,
     teams: state.teams,
@@ -335,6 +349,78 @@ function pushUndo(state: GanttState) {
 /** Keep only entries that are valid string ids. */
 function idArray(v: unknown): string[] {
   return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+}
+
+/** Plain-text bullets out of a keyDependencies/keyFeatures HTML string. */
+function htmlToBulletTexts(html: string): string[] {
+  if (!html) return [];
+  const doc = new DOMParser().parseFromString(
+    html.replace(/<br\s*\/?>/gi, '\n'), 'text/html');
+  const lis = Array.from(doc.querySelectorAll('li'))
+    .map(li => (li.textContent ?? '').trim())
+    .filter(Boolean);
+  if (lis.length > 0) return lis;
+  return (doc.body.textContent ?? '').split('\n').map(t => t.trim()).filter(Boolean);
+}
+
+/**
+ * v7 → v8: per-project `keyDependencies` rich text becomes shared
+ * `DependencyItem`s. Identical text across projects collapses into ONE item
+ * listing every project it blocks — the whole point of the new model, and
+ * visible to the user the first time they open an old plan.
+ *
+ * Idempotent: once `dependencyItems` exists in the file we trust it and only
+ * normalise shapes, so re-saving never re-imports stale legacy text.
+ */
+function migrateDependencyItems(raw: unknown, swimlanes: Swimlane[]): DependencyItem[] {
+  if (Array.isArray(raw)) {
+    return raw
+      .map(r => {
+        const d = r as Partial<DependencyItem> & { swimlaneId?: unknown };
+        if (typeof d.text !== 'string' || !d.text.trim()) return null;
+        // Tolerate a single-id shape in case anything wrote one.
+        const ids = idArray(d.swimlaneIds).length > 0
+          ? idArray(d.swimlaneIds)
+          : typeof d.swimlaneId === 'string' ? [d.swimlaneId] : [];
+        return {
+          id: typeof d.id === 'string' ? d.id : uid(),
+          text: d.text,
+          swimlaneIds: ids,
+          done: d.done === true,
+          owner: typeof d.owner === 'string' ? d.owner : '',
+          createdAt: typeof d.createdAt === 'string' ? d.createdAt : new Date().toISOString(),
+        };
+      })
+      .filter((d): d is DependencyItem => d !== null);
+  }
+
+  const byText = new Map<string, DependencyItem>();
+  const createdAt = new Date().toISOString();
+  for (const lane of swimlanes) {
+    for (const text of htmlToBulletTexts(lane.keyDependencies)) {
+      const key = text.toLowerCase();
+      const existing = byText.get(key);
+      if (existing) {
+        if (!existing.swimlaneIds.includes(lane.id)) existing.swimlaneIds.push(lane.id);
+      } else {
+        byText.set(key, { id: uid(), text, swimlaneIds: [lane.id], done: false, owner: '', createdAt });
+      }
+    }
+  }
+  return [...byText.values()];
+}
+
+/** Per-project dependency text derived from the shared items — used by the
+ * export column and written into saved files so older builds still show
+ * something sensible. Outstanding first, done last (struck through). */
+export function dependenciesHtmlForSwimlane(items: DependencyItem[], swimlaneId: string): string {
+  const mine = items.filter(d => d.swimlaneIds.includes(swimlaneId));
+  if (mine.length === 0) return '';
+  const ordered = [...mine.filter(d => !d.done), ...mine.filter(d => d.done)];
+  const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return '<ul>' + ordered
+    .map(d => `<li>${d.done ? `<s>${escape(d.text)}</s>` : escape(d.text)}</li>`)
+    .join('') + '</ul>';
 }
 
 /** Migrate legacy keyFeatures: string[] → HTML string. Strips the deprecated
@@ -541,6 +627,13 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
       swimlanes: state.swimlanes.filter(s => s.id !== id),
       phaseBars: state.phaseBars.filter(b => b.swimlaneId !== id),
       milestones: state.milestones.filter(m => m.swimlaneId !== id),
+      // Unlink the deleted project; a dependency that blocked only this one
+      // becomes plan-level rather than vanishing silently.
+      dependencyItems: state.dependencyItems.map(d =>
+        d.swimlaneIds.includes(id)
+          ? { ...d, swimlaneIds: d.swimlaneIds.filter(s => s !== id) }
+          : d
+      ),
     }));
     get().saveToStorage();
   },
@@ -811,6 +904,62 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
     get().saveToStorage();
   },
 
+  // === Key dependencies ===
+  addDependencyItem: (text, swimlaneIds) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    pushUndo(get());
+    set(state => ({
+      dependencyItems: [...state.dependencyItems, {
+        id: uid(),
+        text: trimmed,
+        swimlaneIds: swimlaneIds ? [...swimlaneIds] : [],
+        done: false,
+        owner: '',
+        createdAt: new Date().toISOString(),
+      }],
+    }));
+    get().saveToStorage();
+  },
+
+  updateDependencyItem: (id, updates) => {
+    pushUndo(get());
+    set(state => ({
+      dependencyItems: state.dependencyItems.map(d =>
+        d.id === id ? { ...d, ...updates } : d
+      ),
+    }));
+    get().saveToStorage();
+  },
+
+  removeDependencyItem: (id) => {
+    pushUndo(get());
+    set(state => ({
+      dependencyItems: state.dependencyItems.filter(d => d.id !== id),
+    }));
+    get().saveToStorage();
+  },
+
+  toggleDependencyItemProject: (id, swimlaneId) => {
+    pushUndo(get());
+    set(state => ({
+      dependencyItems: state.dependencyItems.map(d => {
+        if (d.id !== id) return d;
+        const linked = d.swimlaneIds.includes(swimlaneId);
+        return {
+          ...d,
+          swimlaneIds: linked
+            ? d.swimlaneIds.filter(s => s !== swimlaneId)
+            : [...d.swimlaneIds, swimlaneId],
+        };
+      }),
+    }));
+    get().saveToStorage();
+  },
+
+  openDependenciesForSwimlane: (swimlaneId) =>
+    set({ railTab: 'dependencies', dependenciesFilterId: swimlaneId }),
+
   // === Floating notes ===
   addFloatingNote: (x, y) => {
     pushUndo(get());
@@ -881,6 +1030,10 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
     // notes-panel close behaviour.
     ...(state.railTab === 'notes' && tab !== 'notes'
       ? { notesPanelFilterId: null, notesPanelSwimlaneId: null }
+      : {}),
+    // Same for the dependencies tab's per-project scope.
+    ...(state.railTab === 'dependencies' && tab !== 'dependencies'
+      ? { dependenciesFilterId: null }
       : {}),
   })),
 
@@ -1282,6 +1435,7 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         milestones: state.milestones,
         dependencies: state.dependencies,
         actionItems: state.actionItems,
+        dependencyItems: state.dependencyItems,
         floatingNotes: state.floatingNotes,
         environments: state.environments,
         teams: state.teams,
@@ -1328,13 +1482,15 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         return false;
       }
 
+      const restoredLanes = migrateSwimlanes(data.swimlanes);
       set({
         sections: data.sections || DEFAULT_SECTIONS,
-        swimlanes: migrateSwimlanes(data.swimlanes),
+        swimlanes: restoredLanes,
         phaseBars: migratePhaseBars(data.phaseBars),
         milestones: data.milestones || [],
         dependencies: data.dependencies || [],
         actionItems: data.actionItems || [],
+        dependencyItems: migrateDependencyItems(data.dependencyItems, restoredLanes),
         floatingNotes: Array.isArray(data.floatingNotes) ? data.floatingNotes : [],
         environments: migrateEnvironments(data.environments),
         teams: migrateTeams(data.teams),
@@ -1367,11 +1523,18 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
     const state = get();
     return JSON.stringify({
       sections: state.sections,
-      swimlanes: state.swimlanes,
+      // `keyDependencies` is written as text derived from the shared items so
+      // a file saved here still renders dependencies in pre-v8 builds (and in
+      // anything else reading the old field). v8+ ignores it on load.
+      swimlanes: state.swimlanes.map(lane => ({
+        ...lane,
+        keyDependencies: dependenciesHtmlForSwimlane(state.dependencyItems, lane.id),
+      })),
       phaseBars: state.phaseBars,
       milestones: state.milestones,
       dependencies: state.dependencies,
       actionItems: state.actionItems,
+      dependencyItems: state.dependencyItems,
       floatingNotes: state.floatingNotes,
       environments: state.environments,
       teams: state.teams,
@@ -1410,13 +1573,15 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         throw new Error('Invalid format: timeline must have totalWeeks and startYear');
       }
       pushUndo(get());
+      const importedLanes = migrateSwimlanes(data.swimlanes);
       set({
         sections: data.sections || DEFAULT_SECTIONS,
-        swimlanes: migrateSwimlanes(data.swimlanes),
+        swimlanes: importedLanes,
         phaseBars: migratePhaseBars(data.phaseBars),
         milestones: data.milestones || [],
         dependencies: data.dependencies || [],
         actionItems: data.actionItems || [],
+        dependencyItems: migrateDependencyItems(data.dependencyItems, importedLanes),
         floatingNotes: Array.isArray(data.floatingNotes) ? data.floatingNotes : [],
         environments: migrateEnvironments(data.environments),
         teams: migrateTeams(data.teams),

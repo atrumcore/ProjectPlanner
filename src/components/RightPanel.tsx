@@ -1,28 +1,33 @@
-import { forwardRef, useState } from 'react';
+import { forwardRef } from 'react';
 import type { CSSProperties } from 'react';
-import { useGanttStore } from '../store/useGanttStore';
+import { useGanttStore, dependenciesHtmlForSwimlane } from '../store/useGanttStore';
 import type { Swimlane } from '../types/gantt';
 import { SWIMLANE_TINT_ALPHA } from '../types/gantt';
 import { hexToRgba } from '../theme/colors';
 import { useSectionedLanes } from '../hooks/useSectionedLanes';
 import FeaturesCell from './FeaturesCell';
-import KeyFeaturesPopover from './KeyFeaturesPopover';
-import { htmlToPlainText } from '../utils/plainText';
 
 interface Props {
   onScroll: (scrollTop: number) => void;
   width: number;
 }
 
+/**
+ * The Key Dependencies column — EXPORT ONLY (mounted by GanttChart while
+ * `isExporting`). Reading and editing happen in the rail tab; this exists so
+ * an exported PNG/PDF still carries each project's dependencies for readers
+ * who only ever see the picture.
+ *
+ * Text is derived from the shared `dependencyItems` (a dependency blocking
+ * three projects appears on all three rows), so there is nothing to edit here
+ * and no popover.
+ */
 const RightPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) => {
   const swimlanes = useGanttStore(s => s.swimlanes);
   const sections = useGanttStore(s => s.sections);
-  const updateSwimlane = useGanttStore(s => s.updateSwimlane);
+  const dependencyItems = useGanttStore(s => s.dependencyItems);
 
   const sectionedLanes = useSectionedLanes(sections, swimlanes);
-
-  // Open dependencies-detail popover (anchored to the clicked cell)
-  const [depsPopover, setDepsPopover] = useState<{ laneId: string; anchor: DOMRect } | null>(null);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     onScroll((e.target as HTMLDivElement).scrollTop);
@@ -43,18 +48,9 @@ const RightPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) 
       background: `linear-gradient(var(--row-tint), var(--row-tint)), var(--row-base)`,
     };
     return (
-    <div
-      key={lane.id}
-      className="deps-cell"
-      style={cellStyle as CSSProperties}
-    >
-      <FeaturesCell
-        key={lane.id}
-        html={lane.keyDependencies}
-        title="Click to view all dependencies"
-        onClick={rect => setDepsPopover({ laneId: lane.id, anchor: rect })}
-      />
-    </div>
+      <div key={lane.id} className="deps-cell" style={cellStyle as CSSProperties}>
+        <FeaturesCell html={dependenciesHtmlForSwimlane(dependencyItems, lane.id)} />
+      </div>
     );
   };
 
@@ -76,23 +72,6 @@ const RightPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) 
           <div className="panel-add-spacer" />
         </div>
       ))}
-
-      {depsPopover && (() => {
-        const lane = swimlanes.find(l => l.id === depsPopover.laneId);
-        if (!lane) return null;
-        // Strip HTML from the project name for the popover's title label.
-        const plainName = htmlToPlainText(lane.projectName) || 'Untitled project';
-        return (
-          <KeyFeaturesPopover
-            anchor={depsPopover.anchor}
-            projectName={plainName}
-            title="Key dependencies"
-            value={lane.keyDependencies}
-            onSave={v => updateSwimlane(lane.id, { keyDependencies: v })}
-            onClose={() => setDepsPopover(null)}
-          />
-        );
-      })()}
     </div>
   );
 });
