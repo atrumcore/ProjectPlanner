@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { looksLikeApiKey } from '../../claude/claudeClient';
+import { CLAUDE_MODEL_OPTIONS, looksLikeApiKey } from '../../claude/claudeClient';
 import type { PendingProposal } from '../../claude/useClaudeStore';
 import { useClaudeStore } from '../../claude/useClaudeStore';
 
@@ -117,6 +117,8 @@ export default function ClaudeChat() {
   const send = useClaudeStore(s => s.send);
   const clearApiKey = useClaudeStore(s => s.clearApiKey);
 
+  const model = useClaudeStore(s => s.model);
+  const setModel = useClaudeStore(s => s.setModel);
   const [draft, setDraft] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -178,8 +180,20 @@ export default function ClaudeChat() {
           }}
         />
         <div className="claude-composer-row">
+          <select
+            className="claude-model-select"
+            value={model}
+            disabled={streaming}
+            onChange={e => setModel(e.target.value)}
+            title="Model used for generation (your key, your cost)"
+            aria-label="Model"
+          >
+            {CLAUDE_MODEL_OPTIONS.map(m => (
+              <option key={m.id} value={m.id}>{m.label}</option>
+            ))}
+          </select>
           <button className="btn-quiet claude-key-link" onClick={clearApiKey} title="Forget the stored key and enter a new one">
-            Change API key
+            Change key
           </button>
           <span className="claude-composer-hint">Ctrl+Enter to send</span>
           <button className="btn-primary" onClick={submit} disabled={streaming || !draft.trim()}>

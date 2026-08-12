@@ -8,7 +8,7 @@
 import { create } from 'zustand';
 import { useGanttStore } from '../store/useGanttStore';
 import {
-  describeClaudeFailure, generatePlan, makeUserTurn,
+  DEFAULT_MODEL, describeClaudeFailure, generatePlan, isKnownModel, makeUserTurn,
 } from './claudeClient';
 import type { ChatTurn } from './claudeClient';
 import { aiPlanToDoc, docToAiPlan } from './skill/aiPlanConvert';
@@ -16,11 +16,22 @@ import type { ExportedDoc, PlanDiff } from './skill/aiPlanConvert';
 import type { AiPlanDoc } from './skill/aiPlan';
 
 const KEY_STORAGE = 'bbd-planner-claude-key';
+const MODEL_STORAGE = 'bbd-planner-claude-model';
 
 const uid = () => crypto.randomUUID();
 
 function loadApiKey(): string | null {
   try { return localStorage.getItem(KEY_STORAGE); } catch { return null; }
+}
+
+/** Stored model choice, falling back to the default when absent or when the
+ * stored id is no longer in the offered list. */
+function loadModel(): string {
+  try {
+    const stored = localStorage.getItem(MODEL_STORAGE);
+    if (stored && isKnownModel(stored)) return stored;
+  } catch { /* ignore */ }
+  return DEFAULT_MODEL;
 }
 
 export interface ChatMessage {
@@ -45,6 +56,8 @@ export interface PendingProposal {
 
 interface ClaudeState {
   apiKey: string | null;
+  /** Model id used for generation (persisted per browser). */
+  model: string;
   messages: ChatMessage[];
   /** Verbatim API turns (assistant turns include thinking blocks) — replayed
    * on every request so the conversation prefix stays cache-valid. */
@@ -59,6 +72,7 @@ interface ClaudeState {
 
   setApiKey: (key: string) => void;
   clearApiKey: () => void;
+  setModel: (id: string) => void;
   send: (text: string) => Promise<void>;
   cancel: () => void;
   applyPending: () => void;
@@ -68,6 +82,7 @@ interface ClaudeState {
 
 export const useClaudeStore = create<ClaudeState>((set, get) => ({
   apiKey: loadApiKey(),
+  model: loadModel(),
   messages: [],
   history: [],
   status: 'idle',
@@ -88,8 +103,14 @@ export const useClaudeStore = create<ClaudeState>((set, get) => ({
     set({ apiKey: null });
   },
 
+  setModel: (id) => {
+    if (!isKnownModel(id)) return;
+    try { localStorage.setItem(MODEL_STORAGE, id); } catch { /* ignore */ }
+    set({ model: id });
+  },
+
   send: async (text) => {
-    const { apiKey, status, history } = get();
+    const { apiKey, model, status, history } = get();
     const request = text.trim();
     if (!apiKey || !request || status === 'streaming') return;
 
@@ -111,6 +132,7 @@ export const useClaudeStore = create<ClaudeState>((set, get) => ({
     try {
       const result = await generatePlan({
         apiKey,
+        model,
         history,
         userContent,
         onThinking: (delta) => set(s => ({ thinkingText: s.thinkingText + delta })),

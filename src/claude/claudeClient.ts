@@ -14,7 +14,19 @@ import type { AiPlanResponse } from './skill/aiPlan';
  * and drop the per-user key + browser-access header. */
 const BASE_URL: string | undefined = undefined;
 
-const MODEL = 'claude-opus-5';
+/** Models the panel offers. First entry is the default. Each user picks per
+ * browser (they pay for their own usage); the choice persists alongside the
+ * API key. */
+export const CLAUDE_MODEL_OPTIONS = [
+  { id: 'claude-opus-5', label: 'Opus 5 — most capable' },
+  { id: 'claude-sonnet-5', label: 'Sonnet 5 — faster, cheaper' },
+] as const;
+
+export const DEFAULT_MODEL = CLAUDE_MODEL_OPTIONS[0].id;
+
+export function isKnownModel(id: string): boolean {
+  return CLAUDE_MODEL_OPTIONS.some(m => m.id === id);
+}
 
 /** One conversation turn as sent to the API. Aliased so the rest of the app
  * never imports SDK types directly. */
@@ -60,6 +72,8 @@ export class ClaudeTruncatedError extends Error {
 
 export interface GenerateArgs {
   apiKey: string;
+  /** One of CLAUDE_MODEL_OPTIONS ids. */
+  model: string;
   /** Prior turns, replayed verbatim (assistant turns include thinking blocks). */
   history: ChatTurn[];
   /** The new user turn (from makeUserTurn). */
@@ -81,12 +95,14 @@ export async function generatePlan(args: GenerateArgs): Promise<GenerateResult> 
 
   const stream = client.beta.messages.stream(
     {
-      model: MODEL,
+      model: args.model,
       max_tokens: 64000,
-      // If Claude Opus 5's safety classifiers decline, retry server-side on
+      // If Opus 5's safety classifiers decline, retry server-side on
       // Anthropic's recommended fallback model instead of failing the turn.
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default',
+      // (Opus-only parameter — other models handle refusals as plain errors.)
+      ...(args.model === 'claude-opus-5'
+        ? { betas: ['server-side-fallback-2026-07-01' as const], fallbacks: 'default' as const }
+        : {}),
       // Thinking is on by default on this model; summarized display gives the
       // panel a live "what I'm considering" narrative while the JSON drafts.
       thinking: { type: 'adaptive', display: 'summarized' },

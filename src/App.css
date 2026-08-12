@@ -4184,6 +4184,28 @@ select option {
   color: var(--text-muted);
 }
 
+.claude-model-select {
+  max-width: 46%;
+  font-size: 11px;
+  font-family: var(--font-body);
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.claude-model-select:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.claude-model-select:focus {
+  outline: none;
+  border-color: var(--accent-secondary);
+}
+
 .claude-key-link {
   margin-top: 0;
   white-space: nowrap;
