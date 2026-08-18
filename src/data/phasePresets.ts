@@ -6,8 +6,16 @@ type PresetMap = Record<string, PhaseColorScheme>;
 /**
  * Default phase-type colours — a categorical palette chosen so adjacent
  * phases stay distinguishable on both themes (users can recolour any type):
- *   analysis/concept → cyan (BBD 3115C) · development → orange
+ *   analysis → steel blue · concept → indigo · development → amber
  *   sit → teal · uat → green · live → crimson · custom → slate
+ *
+ * Chroma is deliberately mid-range rather than fluorescent: solid bars cover
+ * a lot of a plan, and at full saturation they vibrate against each other and
+ * against the tinted swimlane rows, flattening the hierarchy. These read as
+ * distinct hues while letting the timeline shape lead. Every fill is dark
+ * enough for white label text in BOTH themes, so legibility no longer varies
+ * per phase (uat and custom used dark ink before). Analysis and concept were
+ * the same cyan and are now separate hues.
  *
  * In the tagged-bar render, `fill` is the **tag colour** (the small coloured
  * left-edge stripe and the body colour for the short-bar fallback). `text` is
@@ -16,23 +24,23 @@ type PresetMap = Record<string, PhaseColorScheme>;
  * it uses the exact #99001B.
  */
 const DARK_PRESETS: PresetMap = {
-  analysis: { fill: '#00b8cc', stroke: '#006570', text: '#ffffff', label: 'ANALYSIS & DESIGN' },
-  development: { fill: '#cb6600', stroke: '#8a4500', text: '#ffffff', label: 'DEVELOPMENT' },
-  sit: { fill: '#009991', stroke: '#00665f', text: '#ffffff', label: 'SIT' },
-  uat: { fill: '#31bf69', stroke: '#1f8f4d', text: '#07261a', label: 'UAT' },
-  live: { fill: '#d23a52', stroke: '#99001b', text: '#ffffff', label: 'LIVE' },
-  concept: { fill: '#00b8cc', stroke: '#006570', text: '#ffffff', label: 'CONCEPTUALISATION' },
-  custom: { fill: '#8a9298', stroke: '#4a5057', text: '#07140b', label: 'CUSTOM' },
+  analysis: { fill: '#3a7d99', stroke: '#24505f', text: '#ffffff', label: 'ANALYSIS & DESIGN' },
+  development: { fill: '#a3651b', stroke: '#6b420f', text: '#ffffff', label: 'DEVELOPMENT' },
+  sit: { fill: '#2a7c73', stroke: '#1a4f49', text: '#ffffff', label: 'SIT' },
+  uat: { fill: '#3f854c', stroke: '#285531', text: '#ffffff', label: 'UAT' },
+  live: { fill: '#b2455a', stroke: '#742c3a', text: '#ffffff', label: 'LIVE' },
+  concept: { fill: '#5f5fa8', stroke: '#3d3d6e', text: '#ffffff', label: 'CONCEPTUALISATION' },
+  custom: { fill: '#6b7379', stroke: '#454b4f', text: '#ffffff', label: 'CUSTOM' },
 };
 
 const LIGHT_PRESETS: PresetMap = {
-  analysis: { fill: '#00b8cc', stroke: '#006570', text: '#ffffff', label: 'ANALYSIS & DESIGN' },
-  development: { fill: '#cb6600', stroke: '#8a4500', text: '#ffffff', label: 'DEVELOPMENT' },
-  sit: { fill: '#009991', stroke: '#00665f', text: '#ffffff', label: 'SIT' },
-  uat: { fill: '#31bf69', stroke: '#1f8f4d', text: '#07261a', label: 'UAT' },
-  live: { fill: '#99001b', stroke: '#5e0011', text: '#ffffff', label: 'LIVE' },
-  concept: { fill: '#00b8cc', stroke: '#006570', text: '#ffffff', label: 'CONCEPTUALISATION' },
-  custom: { fill: '#c2ccd6', stroke: '#6b7c92', text: '#1a1814', label: 'CUSTOM' },
+  analysis: { fill: '#33708a', stroke: '#22495a', text: '#ffffff', label: 'ANALYSIS & DESIGN' },
+  development: { fill: '#a1631c', stroke: '#6a4112', text: '#ffffff', label: 'DEVELOPMENT' },
+  sit: { fill: '#2a7c73', stroke: '#1b504a', text: '#ffffff', label: 'SIT' },
+  uat: { fill: '#3f854c', stroke: '#295631', text: '#ffffff', label: 'UAT' },
+  live: { fill: '#9e3d51', stroke: '#672835', text: '#ffffff', label: 'LIVE' },
+  concept: { fill: '#55549b', stroke: '#383764', text: '#ffffff', label: 'CONCEPTUALISATION' },
+  custom: { fill: '#5d656b', stroke: '#3d4245', text: '#ffffff', label: 'CUSTOM' },
 };
 
 const PRESETS_BY_THEME: Record<ThemeName, PresetMap> = {
@@ -48,13 +56,13 @@ const PRESETS_BY_THEME: Record<ThemeName, PresetMap> = {
  * own colour, which we never override.
  */
 const KNOWN_BUILTIN_FILLS: Record<string, Set<string>> = {
-  analysis: new Set(['#f5e6a3', '#f5c84b', '#0098cc', '#00b8cc', '#3e7e99', '#cfe6f1']),
-  development: new Set(['#fcdea4', '#f2914a', '#cb6600', '#bd7a40', '#f1ddc4']),
-  sit: new Set(['#c6e9c6', '#5fd98a', '#009991', '#3e867f', '#cfe7e4']),
-  uat: new Set(['#beddfa', '#56c2e8', '#31bf69', '#4e9168', '#d6efdf']),
-  live: new Set(['#f8baba', '#e8657a', '#d23a52', '#99001b', '#a85563', '#f1d4d9']),
-  concept: new Set(['#f5e6a3', '#4fd3c9', '#0098cc', '#00b8cc', '#3e7e99', '#cfe6f1']),
-  custom: new Set(['#e0e0e0', '#b8c4d4', '#8aa0b8', '#8a9298', '#c2ccd6', '#6e7e92', '#dde3ea']),
+  analysis: new Set(['#f5e6a3', '#f5c84b', '#0098cc', '#00b8cc', '#3e7e99', '#cfe6f1', '#3a7d99', '#33708a']),
+  development: new Set(['#fcdea4', '#f2914a', '#cb6600', '#bd7a40', '#f1ddc4', '#b3701f', '#a1631c', '#a3651b']),
+  sit: new Set(['#c6e9c6', '#5fd98a', '#009991', '#3e867f', '#cfe7e4', '#2f8a80', '#2a7c73']),
+  uat: new Set(['#beddfa', '#56c2e8', '#31bf69', '#4e9168', '#d6efdf', '#4a9455', '#3f854c']),
+  live: new Set(['#f8baba', '#e8657a', '#d23a52', '#99001b', '#a85563', '#f1d4d9', '#b2455a', '#9e3d51']),
+  concept: new Set(['#f5e6a3', '#4fd3c9', '#0098cc', '#00b8cc', '#3e7e99', '#cfe6f1', '#5f5fa8', '#55549b']),
+  custom: new Set(['#e0e0e0', '#b8c4d4', '#8aa0b8', '#8a9298', '#c2ccd6', '#6e7e92', '#dde3ea', '#6b7379', '#5d656b']),
 };
 
 /** Phase colour presets for a theme (defaults to the active theme). */

@@ -4,8 +4,9 @@ import { sanitizeHtml } from '../utils/htmlSanitize';
 interface Props {
   /** Sanitised HTML for the bullet list (matches the format the editor produces). */
   html: string;
-  /** Receives the cell's bounding rect so the popover can anchor to it. */
-  onClick: (rect: DOMRect) => void;
+  /** Receives the cell's bounding rect so the popover can anchor to it.
+   * Omit for a read-only cell (the export-only dependencies column). */
+  onClick?: (rect: DOMRect) => void;
   /** Hover tooltip (defaults to the Key Features wording). */
   title?: string;
 }
@@ -32,6 +33,7 @@ export default function FeaturesCell({ html, onClick, title = 'Click to view all
   }, [html]);
 
   const handleClick = () => {
+    if (!onClick) return;
     const rect = cellRef.current?.getBoundingClientRect();
     if (rect) onClick(rect);
   };

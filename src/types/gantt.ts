@@ -57,12 +57,37 @@ export interface Dependency {
   toBarId: string;
 }
 
-export interface ActionItem {
+/**
+ * One row of the plan's register: everything being tracked that isn't a bar
+ * on the chart. A complete RAID log (Risk, Assumption, Issue, Dependency)
+ * plus the two a planner also needs (Action, Decision).
+ *
+ * `kind` is the ONLY thing that varies between them — every kind shares this
+ * shape, and everything kind-specific (label, colour, the past-tense word for
+ * `done`) lives in KIND_META in src/data/trackedKinds.ts.
+ *
+ * Not to be confused with `Dependency`, which is a finish-to-start arrow
+ * between two phase bars.
+ */
+export type TrackedKind =
+  | 'risk' | 'assumption' | 'issue' | 'dependency'
+  | 'action' | 'decision';
+
+export interface TrackedItem {
   id: string;
+  kind: TrackedKind;
   text: string;
+  /** Who owns or is chasing it. '' when unassigned. */
   owner: string;
+  /** Closed out — the wording depends on the kind (Completed, Cleared,
+   * Mitigated...). Done items stay for the record but stop counting. */
   done: boolean;
-  swimlaneId: string | null;
+  /**
+   * Projects this relates to. A LIST because one item routinely spans
+   * several ("Core banking API v3" is one dependency blocking three
+   * projects, not three dependencies). Empty = plan-level.
+   */
+  swimlaneIds: string[];
   createdAt: string;
 }
 
@@ -88,7 +113,11 @@ export interface Swimlane {
   id: string;
   projectName: string;
   keyFeatures: string; // HTML string (rich text)
-  keyDependencies: string; // HTML string (rich text)
+  /** LEGACY (pre-v8): dependencies used to live here as per-project rich text.
+   * Migrated into shared `TrackedItem`s of kind 'dependency' on load; still
+   * derived HTML so older builds and saved files keep showing something. Read
+   * it only in migration and export code — never as the source of truth. */
+  keyDependencies: string;
   section: SwimlaneSection;
   order: number;
   /** Optional user-chosen row tint (hex, e.g. '#3e63dd'). Applied as a
@@ -116,8 +145,11 @@ export const SWIMLANE_COLOR_PRESETS = [
   '#e93d82', // pink
 ] as const;
 
-/** Opacity used when compositing a swimlane's tint over the row background. */
-export const SWIMLANE_TINT_ALPHA = 0.32;
+/** Opacity used when compositing a swimlane's tint over the row background.
+ * Kept low on purpose: the tint groups projects, it does not compete with the
+ * phase bars sitting on top of it. At the old 0.32 the bands read as solid
+ * colour and flattened the hierarchy. */
+export const SWIMLANE_TINT_ALPHA = 0.16;
 
 export interface FloatingNote {
   id: string;
@@ -196,7 +228,7 @@ export type BarStyle = 'tagged' | 'legacy';
 
 /** Tabs on the right-edge rail. One panel open at a time; the strip itself is
  * always visible. Order mirrors the old toolbar buttons. */
-export type RailTab = 'inspector' | 'notes' | 'environments' | 'people' | 'claude';
+export type RailTab = 'inspector' | 'items' | 'environments' | 'people' | 'claude';
 
 export interface GanttState {
   sections: Section[];
@@ -204,7 +236,7 @@ export interface GanttState {
   phaseBars: PhaseBar[];
   milestones: Milestone[];
   dependencies: Dependency[];
-  actionItems: ActionItem[];
+  trackedItems: TrackedItem[];
   floatingNotes: FloatingNote[];
   environments: Environment[];
   teams: Team[];
@@ -232,8 +264,11 @@ export interface GanttState {
   /** Which rail tab's panel is open (one at a time), or null for none.
    * Replaces the three independent panel booleans. */
   railTab: RailTab | null;
-  notesPanelSwimlaneId: string | null;
-  notesPanelFilterId: string | null;
+  /** Scopes the Open Items panel to one project (set by the per-row badge
+   * on the canvas). null = every project. */
+  trackedFilterSwimlaneId: string | null;
+  /** Scopes the Open Items panel to one kind. null = every kind. */
+  trackedFilterKind: TrackedKind | null;
   environmentFocusId: string | null;
   /** Focused resource in people focus mode — dims bars not assigned to it. */
   peopleFocus: { kind: 'person' | 'team'; id: string } | null;

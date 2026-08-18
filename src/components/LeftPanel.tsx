@@ -1,5 +1,6 @@
 import { useGanttStore } from '../store/useGanttStore';
-import type { Swimlane } from '../types/gantt';
+import { KIND_META, BLOCKING_KINDS } from '../data/trackedKinds';
+import type { Swimlane, TrackedKind } from '../types/gantt';
 import { SWIMLANE_COLOR_PRESETS, SWIMLANE_TINT_ALPHA } from '../types/gantt';
 import { hexToRgba } from '../theme/colors';
 import { useSectionedLanes } from '../hooks/useSectionedLanes';
@@ -30,26 +31,49 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
   const addSection = useGanttStore(s => s.addSection);
   const removeSection = useGanttStore(s => s.removeSection);
   const updateSection = useGanttStore(s => s.updateSection);
-  const actionItems = useGanttStore(s => s.actionItems);
-  const openNotesPanelForSwimlane = useGanttStore(s => s.openNotesPanelForSwimlane);
-  const openNotesPanelFiltered = useGanttStore(s => s.openNotesPanelFiltered);
-  const updateActionItem = useGanttStore(s => s.updateActionItem);
+  const trackedItems = useGanttStore(s => s.trackedItems);
+  const openTrackedItemsFor = useGanttStore(s => s.openTrackedItemsFor);
+  const toggleTrackedItemProject = useGanttStore(s => s.toggleTrackedItemProject);
   const people = useGanttStore(s => s.people);
   const teams = useGanttStore(s => s.teams);
   const setSwimlaneOwners = useGanttStore(s => s.setSwimlaneOwners);
 
   const sectionedLanes = useSectionedLanes(sections, swimlanes);
 
-  // Note counts per swimlane (only open items)
-  const noteCountMap = useMemo(() => {
+  // Open tracked items per swimlane. One item linked to three projects counts
+  // on all three rows — that is the point of sharing.
+  const itemCountMap = useMemo(() => {
     const map = new Map<string, number>();
-    for (const item of actionItems) {
-      if (item.swimlaneId && !item.done) {
-        map.set(item.swimlaneId, (map.get(item.swimlaneId) || 0) + 1);
-      }
+    for (const d of trackedItems) {
+      if (d.done) continue;
+      for (const id of d.swimlaneIds) map.set(id, (map.get(id) || 0) + 1);
     }
     return map;
-  }, [actionItems]);
+  }, [trackedItems]);
+
+  // Lanes with an open dependency, risk or issue read as "held up" and tint
+  // the badge, preserving the signal the old two-badge layout carried.
+  const blockedLaneIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const d of trackedItems) {
+      if (d.done || !BLOCKING_KINDS.includes(d.kind)) continue;
+      for (const id of d.swimlaneIds) set.add(id);
+    }
+    return set;
+  }, [trackedItems]);
+
+  // Per-kind breakdown for the badge tooltip.
+  const itemBreakdown = useCallback((laneId: string) => {
+    const counts = new Map<TrackedKind, number>();
+    for (const d of trackedItems) {
+      if (d.done || !d.swimlaneIds.includes(laneId)) continue;
+      counts.set(d.kind, (counts.get(d.kind) || 0) + 1);
+    }
+    return [...counts.entries()]
+      .map(([kind, n]) => `${n} ${(n === 1 ? KIND_META[kind].label : KIND_META[kind].plural).toLowerCase()}`)
+      .join(', ');
+  }, [trackedItems]);
+
 
   // Drag reorder
   const [dragId, setDragId] = useState<string | null>(null);
@@ -159,7 +183,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
 
   const handleDragOver = useCallback((e: React.DragEvent, laneId: string) => {
     e.preventDefault();
-    if (e.dataTransfer.types.includes('application/x-action-item')) {
+    if (e.dataTransfer.types.includes('application/x-tracked-item')) {
       e.dataTransfer.dropEffect = 'link';
       setActionItemHoverLaneId(laneId);
       return;
@@ -177,9 +201,14 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
 
   const handleDrop = useCallback((e: React.DragEvent, targetLane: Swimlane, sectionLanes: Swimlane[]) => {
     e.preventDefault();
-    const actionItemId = e.dataTransfer.getData('application/x-action-item');
-    if (actionItemId) {
-      updateActionItem(actionItemId, { swimlaneId: targetLane.id });
+    const trackedItemId = e.dataTransfer.getData('application/x-tracked-item');
+    if (trackedItemId) {
+      // Links are multi now, so a drop ADDS this project rather than moving
+      // the item off whatever it already related to.
+      const item = useGanttStore.getState().trackedItems.find(d => d.id === trackedItemId);
+      if (item && !item.swimlaneIds.includes(targetLane.id)) {
+        toggleTrackedItemProject(trackedItemId, targetLane.id);
+      }
       setActionItemHoverLaneId(null);
       return;
     }
@@ -258,7 +287,7 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
     return (
       <div
         key={lane.id}
-        className={`swimlane-row${isActionItemTarget ? ' action-item-drop-target' : ''}`}
+        className={`swimlane-row${isActionItemTarget ? ' item-drop-target' : ''}`}
         onDragOver={e => handleDragOver(e, lane.id)}
         onDragLeave={handleDragLeave}
         onDrop={e => handleDrop(e, lane, sectionLanes)}
@@ -282,8 +311,8 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
         <div className="swimlane-project" style={{ flex: 1, position: 'relative' }}>
           <button
             className="swimlane-add-note-btn"
-            onClick={e => { e.stopPropagation(); openNotesPanelForSwimlane(lane.id); }}
-            title="Add action item"
+            onClick={e => { e.stopPropagation(); openTrackedItemsFor(lane.id); }}
+            title="Add an item for this project"
           >+</button>
           <RichTextEditor
             key={lane.id}
@@ -291,13 +320,13 @@ const LeftPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) =
             onSave={v => updateSwimlane(lane.id, { projectName: v })}
             className="swimlane-project-editor"
           />
-          {(noteCountMap.get(lane.id) || 0) > 0 && (
+          {(itemCountMap.get(lane.id) || 0) > 0 && (
             <button
-              className="swimlane-note-badge"
-              onClick={e => { e.stopPropagation(); openNotesPanelFiltered(lane.id); }}
-              title={`${noteCountMap.get(lane.id)} open action item(s) — click to view`}
+              className={`swimlane-item-badge${blockedLaneIds.has(lane.id) ? ' blocked' : ''}`}
+              onClick={e => { e.stopPropagation(); openTrackedItemsFor(lane.id); }}
+              title={`${itemBreakdown(lane.id)} — click to view`}
             >
-              {noteCountMap.get(lane.id)}
+              {itemCountMap.get(lane.id)}
             </button>
           )}
           {(() => {

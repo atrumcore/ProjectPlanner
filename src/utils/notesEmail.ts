@@ -1,4 +1,5 @@
-import type { ActionItem, Section, Swimlane } from '../types/gantt';
+import type { Section, Swimlane, TrackedItem } from '../types/gantt';
+import { KIND_META, KIND_ORDER } from '../data/trackedKinds';
 import { htmlToPlainText } from './plainText';
 
 export interface NotesEmail {
@@ -6,37 +7,40 @@ export interface NotesEmail {
   body: string;
 }
 
-const GENERAL_LABEL = 'General';
+const PLAN_LEVEL_LABEL = 'Plan-level';
 
-function formatItem(item: ActionItem, prefix: string): string {
+function formatItem(item: TrackedItem, prefix: string): string {
   const owner = item.owner ? `  (@${item.owner})` : '';
   return `      ${prefix} ${item.text}${owner}`;
 }
 
-function formatProjectBlock(projectName: string, items: ActionItem[]): string {
-  const active = items
-    .filter(i => !i.done)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  const done = items
-    .filter(i => i.done)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-
+/** One project's items, grouped by kind so a reader sees "Dependencies:" and
+ * "Risks:" rather than an undifferentiated list — the whole reason the
+ * register carries a kind. */
+function formatProjectBlock(projectName: string, items: TrackedItem[]): string {
   const lines: string[] = [`▸ ${projectName}`];
-  if (active.length > 0) {
-    lines.push('    Active:');
+  for (const kind of KIND_ORDER) {
+    const ofKind = items.filter(i => i.kind === kind);
+    if (ofKind.length === 0) continue;
+    const meta = KIND_META[kind];
+    const active = ofKind.filter(i => !i.done).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const done = ofKind.filter(i => i.done).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    lines.push(`    ${meta.plural}:`);
     for (const i of active) lines.push(formatItem(i, '•'));
-  }
-  if (done.length > 0) {
-    lines.push('    Completed:');
     for (const i of done) lines.push(formatItem(i, '✓'));
   }
   return lines.join('\n');
 }
 
-export function buildNotesEmail(
+/**
+ * Plain-text digest of the Open Items register for a mailto: link, grouped
+ * section → project → kind. An item linked to several projects appears under
+ * each of them, which is what a reader scanning one project wants.
+ */
+export function buildOpenItemsEmail(
   swimlanes: Swimlane[],
   sections: Section[],
-  actionItems: ActionItem[],
+  trackedItems: TrackedItem[],
   fileName: string | null,
 ): NotesEmail {
   const today = new Date();
@@ -45,31 +49,19 @@ export function buildNotesEmail(
     day: 'numeric', month: 'short', year: 'numeric',
   });
 
-  const subject = `Roadmap notes — ${fileName || 'Untitled'} — ${isoDate}`;
+  const subject = `Open items — ${fileName || 'Untitled'} — ${isoDate}`;
 
-  if (actionItems.length === 0) {
+  if (trackedItems.length === 0) {
     const body = [
-      `Roadmap notes as of ${longDate}`,
+      `Open items as of ${longDate}`,
       fileName ? `File: ${fileName}` : '',
       '',
-      'No action items.',
+      'Nothing tracked.',
     ].filter(Boolean).join('\n');
     return { subject, body };
   }
 
   const swimlaneById = new Map(swimlanes.map(s => [s.id, s]));
-
-  // Group items: valid swimlane → lane.id; otherwise → null (General)
-  const byLane = new Map<string | null, ActionItem[]>();
-  for (const item of actionItems) {
-    const laneId = item.swimlaneId && swimlaneById.has(item.swimlaneId)
-      ? item.swimlaneId
-      : null;
-    const list = byLane.get(laneId) ?? [];
-    list.push(item);
-    byLane.set(laneId, list);
-  }
-
   const orderedSections = [...sections].sort((a, b) => a.order - b.order);
   const blocks: string[] = [];
 
@@ -80,8 +72,8 @@ export function buildNotesEmail(
 
     const laneBlocks: string[] = [];
     for (const lane of lanesInSection) {
-      const items = byLane.get(lane.id);
-      if (!items || items.length === 0) continue;
+      const items = trackedItems.filter(i => i.swimlaneIds.includes(lane.id));
+      if (items.length === 0) continue;
       laneBlocks.push(formatProjectBlock(htmlToPlainText(lane.projectName), items));
     }
 
@@ -89,15 +81,19 @@ export function buildNotesEmail(
     blocks.push(`═══ ${section.label} ═══\n\n${laneBlocks.join('\n\n')}`);
   }
 
-  const generalItems = byLane.get(null);
-  if (generalItems && generalItems.length > 0) {
+  // Plan-level items, plus anything whose every link points at a project that
+  // no longer exists (so nothing is silently dropped from the digest).
+  const planLevel = trackedItems.filter(
+    i => i.swimlaneIds.filter(id => swimlaneById.has(id)).length === 0
+  );
+  if (planLevel.length > 0) {
     blocks.push(
-      `═══ ${GENERAL_LABEL} ═══\n\n${formatProjectBlock(GENERAL_LABEL, generalItems)}`
+      `═══ ${PLAN_LEVEL_LABEL} ═══\n\n${formatProjectBlock(PLAN_LEVEL_LABEL, planLevel)}`
     );
   }
 
   const header = [
-    `Roadmap notes as of ${longDate}`,
+    `Open items as of ${longDate}`,
     fileName ? `File: ${fileName}` : '',
   ].filter(Boolean).join('\n');
 

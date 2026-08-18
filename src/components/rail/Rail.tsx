@@ -72,7 +72,7 @@ interface TabDef {
 
 const TABS: TabDef[] = [
   { id: 'inspector', icon: InspectorIcon, title: 'Inspector (Ctrl+I)' },
-  { id: 'notes', icon: NotesIcon, title: 'Notes & Action Items (Ctrl+Shift+N)' },
+  { id: 'items', icon: NotesIcon, title: 'Open Items — actions, dependencies, risks (Ctrl+Shift+N)' },
   { id: 'environments', icon: EnvironmentsIcon, title: 'Environments & Contention (Ctrl+Shift+E)' },
   { id: 'people', icon: PeopleIcon, title: 'People & Teams (Ctrl+Shift+P)' },
   { id: 'claude', icon: ClaudeIcon, title: 'Claude assistant (Ctrl+Shift+C)' },
@@ -89,7 +89,7 @@ export default function Rail() {
   const railTab = useGanttStore(s => s.railTab);
   const toggleRailTab = useGanttStore(s => s.toggleRailTab);
 
-  const actionItems = useGanttStore(s => s.actionItems);
+  const trackedItems = useGanttStore(s => s.trackedItems);
   const environments = useGanttStore(s => s.environments);
   const swimlanes = useGanttStore(s => s.swimlanes);
   const phaseBars = useGanttStore(s => s.phaseBars);
@@ -97,7 +97,7 @@ export default function Rail() {
   const teams = useGanttStore(s => s.teams);
   const claudePending = useClaudeStore(s => s.pending !== null);
 
-  const openNotes = useMemo(() => actionItems.filter(i => !i.done).length, [actionItems]);
+  const openItems = useMemo(() => trackedItems.filter(i => !i.done).length, [trackedItems]);
   const envConflicts = useMemo(
     () => getContentions({ environments, swimlanes, phaseBars }).length,
     [environments, swimlanes, phaseBars]
@@ -108,7 +108,7 @@ export default function Rail() {
   );
 
   const badgeFor = (id: RailTab): { count: number; kind: 'info' | 'conflict' } | null => {
-    if (id === 'notes') return openNotes > 0 ? { count: openNotes, kind: 'info' } : null;
+    if (id === 'items') return openItems > 0 ? { count: openItems, kind: 'info' } : null;
     if (id === 'environments') return envConflicts > 0 ? { count: envConflicts, kind: 'conflict' } : null;
     if (id === 'people') return peopleConflicts > 0 ? { count: peopleConflicts, kind: 'conflict' } : null;
     // Un-actioned Claude proposal waiting — visible even with the panel closed.

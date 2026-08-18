@@ -6,7 +6,7 @@ import RightPanel from './RightPanel';
 import TimelineHeader from './TimelineHeader';
 import TimelineContent from './TimelineContent';
 import Toolbar from './Toolbar';
-import NotesPanel from './NotesPanel';
+import OpenItemsPanel from './OpenItemsPanel';
 import EnvironmentsPanel from './EnvironmentsPanel';
 import PeoplePanel from './PeoplePanel';
 import Rail from './rail/Rail';
@@ -22,7 +22,7 @@ import { useAuthStore } from '../auth/useAuthStore';
 import ManagePhaseTypesModal from './ManagePhaseTypesModal';
 import { useGanttStore } from '../store/useGanttStore';
 import { getTodayWeekOffset } from '../utils/dateUtils';
-import { buildNotesEmail } from '../utils/notesEmail';
+import { buildOpenItemsEmail } from '../utils/notesEmail';
 import { buildSwimlaneCsv } from '../utils/swimlaneExport';
 import { useThemeColors } from '../theme/ThemeContext';
 import {
@@ -34,12 +34,13 @@ import { ExportLayoutContext } from './ExportLayoutContext';
 
 const LEFT_DEFAULT = 304;
 const LEFT_MIN = 80;
+/** Width of the export-only Key Dependencies column (no longer resizable —
+ * it never appears on screen). */
 const RIGHT_DEFAULT = 180;
-const RIGHT_MIN = 60;
 
 const RAIL_TITLES = {
   inspector: 'Inspector',
-  notes: 'Notes & Action Items',
+  items: 'Open Items',
   environments: 'Environments & Contention',
   people: 'People & Teams',
   claude: 'Claude Assistant',
@@ -63,20 +64,17 @@ export default function GanttChart() {
 
   // Resizable panel widths
   const [leftWidth, setLeftWidth] = useState(LEFT_DEFAULT);
-  const [rightWidth, setRightWidth] = useState(RIGHT_DEFAULT);
   const [leftCollapsed, setLeftCollapsed] = useState(false);
-  const [rightCollapsed, setRightCollapsed] = useState(false);
 
   // Store width before collapse so we can restore
   const leftWidthBeforeCollapse = useRef(LEFT_DEFAULT);
-  const rightWidthBeforeCollapse = useRef(RIGHT_DEFAULT);
 
   // Drag-to-pan state
   const isPanning = useRef(false);
   const panStart = useRef({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
 
   // Resize drag state
-  const resizing = useRef<'left' | 'right' | null>(null);
+  const resizing = useRef<'left' | null>(null);
   const resizeStartX = useRef(0);
   const resizeStartWidth = useRef(0);
 
@@ -97,6 +95,7 @@ export default function GanttChart() {
   const railTab = useGanttStore(s => s.railTab);
   const setRailTab = useGanttStore(s => s.setRailTab);
   const toggleRailTab = useGanttStore(s => s.toggleRailTab);
+  const openTrackedItemsFor = useGanttStore(s => s.openTrackedItemsFor);
   const claudeHasChat = useClaudeStore(s => s.messages.length > 0);
   const clearClaudeChat = useClaudeStore(s => s.clearChat);
   const environmentFocusId = useGanttStore(s => s.environmentFocusId);
@@ -104,7 +103,7 @@ export default function GanttChart() {
   const peopleFocus = useGanttStore(s => s.peopleFocus);
   const setPeopleFocus = useGanttStore(s => s.setPeopleFocus);
   const phaseTypesModalOpen = useGanttStore(s => s.phaseTypesModalOpen);
-  const actionItems = useGanttStore(s => s.actionItems);
+  const trackedItems = useGanttStore(s => s.trackedItems);
   const swimlanes = useGanttStore(s => s.swimlanes);
   const sections = useGanttStore(s => s.sections);
   const phaseBars = useGanttStore(s => s.phaseBars);
@@ -125,37 +124,22 @@ export default function GanttChart() {
     }
   }, [leftCollapsed, leftWidth]);
 
-  const toggleRightCollapse = useCallback(() => {
-    if (rightCollapsed) {
-      setRightWidth(rightWidthBeforeCollapse.current);
-      setRightCollapsed(false);
-    } else {
-      rightWidthBeforeCollapse.current = rightWidth;
-      setRightCollapsed(true);
-    }
-  }, [rightCollapsed, rightWidth]);
-
-  // Resize handle drag
-  const handleResizeStart = useCallback((side: 'left' | 'right', e: React.PointerEvent) => {
+  // Resize handle drag (left panel only — the dependencies column is
+  // export-only and has no on-screen handle).
+  const handleResizeStart = useCallback((e: React.PointerEvent) => {
     e.preventDefault();
-    resizing.current = side;
+    resizing.current = 'left';
     resizeStartX.current = e.clientX;
-    resizeStartWidth.current = side === 'left' ? leftWidth : rightWidth;
+    resizeStartWidth.current = leftWidth;
     (e.target as Element).setPointerCapture(e.pointerId);
-  }, [leftWidth, rightWidth]);
+  }, [leftWidth]);
 
   const handleResizeMove = useCallback((e: React.PointerEvent) => {
     if (!resizing.current) return;
     const dx = e.clientX - resizeStartX.current;
-    if (resizing.current === 'left') {
-      setLeftWidth(Math.max(LEFT_MIN, resizeStartWidth.current + dx));
-      if (leftCollapsed) setLeftCollapsed(false);
-    } else {
-      // Right panel: dragging left makes it bigger
-      setRightWidth(Math.max(RIGHT_MIN, resizeStartWidth.current - dx));
-      if (rightCollapsed) setRightCollapsed(false);
-    }
-  }, [leftCollapsed, rightCollapsed]);
+    setLeftWidth(Math.max(LEFT_MIN, resizeStartWidth.current + dx));
+    if (leftCollapsed) setLeftCollapsed(false);
+  }, [leftCollapsed]);
 
   const handleResizeEnd = useCallback(() => {
     resizing.current = null;
@@ -283,7 +267,7 @@ export default function GanttChart() {
       }
       if (mod && e.shiftKey && key === 'n') {
         e.preventDefault();
-        toggleRailTab('notes');
+        toggleRailTab('items');
         return;
       }
       if (mod && e.shiftKey && key === 'e') {
@@ -299,6 +283,17 @@ export default function GanttChart() {
       if (mod && e.shiftKey && key === 'c') {
         e.preventDefault();
         toggleRailTab('claude');
+        return;
+      }
+      if (mod && e.shiftKey && key === 'd') {
+        // Kept from when Dependencies was its own tab: opens the register
+        // already filtered to that lens, so the old habit still lands.
+        e.preventDefault();
+        if (railTab === 'items' && useGanttStore.getState().trackedFilterKind === 'dependency') {
+          setRailTab(null);
+        } else {
+          openTrackedItemsFor(null, 'dependency');
+        }
         return;
       }
       if (mod && key === 'n') {
@@ -349,7 +344,7 @@ export default function GanttChart() {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [undo, redo, selectedBarId, removePhaseBar, selectBar, saveFile, saveFileAs, openFile, newFile, toggleRailTab, railTab, setRailTab, environmentFocusId, setEnvironmentFocus, peopleFocus, setPeopleFocus]);
+  }, [undo, redo, selectedBarId, removePhaseBar, selectBar, saveFile, saveFileAs, openFile, newFile, toggleRailTab, openTrackedItemsFor, railTab, setRailTab, environmentFocusId, setEnvironmentFocus, peopleFocus, setPeopleFocus]);
 
   const handleSpacePanStart = useCallback((e: React.PointerEvent) => {
     if (spaceHeld.current && e.button === 0) {
@@ -386,13 +381,13 @@ export default function GanttChart() {
     const prevScrollLeft = body?.scrollLeft ?? 0;
     const prevScrollTop = body?.scrollTop ?? 0;
     const prevLeftCollapsed = leftCollapsed;
-    const prevRightCollapsed = rightCollapsed;
 
     try {
       // Enter export mode (batched into one render): include the full plan by
-      // forcing collapsed panels open, and start from the top-left origin.
+      // forcing the collapsed left panel open, and start from the top-left
+      // origin. `isExporting` also mounts the Key Dependencies column, which
+      // exists only for the exported image.
       if (prevLeftCollapsed) setLeftCollapsed(false);
-      if (prevRightCollapsed) setRightCollapsed(false);
       setScrollLeft(0);
       if (body) { body.scrollLeft = 0; body.scrollTop = 0; }
       setIsExporting(true);
@@ -437,11 +432,10 @@ export default function GanttChart() {
       // reverts every CSS override at once.
       setIsExporting(false);
       if (prevLeftCollapsed) setLeftCollapsed(true);
-      if (prevRightCollapsed) setRightCollapsed(true);
       if (body) { body.scrollLeft = prevScrollLeft; body.scrollTop = prevScrollTop; }
       setScrollLeft(prevScrollLeft);
     }
-  }, [themeColors, leftCollapsed, rightCollapsed]);
+  }, [themeColors, leftCollapsed]);
 
   // Base name for exported files: the open document's name (sans .json), else
   // a sensible default. Keeps downloads identifiable instead of a generic name.
@@ -514,9 +508,9 @@ export default function GanttChart() {
   }, [captureCanvas, exportBaseName]);
 
   const emailNotes = useCallback(() => {
-    const { subject, body } = buildNotesEmail(swimlanes, sections, actionItems, currentFileName);
+    const { subject, body } = buildOpenItemsEmail(swimlanes, sections, trackedItems, currentFileName);
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  }, [swimlanes, sections, actionItems, currentFileName]);
+  }, [swimlanes, sections, trackedItems, currentFileName]);
 
   const exportSwimlanes = useCallback(() => {
     const csv = buildSwimlaneCsv(swimlanes, sections, phaseBars, phaseTypes, timeline, people, teams);
@@ -576,7 +570,7 @@ export default function GanttChart() {
       {/* Left resize handle + collapse toggle */}
       <div
         className="resize-handle"
-        onPointerDown={e => handleResizeStart('left', e)}
+        onPointerDown={handleResizeStart}
         onPointerMove={handleResizeMove}
         onPointerUp={handleResizeEnd}
         onPointerCancel={handleResizeEnd}
@@ -623,31 +617,11 @@ export default function GanttChart() {
         </div>
       </div>
 
-      {/* Right resize handle + collapse toggle */}
-      <div
-        className="resize-handle"
-        onPointerDown={e => handleResizeStart('right', e)}
-        onPointerMove={handleResizeMove}
-        onPointerUp={handleResizeEnd}
-        onPointerCancel={handleResizeEnd}
-      >
-        <button
-          className="collapse-btn collapse-btn-right"
-          onClick={toggleRightCollapse}
-          title={rightCollapsed ? 'Show right panel' : 'Hide right panel'}
-        >
-          {rightCollapsed ? '\u25C0' : '\u25B6'}
-        </button>
-      </div>
-
-      {/* Right panel */}
-      {!rightCollapsed && (
-        <RightPanel
-          ref={rightRef}
-          onScroll={top => syncScroll('right', top)}
-          width={rightWidth}
-        />
-      )}
+      {/* Key Dependencies column \u2014 EXPORT ONLY. Reading and editing happen in
+          the rail tab (Ctrl+Shift+D); the column exists purely so exported
+          PNG/PDF plans still carry each project's dependencies for readers
+          who only ever see the picture. */}
+      {isExporting && <RightPanel ref={rightRef} onScroll={() => {}} width={RIGHT_DEFAULT} />}
     </div>
 
     {/* Rail panel + strip — in-flow, outside .gantt-container so exports
@@ -657,14 +631,14 @@ export default function GanttChart() {
       <RailPanel
         title={RAIL_TITLES[railTab]}
         onClose={() => setRailTab(null)}
-        headerActions={railTab === 'notes'
+        headerActions={railTab === 'items'
           ? <button onClick={emailNotes} title="Email notes" aria-label="Email notes">&#x2709;</button>
           : railTab === 'claude' && claudeHasChat
             ? <button className="claude-clear-btn" onClick={clearClaudeChat} title="Clear conversation">Clear</button>
             : undefined}
       >
         {railTab === 'inspector' && <InspectorTab />}
-        {railTab === 'notes' && <NotesPanel />}
+        {railTab === 'items' && <OpenItemsPanel />}
         {railTab === 'environments' && <EnvironmentsPanel />}
         {railTab === 'people' && <PeoplePanel />}
         {railTab === 'claude' && <ClaudeChat />}
