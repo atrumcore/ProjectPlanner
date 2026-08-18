@@ -4,8 +4,48 @@ import type { PendingProposal } from '../../ai/useAssistantStore';
 import { activeProvider, useAssistantStore } from '../../ai/useAssistantStore';
 import AiProviderModal from './AiProviderModal';
 
-/** How much of the live thinking narrative to show while streaming. */
-const THINKING_TAIL_CHARS = 280;
+/** How close to the bottom still counts as "following along", in px. Anything
+ * further up is treated as the user having deliberately scrolled back. */
+const STICK_THRESHOLD = 24;
+
+/**
+ * Keep a scroller pinned to the bottom as content streams in — but only while
+ * the user is actually at the bottom.
+ *
+ * The panel used to force `scrollTop = scrollHeight` on every reasoning delta.
+ * Deltas land many times a second, so scrolling up to read an earlier reply
+ * snapped you straight back down before you could read it: the transcript was
+ * there the whole time and simply could not be looked at.
+ */
+function useStickToBottom(deps: unknown[]) {
+  const ref = useRef<HTMLDivElement>(null);
+  const pinnedRef = useRef(true);
+  const [pinned, setPinned] = useState(true);
+
+  const onScroll = () => {
+    const el = ref.current;
+    if (!el) return;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= STICK_THRESHOLD;
+    pinnedRef.current = atBottom;
+    setPinned(atBottom);
+  };
+
+  useEffect(() => {
+    const el = ref.current;
+    if (el && pinnedRef.current) el.scrollTop = el.scrollHeight;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+
+  const jumpToLatest = () => {
+    const el = ref.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+    pinnedRef.current = true;
+    setPinned(true);
+  };
+
+  return { ref, onScroll, pinned, jumpToLatest };
+}
 
 /** Shown until the user has registered somewhere to send requests. */
 function NoProviderState() {
@@ -71,6 +111,17 @@ function ProposalCard({ pending }: { pending: PendingProposal }) {
   );
 }
 
+/** The model's reasoning, in full and scrollable. Used live while streaming
+ * and again behind a disclosure once the turn has finished. */
+function Reasoning({ text, live }: { text: string; live?: boolean }) {
+  const { ref, onScroll } = useStickToBottom([live ? text.length : 0]);
+  return (
+    <div className="assistant-thinking" ref={ref} onScroll={onScroll}>
+      {text}
+    </div>
+  );
+}
+
 function StreamingRow() {
   const thinkingText = useAssistantStore(s => s.thinkingText);
   const progressChars = useAssistantStore(s => s.progressChars);
@@ -87,14 +138,15 @@ function StreamingRow() {
   const elapsedSec = streamStartedAt ? Math.max(0, Math.floor((now - streamStartedAt) / 1000)) : 0;
   const elapsed = `${Math.floor(elapsedSec / 60)}:${String(elapsedSec % 60).padStart(2, '0')}`;
 
-  const tail = thinkingText.slice(-THINKING_TAIL_CHARS);
   const label = progressChars > 0
     ? `Drafting plan… ${(progressChars / 1024).toFixed(1)} KB · ${elapsed}`
     : `Thinking… ${elapsed}`;
 
   return (
     <div className="assistant-streaming">
-      {tail && <div className="assistant-thinking">{tail}</div>}
+      {/* The whole narrative, not its last 280 characters — the tail clamp
+          threw away most of what the model said and could not be scrolled. */}
+      {thinkingText && <Reasoning text={thinkingText} live />}
       <div className="assistant-stream-row">
         <span className="assistant-stream-pulse" aria-hidden="true" />
         <span>{label}</span>
@@ -124,16 +176,14 @@ export default function AssistantChat() {
   const toggleSettings = useAssistantStore(s => s.toggleSettings);
 
   const [draft, setDraft] = useState('');
-  const listRef = useRef<HTMLDivElement>(null);
 
   const streaming = status === 'streaming';
 
-  // Keep the newest content in view as messages/thinking/proposals arrive.
+  // Follow new content only while the user is at the bottom, so scrolling back
+  // through the transcript is not fought by every incoming delta.
   const thinkingLen = useAssistantStore(s => s.thinkingText.length);
-  useEffect(() => {
-    const el = listRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [messages.length, pending, streaming, thinkingLen]);
+  const { ref: listRef, onScroll, pinned, jumpToLatest } =
+    useStickToBottom([messages.length, pending, streaming, thinkingLen]);
 
   if (!provider || !active) {
     return (
@@ -153,7 +203,7 @@ export default function AssistantChat() {
 
   return (
     <div className="assistant-chat-root">
-      <div className="assistant-chat" ref={listRef}>
+      <div className="assistant-chat" ref={listRef} onScroll={onScroll}>
         {messages.length === 0 && !streaming && (
           <div className="teach-state">
             <span className="kicker">Plan with AI</span>
@@ -174,12 +224,25 @@ export default function AssistantChat() {
             className={`assistant-msg ${m.role}${m.isError ? ' is-error' : ''}${m.isNotice ? ' is-notice' : ''}`}
           >
             {m.text}
+            {m.thinking && (
+              // Collapsed by default: the summary is the reply, the reasoning
+              // is there for when you want to check how it got there.
+              <details className="assistant-reasoning">
+                <summary>Show reasoning</summary>
+                <Reasoning text={m.thinking} />
+              </details>
+            )}
             {m.applied && <div className="assistant-msg-applied">✓ Applied — Ctrl+Z to undo</div>}
           </div>
         ))}
         {pending && <ProposalCard pending={pending} />}
         {streaming && <StreamingRow />}
       </div>
+      {!pinned && (
+        <button className="assistant-jump-latest" onClick={jumpToLatest}>
+          ↓ Jump to latest
+        </button>
+      )}
       <div className="assistant-composer">
         <textarea
           value={draft}

@@ -4026,6 +4026,8 @@ select option {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  /* Anchors the floating "jump to latest" pill. */
+  position: relative;
 }
 
 .assistant-chat {
@@ -4077,6 +4079,9 @@ select option {
   gap: 8px;
 }
 
+/* The full reasoning narrative. Capped in height and scrolled in place rather
+   than truncated: a long narrative should not push the composer off-screen,
+   but every word of it stays reachable. */
 .assistant-thinking {
   font-size: var(--fs-meta);
   font-style: italic;
@@ -4084,6 +4089,67 @@ select option {
   line-height: 1.5;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  max-height: 168px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* Retained reasoning on a finished turn. */
+.assistant-reasoning {
+  margin-top: 8px;
+}
+
+.assistant-reasoning > summary {
+  font-size: var(--fs-badge);
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+
+.assistant-reasoning > summary::-webkit-details-marker { display: none; }
+
+.assistant-reasoning > summary::before {
+  content: '▸ ';
+  display: inline-block;
+}
+
+.assistant-reasoning[open] > summary::before {
+  content: '▾ ';
+}
+
+.assistant-reasoning > summary:hover {
+  color: var(--text-primary);
+}
+
+.assistant-reasoning .assistant-thinking {
+  margin-top: 6px;
+  padding-left: 8px;
+  border-left: 2px solid var(--border);
+}
+
+/* Only shown once the user has scrolled away from the bottom, so following
+   along live is never interrupted by an affordance they do not need. */
+.assistant-jump-latest {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 96px;
+  z-index: 2;
+  font-size: var(--fs-badge);
+  font-weight: 600;
+  color: var(--on-accent);
+  background: var(--accent-primary);
+  border: none;
+  border-radius: 999px;
+  padding: 5px 12px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.assistant-jump-latest:hover {
+  background: var(--accent-primary-hover);
 }
 
 .assistant-stream-row {

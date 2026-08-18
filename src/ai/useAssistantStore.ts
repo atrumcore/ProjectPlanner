@@ -29,6 +29,10 @@ export interface ChatMessage {
   isError?: boolean;
   /** Neither role: a panel notice, e.g. the provider changed. */
   isNotice?: boolean;
+  /** Assistant messages: the reasoning narrative this turn streamed, kept so
+   * it can be re-read. It used to be dropped the moment the turn finished,
+   * which is precisely when someone wants to look at it. */
+  thinking?: string;
 }
 
 export interface PendingProposal {
@@ -229,7 +233,14 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
         thinkingText: '',
         progressChars: 0,
         jsonMode: result.jsonMode ?? s.jsonMode,
-        messages: [...s.messages, { id: messageId, role: 'assistant', text: result.response.summary }],
+        messages: [...s.messages, {
+          id: messageId,
+          role: 'assistant',
+          text: result.response.summary,
+          // Carry the reasoning onto the message before clearing the live
+          // buffer, so it survives the turn instead of being thrown away.
+          thinking: s.thinkingText.trim() || undefined,
+        }],
         history: [...s.history, result.userTurn, result.assistantTurn],
         pending: {
           plan: result.response.plan,
