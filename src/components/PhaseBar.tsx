@@ -255,6 +255,78 @@ export default function PhaseBar({ bar, rowY }: Props) {
   // solid pill path, where the bar fill is the phase colour.
   const labelFill = useSolidPill ? colors.text : c.TEXT_PRIMARY;
 
+  // ── Shared inner layout ───────────────────────────────────────────────────
+  // The bar's contents are one left-to-right run: [date] [chips] [label].
+  // Every piece is measured here, once, so the label knows what is in front of
+  // it. Previously the chip row and the label each computed their own left
+  // edge from the bar origin: the label reserved a slot for the date but knew
+  // nothing about the chips, so with dates off they began at exactly the same
+  // x and the chips were painted straight over the label — and the row of
+  // 16px chips sat bottom-aligned across the label's own line, so there was no
+  // vertical escape either.
+  const CHIP_R = 8;
+  const CHIP_STEP = CHIP_R * 2 + 2;
+  const CHIP_MAX_VISIBLE = 3;
+  const CHIP_OVERFLOW_W = 16;
+
+  const assignedTeams = bar.teamIds
+    .map(id => teams.find(t => t.id === id))
+    .filter((t): t is NonNullable<typeof t> => !!t);
+  const assignedPeople = bar.assigneeIds
+    .map(id => people.find(p => p.id === id))
+    .filter((p): p is NonNullable<typeof p> => !!p);
+  const chips: Array<{ key: string; color: string; text: string; isTeam: boolean; title: string }> = [
+    ...assignedTeams.map(t => ({ key: `t-${t.id}`, color: t.color, text: initials(t.name), isTeam: true, title: `Team: ${t.name}` })),
+    ...assignedPeople.map(p => ({ key: `p-${p.id}`, color: p.color, text: initials(p.name), isTeam: false, title: p.role ? `${p.name} (${p.role})` : p.name })),
+  ];
+  // Mirrors the render condition below — the label must reserve space only
+  // when the chips are actually painted, or short bars lose their label for
+  // chips that never appear.
+  const chipsRendered = !editing && showPeopleIndicators && displayWidth >= 40
+    && (chips.length > 0 || isHovered || isSelected);
+
+  const innerLeft = x + (useSolidPill ? 8 : TAG_WIDTH + 7);
+  const dateStr = formatDayMonth(startDate);
+  const dateSlotW = dateSlotWidth(DATE_FONT_SIZE, DATE_FONT_WEIGHT);
+  const barInnerRight = x + displayWidth - 8;
+  const showDate = showBarDates
+    && barInnerRight - innerLeft >= measureText(dateStr, DATE_FONT_SIZE, DATE_FONT_WEIGHT);
+  const chipsLeft = innerLeft + (showDate ? dateSlotW + LABEL_GAP : 0);
+
+  // Smallest label worth drawing. A truncation like "D…" costs a chip its
+  // place and still tells you nothing, so below this the label is dropped
+  // rather than rendered as a stub — the full text stays in the tooltip.
+  const MIN_LABEL_W = measureText('ABC…', LABEL_FONT_SIZE, LABEL_FONT_WEIGHT);
+
+  const chipRowWidthFor = (n: number) =>
+    n === 0 ? 0 : n * CHIP_STEP - 2 + (chips.length - n > 0 ? CHIP_OVERFLOW_W : 0);
+
+  // On a tight bar the phase name outranks who is on it: shed chips into the
+  // "+N" overflow until the label clears its minimum. Three chips plus a date
+  // eat ~100px, so a 4-week bar had nothing left and showed "D…" while the
+  // chips kept full width. One chip is the floor — dropping the row entirely
+  // would hide that anyone is assigned at all.
+  let visibleCount = Math.min(CHIP_MAX_VISIBLE, chips.length);
+  if (chipsRendered && chips.length > 0 && bar.label) {
+    while (visibleCount > 1) {
+      const labelSpace = barInnerRight - (chipsLeft + chipRowWidthFor(visibleCount) + LABEL_GAP);
+      if (labelSpace >= MIN_LABEL_W) break;
+      visibleCount--;
+    }
+  }
+
+  const visibleChips = chips.slice(0, visibleCount);
+  const chipOverflow = chips.length - visibleChips.length;
+  const chipRowW = !chipsRendered
+    ? 0
+    : chips.length > 0
+      ? chipRowWidthFor(visibleCount)
+      : CHIP_R * 2; // the lone dashed "add" affordance
+  const labelLeft = chipsLeft + (chipRowW > 0 ? chipRowW + LABEL_GAP : 0);
+  // One centreline for date, chips and label so the run reads as a single row
+  // rather than a label with badges hanging off the bottom of the bar.
+  const contentCy = y + BAR_HEIGHT / 2;
+
   return (
     <g onDoubleClick={(e) => e.stopPropagation()}>
 
@@ -340,24 +412,17 @@ export default function PhaseBar({ bar, rowY }: Props) {
           date sits in a fixed-width slot so every label on the chart starts
           at the same offset instead of jittering with its date's width. */}
       {!editing && (() => {
-        const innerLeft = x + (useSolidPill ? 8 : TAG_WIDTH + 7);
-        const availW = x + displayWidth - 8 - innerLeft;
-        const dateStr = formatDayMonth(startDate);
-        const slotW = dateSlotWidth(DATE_FONT_SIZE, DATE_FONT_WEIGHT);
-        const showDate = showBarDates && availW >= measureText(dateStr, DATE_FONT_SIZE, DATE_FONT_WEIGHT);
-        const labelLeft = innerLeft + (showDate ? slotW + LABEL_GAP : 0);
-        const label = fitText(
-          bar.label,
-          x + displayWidth - 8 - labelLeft,
-          LABEL_FONT_SIZE,
-          LABEL_FONT_WEIGHT,
-        );
+        const labelSpace = barInnerRight - labelLeft;
+        // Below the minimum, draw nothing rather than a one-letter stub.
+        const label = labelSpace >= MIN_LABEL_W
+          ? fitText(bar.label, labelSpace, LABEL_FONT_SIZE, LABEL_FONT_WEIGHT)
+          : '';
         return (
           <>
             {showDate && (
               <text
                 x={innerLeft}
-                y={y + BAR_HEIGHT / 2 + TEXT_BASELINE_OFFSET}
+                y={contentCy + TEXT_BASELINE_OFFSET}
                 fill={labelFill}
                 fontSize={DATE_FONT_SIZE}
                 fontWeight={DATE_FONT_WEIGHT}
@@ -370,7 +435,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
             {label && (
               <text
                 x={labelLeft}
-                y={y + BAR_HEIGHT / 2 + TEXT_BASELINE_OFFSET}
+                y={contentCy + TEXT_BASELINE_OFFSET}
                 fill={labelFill}
                 fontSize={LABEL_FONT_SIZE}
                 fontWeight={LABEL_FONT_WEIGHT}
@@ -624,29 +689,18 @@ export default function PhaseBar({ bar, rowY }: Props) {
 
       {/* People chips — teams first, then person initials, bottom-left of the
           bar. Click opens the multi-select people picker. */}
-      {!editing && showPeopleIndicators && displayWidth >= 40 && (() => {
-        const assignedTeams = bar.teamIds
-          .map(id => teams.find(t => t.id === id))
-          .filter((t): t is NonNullable<typeof t> => !!t);
-        const assignedPeople = bar.assigneeIds
-          .map(id => people.find(p => p.id === id))
-          .filter((p): p is NonNullable<typeof p> => !!p);
-        const chips: Array<{ key: string; color: string; text: string; isTeam: boolean; title: string }> = [
-          ...assignedTeams.map(t => ({ key: `t-${t.id}`, color: t.color, text: initials(t.name), isTeam: true, title: `Team: ${t.name}` })),
-          ...assignedPeople.map(p => ({ key: `p-${p.id}`, color: p.color, text: initials(p.name), isTeam: false, title: p.role ? `${p.name} (${p.role})` : p.name })),
-        ];
+      {chipsRendered && (() => {
         const hasAny = chips.length > 0;
-        if (!hasAny && !(isHovered || isSelected)) return null;
 
         // 16px chips: the smallest that fit two-letter initials at the type
         // scale's 9px floor. All chip layout derives from this radius.
-        const chipR = 8;
-        const step = chipR * 2 + 2;
-        const maxVisible = 3;
-        const visible = chips.slice(0, maxVisible);
-        const overflow = chips.length - visible.length;
-        const baseX = x + (useSolidPill ? 8 : TAG_WIDTH + 8);
-        const cyChip = y + BAR_HEIGHT - chipR - 2;
+        const chipR = CHIP_R;
+        const step = CHIP_STEP;
+        const visible = visibleChips;
+        const overflow = chipOverflow;
+        // Sits after the date and before the label, on the shared centreline.
+        const baseX = chipsLeft;
+        const cyChip = contentCy;
         const openPicker = (e: React.MouseEvent) => {
           e.stopPropagation();
           setPeoplePicker({ x: e.clientX, y: e.clientY });
