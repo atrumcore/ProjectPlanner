@@ -14,6 +14,7 @@ import TodayMarker from './TodayMarker';
 import MilestoneMarker from './MilestoneMarker';
 import PhaseTypePicker from './PhaseTypePicker';
 import FloatingNote from './FloatingNote';
+import { FS, FW, FONT_BODY } from '../theme/typography';
 
 interface DrawingBar {
   swimlaneId: string;
@@ -481,8 +482,8 @@ export default function TimelineContent() {
         <text
           x={gridWidth / 2} y={contentHeight / 2}
           textAnchor="middle" dominantBaseline="middle"
-          fill={c.TEXT_SECONDARY} fontSize={13}
-          fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
+          fill={c.TEXT_SECONDARY} fontSize={FS.meta} fontWeight={FW.meta}
+          fontFamily={FONT_BODY}
           opacity={0.5} style={{ pointerEvents: 'none' }}
         >
           Click and drag to create a phase bar

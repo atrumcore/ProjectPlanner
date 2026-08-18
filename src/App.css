@@ -16,6 +16,16 @@
   --font-display: 'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif;
   --font-body: 'Open Sans', Helvetica, Arial, sans-serif;
 
+  /* BBD v2 type scale — design-system/foundations/typography.html.
+     Mirrored for the SVG canvas in src/theme/typography.ts; 9px is the floor. */
+  --fs-title: 15px;   /* Montserrat 700 — app title / launcher heading */
+  --fs-detail: 14px;  /* Montserrat 600 — panel detail name */
+  --fs-row: 13px;     /* Open Sans 600  — row titles, buttons, plan names */
+  --fs-body: 12px;    /* Open Sans 400  — panels, menus, inputs */
+  --fs-meta: 11px;    /* Open Sans 400  — meta, hints, attribution */
+  --fs-label: 10px;   /* Montserrat 700 — eyebrows (caps +0.12em), on-bar */
+  --fs-badge: 9px;    /* 700 — badges, pills, chip initials */
+
   --row-height: 48px;
   /* "+ Add project/section" row height — mirrored by the timeline SVG's
      spacer bands (ADD_ROW_HEIGHT in src/types/gantt.ts). */
@@ -464,7 +474,7 @@ select option {
 }
 
 .display-preset-hint {
-  font-size: 10px;
+  font-size: var(--fs-meta);
   color: var(--text-muted);
   margin-left: auto;
 }
@@ -1181,7 +1191,7 @@ select option {
 /* Right-aligned keyboard shortcut hint */
 .menu-item-shortcut {
   margin-left: auto;
-  font-size: 10px;
+  font-size: var(--fs-meta);
   color: var(--text-muted);
   font-family: ui-monospace, 'Cascadia Mono', Consolas, Menlo, monospace;
 }
@@ -1215,7 +1225,7 @@ select option {
 }
 
 .timeline-range-label {
-  font-size: 10px;
+  font-size: var(--fs-meta);
   color: var(--text-primary);
   opacity: 0.7;
   white-space: nowrap;
@@ -1287,9 +1297,9 @@ select option {
   align-items: center;
   justify-content: center;
   width: 34px;
-  font-size: 9px;
+  font-size: var(--fs-badge);
   color: var(--text-muted);
-  font-weight: 600;
+  font-weight: 700;
   flex-shrink: 0;
 }
 
@@ -1595,7 +1605,7 @@ select option {
   padding: 6px 8px 2px;
 }
 .people-picker-meta {
-  font-size: 10px;
+  font-size: var(--fs-meta);
   color: var(--text-secondary);
   font-weight: 400;
 }
@@ -1839,7 +1849,7 @@ select option {
   letter-spacing: 0.12em;
 }
 .people-roster-meta {
-  font-size: 10px;
+  font-size: var(--fs-meta);
   color: var(--text-secondary);
   font-weight: 400;
   overflow: hidden;
@@ -1887,8 +1897,8 @@ select option {
   text-decoration: underline dotted;
 }
 .people-detail-name-input {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: var(--fs-row);
+  font-weight: 600;
   padding: 3px 6px;
   background: var(--bg-app);
   color: var(--text-primary);
@@ -2581,7 +2591,7 @@ select option {
 }
 
 .item-row-delete.confirm {
-  font-size: 10px;
+  font-size: var(--fs-badge);
   font-weight: 600;
   color: #ffffff;
   background: var(--error-bright);
@@ -2599,7 +2609,7 @@ select option {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 10px;
+  font-size: var(--fs-badge);
   font-weight: 600;
   font-family: var(--font-body);
   padding: 2px 7px;
@@ -2622,7 +2632,7 @@ select option {
 }
 
 .item-chip {
-  font-size: 10px;
+  font-size: var(--fs-badge);
   font-family: var(--font-body);
   padding: 2px 7px;
   border-radius: 999px;
@@ -2645,13 +2655,13 @@ select option {
 .item-chip:hover .item-chip-x { opacity: 1; }
 
 .item-chip-none {
-  font-size: 10px;
+  font-size: var(--fs-badge);
   font-style: italic;
   color: var(--text-muted);
 }
 
 .item-link-btn {
-  font-size: 10px;
+  font-size: var(--fs-badge);
   font-family: var(--font-body);
   padding: 2px 7px;
   border-radius: 999px;
@@ -2669,7 +2679,7 @@ select option {
 .item-kind-select,
 .item-link-select,
 .item-owner-input {
-  font-size: 10px;
+  font-size: var(--fs-badge);
   font-family: var(--font-body);
   padding: 2px 4px;
   border: 1px solid var(--accent-secondary);
@@ -2680,7 +2690,7 @@ select option {
 }
 
 .item-owner {
-  font-size: 10px;
+  font-size: var(--fs-badge);
   font-family: var(--font-body);
   padding: 2px 7px;
   border-radius: 999px;
@@ -2835,7 +2845,7 @@ select option {
 /* Phase bar drag-time pill */
 .phase-bar-drag-pill {
   display: inline-block;
-  font-size: 10px;
+  font-size: var(--fs-badge);
   font-weight: 700;
   letter-spacing: 0.4px;
   color: #ffffff;
@@ -3194,7 +3204,7 @@ select option {
 }
 .env-panel-contention-week {
   color: var(--text-secondary);
-  font-size: 10px;
+  font-size: var(--fs-meta);
   margin-left: 4px;
 }
 
@@ -3660,8 +3670,8 @@ select option {
 }
 
 .key-features-popover-project {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: var(--fs-row);
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3768,7 +3778,7 @@ select option {
   background: var(--hover);
   padding: 1px 6px;
   border-radius: 4px;
-  font-size: 10px;
+  font-size: var(--fs-meta);
   color: var(--text-secondary);
   border: 1px solid var(--border);
 }
@@ -4079,7 +4089,7 @@ select option {
 
 .claude-msg-applied {
   margin-top: 6px;
-  font-size: 10px;
+  font-size: var(--fs-badge);
   font-weight: 600;
   color: var(--success);
 }
@@ -4128,7 +4138,7 @@ select option {
 }
 
 .claude-stream-note {
-  font-size: 10px;
+  font-size: var(--fs-meta);
   color: var(--text-muted);
   line-height: 1.5;
 }
@@ -4150,7 +4160,7 @@ select option {
 }
 
 .claude-diff-chip {
-  font-size: 10px;
+  font-size: var(--fs-badge);
   font-weight: 600;
   padding: 3px 9px;
   border-radius: 999px;
@@ -4219,7 +4229,7 @@ select option {
 .claude-composer-hint {
   flex: 1;
   text-align: right;
-  font-size: 10px;
+  font-size: var(--fs-meta);
   color: var(--text-muted);
 }
 

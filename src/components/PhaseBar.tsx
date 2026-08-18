@@ -12,6 +12,7 @@ import { useTheme } from '../theme/ThemeContext';
 import ContextMenu from './ContextMenu';
 import BarEnvPickerPopover from './BarEnvPickerPopover';
 import PeoplePickerPopover from './PeoplePickerPopover';
+import { FS, FW, FONT_DISPLAY } from '../theme/typography';
 
 /** "Alice Smith" -> "AS"; single word takes its first two letters. */
 function initials(name: string): string {
@@ -242,10 +243,10 @@ export default function PhaseBar({ bar, rowY }: Props) {
   // The offset centres 10px Montserrat caps in a 30px bar: half the cap
   // height, ~0.72em.
   const TEXT_BASELINE_OFFSET = 3.6;
-  const DATE_FONT_SIZE = 9;
-  const DATE_FONT_WEIGHT = 600;
-  const LABEL_FONT_SIZE = 10;
-  const LABEL_FONT_WEIGHT = 700;
+  const DATE_FONT_SIZE = FS.badge;
+  const DATE_FONT_WEIGHT = FW.badge;
+  const LABEL_FONT_SIZE = FS.label;
+  const LABEL_FONT_WEIGHT = FW.label;
   const LABEL_GAP = 8;
   const useSolidPill = displayWidth < SHORT_BAR_THRESHOLD || barStyle === 'legacy';
   const clipId = `bar-clip-${bar.id}`;
@@ -360,7 +361,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
                 fill={labelFill}
                 fontSize={DATE_FONT_SIZE}
                 fontWeight={DATE_FONT_WEIGHT}
-                fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
+                fontFamily={FONT_DISPLAY}
                 style={{ pointerEvents: 'none', userSelect: 'none', opacity: 0.7 }}
               >
                 {dateStr}
@@ -373,7 +374,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
                 fill={labelFill}
                 fontSize={LABEL_FONT_SIZE}
                 fontWeight={LABEL_FONT_WEIGHT}
-                fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
+                fontFamily={FONT_DISPLAY}
                 style={{ pointerEvents: 'none', userSelect: 'none' }}
               >
                 {label}
@@ -396,7 +397,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
 
         if (env && (isHovered || isSelected)) {
           const text = env.name;
-          const pillW = Math.max(28, Math.ceil(measureText(text, 9, 700)) + 14);
+          const pillW = Math.max(28, Math.ceil(measureText(text, FS.badge, FW.badge)) + 14);
           const pillH = 14;
           const px = x + 4;
           const py = y - pillH - 2;
@@ -423,9 +424,9 @@ export default function PhaseBar({ bar, rowY }: Props) {
                 dominantBaseline="central"
                 textAnchor="middle"
                 fill="#ffffff"
-                fontSize={9}
-                fontWeight={700}
-                fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
+                fontSize={FS.badge}
+                fontWeight={FW.badge}
+                fontFamily={FONT_DISPLAY}
                 style={{ pointerEvents: 'none', userSelect: 'none', letterSpacing: 0.4 }}
               >
                 {text}
@@ -463,9 +464,9 @@ export default function PhaseBar({ bar, rowY }: Props) {
                 dominantBaseline="central"
                 textAnchor="middle"
                 fill={c.TEXT_SECONDARY}
-                fontSize={9}
-                fontWeight={600}
-                fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
+                fontSize={FS.badge}
+                fontWeight={FW.badge}
+                fontFamily={FONT_DISPLAY}
                 style={{ pointerEvents: 'none', userSelect: 'none', letterSpacing: 0.4 }}
               >
                 + env
@@ -491,7 +492,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
               paddingLeft: useSolidPill ? 8 : TAG_WIDTH + 7,
               fontSize: LABEL_FONT_SIZE,
               fontWeight: LABEL_FONT_WEIGHT,
-              fontFamily: "'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif",
+              fontFamily: FONT_DISPLAY,
               color: colors.text,
               outline: 'none',
             }}
@@ -686,10 +687,10 @@ export default function PhaseBar({ bar, rowY }: Props) {
                         y={cyChip}
                         textAnchor="middle"
                         dominantBaseline="central"
-                        fontSize={9}
-                        fontWeight={700}
+                        fontSize={FS.badge}
+                        fontWeight={FW.badge}
                         fill="#ffffff"
-                        fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
+                        fontFamily={FONT_DISPLAY}
                         style={{ userSelect: 'none' }}
                       >
                         {ch.text}
@@ -702,10 +703,10 @@ export default function PhaseBar({ bar, rowY }: Props) {
                     x={baseX + chipR + visible.length * step - chipR + 2}
                     y={cyChip}
                     dominantBaseline="central"
-                    fontSize={9}
-                    fontWeight={700}
+                    fontSize={FS.badge}
+                    fontWeight={FW.badge}
                     fill={c.TEXT_SECONDARY}
-                    fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
+                    fontFamily={FONT_DISPLAY}
                     style={{ userSelect: 'none', pointerEvents: 'none' }}
                   >
                     +{overflow}

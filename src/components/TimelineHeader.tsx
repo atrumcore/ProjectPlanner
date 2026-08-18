@@ -8,6 +8,7 @@ import {
   getCalendarWeekBoundaries,
 } from '../utils/dateUtils';
 import { useThemeColors } from '../theme/ThemeContext';
+import { FS, FW, FONT_DISPLAY } from '../theme/typography';
 
 interface Props {
   totalWeeks: number;
@@ -76,9 +77,9 @@ export default function TimelineHeader({ totalWeeks, startMonth, startYear, scro
                 dominantBaseline="central"
                 textAnchor="middle"
                 fill={c.TEXT_HEADER}
-                fontSize={11}
+                fontSize={FS.meta}
                 fontWeight={700}
-                fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
+                fontFamily={FONT_DISPLAY}
               >
                 {month.name}
               </text>
@@ -134,9 +135,9 @@ export default function TimelineHeader({ totalWeeks, startMonth, startYear, scro
                 dominantBaseline="central"
                 textAnchor="middle"
                 fill="white"
-                fontSize={9}
-                fontWeight={700}
-                fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
+                fontSize={FS.badge}
+                fontWeight={FW.badge}
+                fontFamily={FONT_DISPLAY}
               >
                 {dateLabel}
               </text>
@@ -159,9 +160,9 @@ export default function TimelineHeader({ totalWeeks, startMonth, startYear, scro
                   dominantBaseline="central"
                   textAnchor="middle"
                   fill={c.WEEK_LABEL_COLOR}
-                  fontSize={10}
-                  fontWeight={600}
-                  fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
+                  fontSize={FS.label}
+                  fontWeight={FW.label}
+                  fontFamily={FONT_DISPLAY}
                 >
                   {d}
                 </text>
@@ -202,9 +203,9 @@ export default function TimelineHeader({ totalWeeks, startMonth, startYear, scro
                     dominantBaseline="central"
                     textAnchor="middle"
                     fill={c.WEEK_LABEL_COLOR}
-                    fontSize={10}
-                    fontWeight={600}
-                    fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
+                    fontSize={FS.label}
+                    fontWeight={FW.label}
+                    fontFamily={FONT_DISPLAY}
                   >
                     W{b.weekNumber}
                   </text>
