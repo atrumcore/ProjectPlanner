@@ -2,13 +2,13 @@
  * Deterministic mapping between the app's exported document format and the
  * AI-facing plan format (see aiPlan.ts).
  *
- *  - `docToAiPlan`  : projection of the current document sent to Claude.
- *  - `aiPlanToDoc`  : converts Claude's returned end-state back into a full
+ *  - `docToAiPlan`  : projection of the current document sent to the model.
+ *  - `aiPlanToDoc`  : converts the model's returned end-state back into a full
  *                     document ready for `importFromJSON`, plus a diff and
  *                     warnings for the proposal card.
  *
- * Claude works in calendar dates and names; this module owns all date↔week
- * math and name↔id resolution. Everything Claude never sees (action items,
+ * The model works in calendar dates and names; this module owns all date↔week
+ * math and name↔id resolution. Everything the model never sees (action items,
  * floating notes, environments, phase-type definitions, view preferences,
  * save attribution) passes through from the base document untouched.
  */
@@ -114,7 +114,7 @@ function htmlToBullets(html: string): string[] {
 const BUILTIN_TYPE_IDS = new Set(['analysis', 'development', 'sit', 'uat', 'live', 'concept', 'custom']);
 
 /* ------------------------------------------------------------------ */
-/* Document → AI plan (projection sent to Claude)                      */
+/* Document → AI plan (projection sent to the model)                      */
 /* ------------------------------------------------------------------ */
 
 export function docToAiPlan(doc: ExportedDoc): AiPlanDoc {
@@ -162,7 +162,7 @@ export function docToAiPlan(doc: ExportedDoc): AiPlanDoc {
     section: sectionById.get(lane.section)?.label ?? lane.section,
     featureBullets: htmlToBullets(lane.keyFeatures),
     // Dependencies are shared items; project them as this lane's outstanding
-    // ones so Claude sees per-project text in the format it reasons about.
+    // ones so the model sees per-project text in the format it reasons about.
     dependencyBullets: (doc.trackedItems ?? [])
       .filter(d => d.kind === 'dependency' && !d.done && d.swimlaneIds.includes(lane.id))
       .map(d => d.text),
@@ -457,7 +457,7 @@ export function aiPlanToDoc(plan: AiPlanDoc, baseDoc: ExportedDoc): ConvertResul
   }
 
   /* -- 6b. Dependency items ------------------------------------------ */
-  // Claude only ever sees OUTSTANDING, project-linked items of kind
+  // the model only ever sees OUTSTANDING, project-linked items of kind
   // 'dependency', so those are the only ones it may rewrite. Every other kind
   // (actions, risks, issues, decisions, assumptions), plus cleared and
   // plan-level dependencies, is preserved untouched — otherwise every applied
@@ -489,7 +489,7 @@ export function aiPlanToDoc(plan: AiPlanDoc, baseDoc: ExportedDoc): ConvertResul
   }
   const preserved = baseItems
     .filter(d =>
-      // Anything Claude never saw is untouchable: every non-dependency kind,
+      // Anything the model never saw is untouchable: every non-dependency kind,
       // plus cleared and plan-level dependencies.
       d.kind !== 'dependency' || d.done || d.swimlaneIds.length === 0)
     .filter(d => d.kind !== 'dependency' || !rebuiltByText.has(norm(d.text)))

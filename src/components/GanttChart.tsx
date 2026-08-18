@@ -12,8 +12,8 @@ import PeoplePanel from './PeoplePanel';
 import Rail from './rail/Rail';
 import RailPanel from './rail/RailPanel';
 import InspectorTab from './rail/InspectorTab';
-import ClaudeChat from './claude/ClaudeChat';
-import { useClaudeStore } from '../claude/useClaudeStore';
+import AssistantChat from './ai/AssistantChat';
+import { useAssistantStore } from '../ai/useAssistantStore';
 import FileUpdateBanner from './FileUpdateBanner';
 import SaveConflictModal from './SaveConflictModal';
 import DisplayNameModal from './DisplayNameModal';
@@ -43,7 +43,7 @@ const RAIL_TITLES = {
   items: 'Open Items',
   environments: 'Environments & Contention',
   people: 'People & Teams',
-  claude: 'Claude Assistant',
+  assistant: 'AI Assistant',
 } as const;
 
 export default function GanttChart() {
@@ -96,8 +96,8 @@ export default function GanttChart() {
   const setRailTab = useGanttStore(s => s.setRailTab);
   const toggleRailTab = useGanttStore(s => s.toggleRailTab);
   const openTrackedItemsFor = useGanttStore(s => s.openTrackedItemsFor);
-  const claudeHasChat = useClaudeStore(s => s.messages.length > 0);
-  const clearClaudeChat = useClaudeStore(s => s.clearChat);
+  const assistantHasChat = useAssistantStore(s => s.messages.length > 0);
+  const clearAssistantChat = useAssistantStore(s => s.clearChat);
   const environmentFocusId = useGanttStore(s => s.environmentFocusId);
   const setEnvironmentFocus = useGanttStore(s => s.setEnvironmentFocus);
   const peopleFocus = useGanttStore(s => s.peopleFocus);
@@ -282,7 +282,7 @@ export default function GanttChart() {
       }
       if (mod && e.shiftKey && key === 'c') {
         e.preventDefault();
-        toggleRailTab('claude');
+        toggleRailTab('assistant');
         return;
       }
       if (mod && e.shiftKey && key === 'd') {
@@ -633,15 +633,15 @@ export default function GanttChart() {
         onClose={() => setRailTab(null)}
         headerActions={railTab === 'items'
           ? <button onClick={emailNotes} title="Email notes" aria-label="Email notes">&#x2709;</button>
-          : railTab === 'claude' && claudeHasChat
-            ? <button className="claude-clear-btn" onClick={clearClaudeChat} title="Clear conversation">Clear</button>
+          : railTab === 'assistant' && assistantHasChat
+            ? <button className="assistant-clear-btn" onClick={clearAssistantChat} title="Clear conversation">Clear</button>
             : undefined}
       >
         {railTab === 'inspector' && <InspectorTab />}
         {railTab === 'items' && <OpenItemsPanel />}
         {railTab === 'environments' && <EnvironmentsPanel />}
         {railTab === 'people' && <PeoplePanel />}
-        {railTab === 'claude' && <ClaudeChat />}
+        {railTab === 'assistant' && <AssistantChat />}
       </RailPanel>
     )}
     <Rail />

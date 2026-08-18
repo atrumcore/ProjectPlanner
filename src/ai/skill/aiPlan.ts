@@ -2,7 +2,7 @@
  * The AI-facing plan format — the "contract" of the planner skill.
  *
  * One shape is used in both directions: the projection of the current
- * document sent to Claude and the plan Claude returns are the same format,
+ * document sent to the model and the plan it returns are the same format,
  * so the system prompt can simply say "return this same format, modified".
  *
  * Deliberately simpler than the app's internal model:

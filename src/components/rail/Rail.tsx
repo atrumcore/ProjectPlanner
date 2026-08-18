@@ -1,6 +1,6 @@
 import { useMemo, type ReactNode } from 'react';
 import { useGanttStore } from '../../store/useGanttStore';
-import { useClaudeStore } from '../../claude/useClaudeStore';
+import { useAssistantStore } from '../../ai/useAssistantStore';
 import { getContentions, getPeopleContentions } from '../../utils/contention';
 import type { RailTab } from '../../types/gantt';
 
@@ -57,8 +57,8 @@ const PeopleIcon = (
   </svg>
 );
 
-/** Four-point spark — the Claude assistant. */
-const ClaudeIcon = (
+/** Four-point spark — the AI assistant. */
+const AssistantIcon = (
   <svg {...ICON_PROPS} aria-hidden="true">
     <path d="M8 1.8 L9.6 6.4 L14.2 8 L9.6 9.6 L8 14.2 L6.4 9.6 L1.8 8 L6.4 6.4 Z" />
   </svg>
@@ -75,7 +75,7 @@ const TABS: TabDef[] = [
   { id: 'items', icon: NotesIcon, title: 'Open Items — actions, dependencies, risks (Ctrl+Shift+N)' },
   { id: 'environments', icon: EnvironmentsIcon, title: 'Environments & Contention (Ctrl+Shift+E)' },
   { id: 'people', icon: PeopleIcon, title: 'People & Teams (Ctrl+Shift+P)' },
-  { id: 'claude', icon: ClaudeIcon, title: 'Claude assistant (Ctrl+Shift+C)' },
+  { id: 'assistant', icon: AssistantIcon, title: 'AI assistant (Ctrl+Shift+C)' },
 ];
 
 /**
@@ -95,7 +95,7 @@ export default function Rail() {
   const phaseBars = useGanttStore(s => s.phaseBars);
   const people = useGanttStore(s => s.people);
   const teams = useGanttStore(s => s.teams);
-  const claudePending = useClaudeStore(s => s.pending !== null);
+  const assistantPending = useAssistantStore(s => s.pending !== null);
 
   const openItems = useMemo(() => trackedItems.filter(i => !i.done).length, [trackedItems]);
   const envConflicts = useMemo(
@@ -111,8 +111,8 @@ export default function Rail() {
     if (id === 'items') return openItems > 0 ? { count: openItems, kind: 'info' } : null;
     if (id === 'environments') return envConflicts > 0 ? { count: envConflicts, kind: 'conflict' } : null;
     if (id === 'people') return peopleConflicts > 0 ? { count: peopleConflicts, kind: 'conflict' } : null;
-    // Un-actioned Claude proposal waiting — visible even with the panel closed.
-    if (id === 'claude') return claudePending ? { count: 1, kind: 'info' } : null;
+    // Un-actioned AI proposal waiting — visible even with the panel closed.
+    if (id === 'assistant') return assistantPending ? { count: 1, kind: 'info' } : null;
     return null;
   };
 
