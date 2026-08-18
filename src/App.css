@@ -4298,6 +4298,26 @@ select option {
   border-color: var(--accent-secondary);
 }
 
+.assistant-effort-select {
+  background: var(--bg-surface-2);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 6px;
+  font-size: var(--fs-meta);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.assistant-effort-select:hover {
+  border-color: var(--border-strong);
+}
+
+.assistant-effort-select:focus {
+  outline: none;
+  border-color: var(--accent-secondary);
+}
+
 .assistant-providers-link {
   margin-top: 0;
   white-space: nowrap;

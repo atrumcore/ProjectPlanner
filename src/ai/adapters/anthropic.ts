@@ -11,7 +11,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import PLANNER_SKILL_PROMPT from '../skill/planner-skill.md?raw';
 import {
-  AI_PLAN_RESPONSE_SCHEMA, PlanRefusalError, PlanTruncatedError, parsePlanResponse,
+  AI_PLAN_RESPONSE_SCHEMA, PlanRefusalError, PlanTruncatedError, liveUserContent, parsePlanResponse,
 } from '../aiClient';
 import type { GenerateArgs, GenerateResult, ProviderTurn } from '../aiClient';
 import { resolveBaseUrl } from '../providers';
@@ -36,18 +36,33 @@ function makeClient(apiKey: string, baseURL: string): Anthropic {
  * valid. A turn recorded under a different provider has no usable `raw`, so
  * it degrades to plain text rather than being sent as something the API
  * would reject.
+ *
+ * The last history turn carries a cache breakpoint. History is append-only
+ * and now holds no document snapshots, so everything up to that point is
+ * byte-stable across turns and reads at cache rates; the volatile current
+ * document sits after it, in the live turn, where it belongs. Placing the
+ * breakpoint on the live turn instead would cache a prefix that never
+ * recurs — the document moves on every turn.
  */
 function toAnthropicTurns(history: ProviderTurn[]): AnthropicTurn[] {
-  return history.map(turn => {
-    if (turn.raw && Array.isArray(turn.raw)) {
-      return { role: turn.role, content: turn.raw as Anthropic.Beta.Messages.BetaContentBlockParam[] };
+  return history.map((turn, i) => {
+    const isLast = i === history.length - 1;
+    const blocks: Anthropic.Beta.Messages.BetaContentBlockParam[] =
+      turn.raw && Array.isArray(turn.raw)
+        ? [...(turn.raw as Anthropic.Beta.Messages.BetaContentBlockParam[])]
+        : [{ type: 'text', text: turn.text }];
+
+    if (isLast && blocks.length > 0) {
+      const last = blocks[blocks.length - 1];
+      blocks[blocks.length - 1] = { ...last, cache_control: { type: 'ephemeral' } } as typeof last;
     }
-    return { role: turn.role, content: turn.text };
+    return { role: turn.role, content: blocks };
   });
 }
 
 export async function generateAnthropic(args: GenerateArgs): Promise<GenerateResult> {
   const client = makeClient(args.provider.apiKey ?? '', resolveBaseUrl(args.provider));
+  const userContent = liveUserContent(args);
 
   const stream = client.beta.messages.stream(
     {
@@ -67,8 +82,14 @@ export async function generateAnthropic(args: GenerateArgs): Promise<GenerateRes
       system: [
         { type: 'text', text: PLANNER_SKILL_PROMPT, cache_control: { type: 'ephemeral' } },
       ],
-      messages: [...toAnthropicTurns(args.history), { role: 'user', content: args.userContent }],
-      output_config: { format: { type: 'json_schema', schema: AI_PLAN_RESPONSE_SCHEMA } },
+      messages: [...toAnthropicTurns(args.history), { role: 'user', content: userContent }],
+      // Effort is the main quality/latency dial on this model and was never
+      // set, so every request ran at the `high` default — a one-bar tweak cost
+      // the same as a twelve-project replan.
+      output_config: {
+        effort: args.effort,
+        format: { type: 'json_schema', schema: AI_PLAN_RESPONSE_SCHEMA },
+      },
     },
     { signal: args.signal },
   );
@@ -101,11 +122,17 @@ export async function generateAnthropic(args: GenerateArgs): Promise<GenerateRes
     .map(b => b.text)
     .join('');
 
+  const response = parsePlanResponse(text);
+
   return {
-    response: parsePlanResponse(text),
-    userTurn: { role: 'user', text: args.userContent },
-    // Keep the full content (thinking blocks included) for verbatim replay.
-    assistantTurn: { role: 'assistant', text, raw: msg.content },
+    response,
+    // The request alone — the document this turn was answered against is not
+    // stored, so it cannot come back next turn as a stale second opinion.
+    userTurn: { role: 'user', text: args.request },
+    // `text` is the portable summary another provider could read; `raw` keeps
+    // the full blocks (thinking included) that this API needs replayed
+    // verbatim to stay coherent and cache-valid.
+    assistantTurn: { role: 'assistant', text: response.summary, raw: msg.content },
     jsonMode: 'schema',
   };
 }

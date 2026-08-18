@@ -7,8 +7,8 @@
 
 import { create } from 'zustand';
 import { useGanttStore } from '../store/useGanttStore';
-import { describeProviderFailure, generatePlan, makeUserTurn } from './aiClient';
-import type { JsonMode, ProviderTurn } from './aiClient';
+import { DEFAULT_EFFORT, describeProviderFailure, generatePlan, isEffort } from './aiClient';
+import type { Effort, JsonMode, ProviderTurn } from './aiClient';
 import {
   firstChoice, loadActive, loadProviders, normaliseModels, saveActive, saveProviders,
 } from './providers';
@@ -45,9 +45,21 @@ export interface PendingProposal {
   messageId: string;
 }
 
+const EFFORT_STORAGE = 'bbd-planner-ai-effort';
+
+function loadEffort(): Effort {
+  try {
+    const stored = localStorage.getItem(EFFORT_STORAGE);
+    if (stored && isEffort(stored)) return stored;
+  } catch { /* ignore */ }
+  return DEFAULT_EFFORT;
+}
+
 interface AssistantState {
   providers: Provider[];
   active: ActiveChoice | null;
+  /** How hard the model works per turn (persisted per browser). */
+  effort: Effort;
   messages: ChatMessage[];
   /** Verbatim API turns, replayed so the conversation prefix stays
    * cache-valid. Cleared whenever the active provider changes. */
@@ -71,6 +83,7 @@ interface AssistantState {
   updateProvider: (id: string, patch: Partial<Omit<Provider, 'id'>>) => void;
   removeProvider: (id: string) => void;
   setActive: (choice: ActiveChoice) => void;
+  setEffort: (e: Effort) => void;
   toggleSettings: (open?: boolean) => void;
 
   send: (text: string) => Promise<void>;
@@ -91,6 +104,7 @@ const initialProviders = loadProviders();
 export const useAssistantStore = create<AssistantState>((set, get) => ({
   providers: initialProviders,
   active: loadActive(initialProviders) ?? firstChoice(initialProviders),
+  effort: loadEffort(),
   messages: [],
   history: [],
   status: 'idle',
@@ -189,6 +203,11 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
     }));
   },
 
+  setEffort: (e) => {
+    try { localStorage.setItem(EFFORT_STORAGE, e); } catch { /* ignore */ }
+    set({ effort: e });
+  },
+
   toggleSettings: (open) => set(s => ({ settingsOpen: open ?? !s.settingsOpen })),
 
   send: async (text) => {
@@ -209,16 +228,19 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
       messages: [...s.messages, { id: uid(), role: 'user', text: request }],
     }));
 
-    // Snapshot the document as the model will see it for this turn.
+    // Snapshot the document as the model will see it for this turn. It is
+    // framed onto the live turn by the adapter and deliberately not stored.
     const baseDoc = JSON.parse(useGanttStore.getState().exportToJSON()) as ExportedDoc;
-    const userContent = makeUserTurn(JSON.stringify(docToAiPlan(baseDoc)), request);
+    const documentJson = JSON.stringify(docToAiPlan(baseDoc));
 
     try {
       const result = await generatePlan({
         provider,
         model: state.active.model,
+        effort: state.effort,
         history: state.history,
-        userContent,
+        request,
+        documentJson,
         onThinking: (delta) => set(s => ({ thinkingText: s.thinkingText + delta })),
         onProgress: (totalChars) => set({ progressChars: totalChars }),
         signal: abort.signal,

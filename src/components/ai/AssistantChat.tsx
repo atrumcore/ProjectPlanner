@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { JSON_MODE_LABEL } from '../../ai/aiClient';
+import { EFFORT_OPTIONS, JSON_MODE_LABEL } from '../../ai/aiClient';
+import type { Effort } from '../../ai/aiClient';
 import type { PendingProposal } from '../../ai/useAssistantStore';
 import { activeProvider, useAssistantStore } from '../../ai/useAssistantStore';
 import AiProviderModal from './AiProviderModal';
@@ -171,6 +172,8 @@ export default function AssistantChat() {
   const pending = useAssistantStore(s => s.pending);
   const jsonMode = useAssistantStore(s => s.jsonMode);
   const send = useAssistantStore(s => s.send);
+  const effort = useAssistantStore(s => s.effort);
+  const setEffort = useAssistantStore(s => s.setEffort);
   const setActive = useAssistantStore(s => s.setActive);
   const settingsOpen = useAssistantStore(s => s.settingsOpen);
   const toggleSettings = useAssistantStore(s => s.toggleSettings);
@@ -276,6 +279,22 @@ export default function AssistantChat() {
               </optgroup>
             ))}
           </select>
+          {/* Anthropic's effort levels. Other wire formats have no portable
+              equivalent, so the control is hidden rather than shown inert. */}
+          {provider.apiType === 'anthropic' && (
+            <select
+              className="assistant-effort-select"
+              value={effort}
+              disabled={streaming}
+              onChange={e => setEffort(e.target.value as Effort)}
+              title={EFFORT_OPTIONS.find(o => o.id === effort)?.hint}
+              aria-label="Effort"
+            >
+              {EFFORT_OPTIONS.map(o => (
+                <option key={o.id} value={o.id}>{o.label}</option>
+              ))}
+            </select>
+          )}
           <button
             className="btn-quiet assistant-providers-link"
             onClick={() => toggleSettings(true)}

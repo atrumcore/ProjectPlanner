@@ -43,13 +43,41 @@ export const JSON_MODE_LABEL: Record<JsonMode, string> = {
   'prompt-only': 'Prompt-only JSON',
 };
 
+/** How hard the model should work on a turn. Anthropic's effort levels; other
+ * wire formats have no portable equivalent and ignore it. */
+export type Effort = 'low' | 'high' | 'xhigh';
+
+export const EFFORT_OPTIONS: Array<{ id: Effort; label: string; hint: string }> = [
+  { id: 'low', label: 'Quick', hint: 'Small edits — move a bar, rename a phase.' },
+  { id: 'high', label: 'Balanced', hint: 'The default. Good for most requests.' },
+  { id: 'xhigh', label: 'Thorough', hint: 'Whole-plan work worth the extra time.' },
+];
+
+export const DEFAULT_EFFORT: Effort = 'high';
+
+export function isEffort(v: string): v is Effort {
+  return EFFORT_OPTIONS.some(o => o.id === v);
+}
+
 export interface GenerateArgs {
   provider: Provider;
   model: string;
-  /** Prior turns, replayed so the conversation prefix stays cache-valid. */
+  effort: Effort;
+  /** Prior turns, replayed so the conversation prefix stays cache-valid.
+   * These carry the request text only — never a document snapshot. */
   history: ProviderTurn[];
-  /** The new user turn (from makeUserTurn). */
-  userContent: string;
+  /** The user's request, verbatim. */
+  request: string;
+  /**
+   * The current document, framed onto THIS turn only.
+   *
+   * Kept separate from `request` so the two can be recombined for the live
+   * turn and stored apart afterwards. Framing them together before storage is
+   * what made every historical turn carry its own full snapshot of the plan:
+   * by turn five the model received five copies, four of them stale, and had
+   * to work out which one was current.
+   */
+  documentJson: string;
   onThinking: (delta: string) => void;
   onProgress: (totalChars: number) => void;
   signal: AbortSignal;
@@ -65,9 +93,15 @@ export interface GenerateResult {
 }
 
 /** Wrap the current-document projection and the user's request into the
- * user-turn format the planner skill contract expects. */
+ * user-turn format the planner skill contract expects. Applied to the live
+ * turn at send time; the stored turn keeps the request alone. */
 export function makeUserTurn(currentDocJson: string, request: string): string {
   return `<current_document>\n${currentDocJson}\n</current_document>\n\n<request>\n${request}\n</request>`;
+}
+
+/** The live turn's content: current document plus this request. */
+export function liveUserContent(args: Pick<GenerateArgs, 'documentJson' | 'request'>): string {
+  return makeUserTurn(args.documentJson, args.request);
 }
 
 export class PlanRefusalError extends Error {

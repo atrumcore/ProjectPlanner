@@ -19,7 +19,8 @@
 
 import PLANNER_SKILL_PROMPT from '../skill/planner-skill.md?raw';
 import {
-  AI_PLAN_RESPONSE_SCHEMA, PlanParseError, PlanTruncatedError, ProviderHttpError, parsePlanResponse,
+  AI_PLAN_RESPONSE_SCHEMA, PlanParseError, PlanTruncatedError, ProviderHttpError,
+  liveUserContent, parsePlanResponse,
 } from '../aiClient';
 import type { GenerateArgs, GenerateResult, JsonMode, ProviderTurn } from '../aiClient';
 import { resolveBaseUrl } from '../providers';
@@ -273,17 +274,22 @@ async function negotiateAndSend(args: GenerateArgs, userContent: string): Promis
 }
 
 export async function generateOpenAiChat(args: GenerateArgs): Promise<GenerateResult> {
-  const { outcome, negotiated } = await negotiateAndSend(args, args.userContent);
+  const userContent = liveUserContent(args);
+  const { outcome, negotiated } = await negotiateAndSend(args, userContent);
 
   if (outcome.finishReason === 'length') throw new PlanTruncatedError();
 
+  // The request alone goes into history — never the document snapshot it was
+  // answered against — and the assistant turn keeps its summary rather than
+  // the whole plan JSON. Both otherwise recur verbatim on every later turn.
+  const turns = (summary: string) => ({
+    userTurn: { role: 'user' as const, text: args.request },
+    assistantTurn: { role: 'assistant' as const, text: summary },
+  });
+
   try {
-    return {
-      response: parsePlanResponse(outcome.text),
-      userTurn: { role: 'user', text: args.userContent },
-      assistantTurn: { role: 'assistant', text: outcome.text },
-      jsonMode: negotiated.jsonMode,
-    };
+    const response = parsePlanResponse(outcome.text);
+    return { response, ...turns(response.summary), jsonMode: negotiated.jsonMode };
   } catch (err) {
     if (!(err instanceof PlanParseError)) throw err;
 
@@ -292,23 +298,16 @@ export async function generateOpenAiChat(args: GenerateArgs): Promise<GenerateRe
     // — and handing back the exact parse error fixes it far more often than
     // it costs. Failing outright here would make every such endpoint look
     // broken when the plan itself was fine.
-    const repairPrompt = `${args.userContent}
+    const repairPrompt = `${userContent}
 
 Your previous reply could not be read: ${err.reason}
 Reply again with ONLY the JSON object. No prose, no markdown fence.`;
 
-    const retry = await negotiateAndSend(
-      { ...args, history: args.history },
-      repairPrompt,
-    );
+    const retry = await negotiateAndSend(args, repairPrompt);
     if (retry.outcome.finishReason === 'length') throw new PlanTruncatedError();
 
-    return {
-      response: parsePlanResponse(retry.outcome.text),
-      userTurn: { role: 'user', text: args.userContent },
-      assistantTurn: { role: 'assistant', text: retry.outcome.text },
-      jsonMode: retry.negotiated.jsonMode,
-    };
+    const response = parsePlanResponse(retry.outcome.text);
+    return { response, ...turns(response.summary), jsonMode: retry.negotiated.jsonMode };
   }
 }
 
