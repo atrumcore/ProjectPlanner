@@ -1,5 +1,10 @@
 // One-shot rename of localStorage keys carrying the old `dha-` prefix.
 //
+// (The assistant's single-key → provider-registry migration deliberately does
+// NOT live here: the assistant store reads its registry at module scope, so a
+// migration run from main.tsx would write storage the store had already read
+// past. It sits in src/ai/providers.ts, on the read path itself.)
+//
 // The app was originally built for a single programme and prefixed its
 // storage keys accordingly; it is now a generic planner. Renaming the keys
 // would silently orphan every existing user's autosaved plan and settings, so

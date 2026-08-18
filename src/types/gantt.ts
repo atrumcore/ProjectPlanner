@@ -228,7 +228,7 @@ export type BarStyle = 'tagged' | 'legacy';
 
 /** Tabs on the right-edge rail. One panel open at a time; the strip itself is
  * always visible. Order mirrors the old toolbar buttons. */
-export type RailTab = 'inspector' | 'items' | 'environments' | 'people' | 'claude';
+export type RailTab = 'inspector' | 'items' | 'environments' | 'people' | 'assistant';
 
 export interface GanttState {
   sections: Section[];
@@ -353,7 +353,7 @@ export const DEPS_COL_WIDTH = 180;
 export const HEADER_HEIGHT = 48;
 export const WEEK_LABEL_HEIGHT = 18;
 export const WEEK_WIDTH = 36;
-export const BAR_HEIGHT = 30;
+export const BAR_HEIGHT = 36;
 export const BAR_RADIUS = 8;
 export const MILESTONE_WIDTH = 10;
 export const LEFT_PANEL_WIDTH = PROJECT_COL_WIDTH + FEATURES_COL_WIDTH;

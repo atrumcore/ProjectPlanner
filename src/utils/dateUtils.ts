@@ -241,6 +241,11 @@ export function formatDayMonth(date: Date): string {
   return `${date.getDate()} ${MONTH_NAMES[date.getMonth()].substring(0, 3)}`;
 }
 
+/** The month tokens formatDayMonth can emit. Exported so the canvas can size
+ * its fixed date slot from the real set rather than assuming which is widest —
+ * "Sep" was the stand-in, but "Aug" measures wider and overran the slot. */
+export const DAY_MONTH_TOKENS: string[] = MONTH_NAMES.map(m => m.substring(0, 3));
+
 export function getCumulativeWeeks(
   startMonth: number,
   startYear: number,

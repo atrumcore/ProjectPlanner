@@ -49,7 +49,7 @@
   --features-col: 164px;
   --deps-col: 180px;
   --week-width: 36px;
-  --bar-height: 30px;
+  --bar-height: 36px;
   --bar-radius: 8px;
   --left-panel: 304px;
   --section-header-height: 40px;
@@ -256,7 +256,9 @@ kbd {
    device drifts every time it is reused at a new size. */
 .swimlane-features-more,
 .env-pill-pick,
-.people-detail-kind {
+.people-detail-kind,
+.assistant-json-mode,
+.ai-provider-active-chip {
   font-family: var(--font-display);
   font-size: var(--fs-badge);
   font-weight: 700;
@@ -4010,23 +4012,25 @@ select option {
   font-size: var(--fs-meta);
 }
 
-/* ─── Claude assistant (rail tab) ───────────────────────────────────────────
+/* ─── AI assistant (rail tab) ──────────────────────────────────────────────
    Lives in the shared right-edge RailPanel like every other tab. Chat classes
    below are panel-only; buttons/empty states reuse the shared .btn-* and
    .teach-state patterns. */
-.claude-clear-btn {
+.assistant-clear-btn {
   font-size: var(--fs-meta) !important;
   font-family: var(--font-body);
 }
 
-.claude-chat-root {
+.assistant-chat-root {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  /* Anchors the floating "jump to latest" pill. */
+  position: relative;
 }
 
-.claude-chat {
+.assistant-chat {
   flex: 1;
   overflow-y: auto;
   padding: 12px 14px;
@@ -4035,7 +4039,7 @@ select option {
   gap: 10px;
 }
 
-.claude-msg {
+.assistant-msg {
   max-width: 94%;
   padding: 8px 11px;
   border-radius: 10px;
@@ -4046,45 +4050,109 @@ select option {
   overflow-wrap: anywhere;
 }
 
-.claude-msg.user {
+.assistant-msg.user {
   align-self: flex-end;
   background: var(--bg-surface-2);
   border: 1px solid var(--border);
 }
 
-.claude-msg.assistant {
+.assistant-msg.assistant {
   align-self: flex-start;
   border: 1px solid var(--border);
 }
 
-.claude-msg.is-error {
+.assistant-msg.is-error {
   border-color: var(--error-bright);
   color: var(--error-bright);
 }
 
-.claude-msg-applied {
+.assistant-msg-applied {
   margin-top: 6px;
   font-size: var(--fs-badge);
   font-weight: 600;
   color: var(--success);
 }
 
-.claude-streaming {
+.assistant-streaming {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.claude-thinking {
+/* The full reasoning narrative. Capped in height and scrolled in place rather
+   than truncated: a long narrative should not push the composer off-screen,
+   but every word of it stays reachable. */
+.assistant-thinking {
   font-size: var(--fs-meta);
   font-style: italic;
   color: var(--text-secondary);
   line-height: 1.5;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  max-height: 168px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
-.claude-stream-row {
+/* Retained reasoning on a finished turn. */
+.assistant-reasoning {
+  margin-top: 8px;
+}
+
+.assistant-reasoning > summary {
+  font-size: var(--fs-badge);
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+
+.assistant-reasoning > summary::-webkit-details-marker { display: none; }
+
+.assistant-reasoning > summary::before {
+  content: '▸ ';
+  display: inline-block;
+}
+
+.assistant-reasoning[open] > summary::before {
+  content: '▾ ';
+}
+
+.assistant-reasoning > summary:hover {
+  color: var(--text-primary);
+}
+
+.assistant-reasoning .assistant-thinking {
+  margin-top: 6px;
+  padding-left: 8px;
+  border-left: 2px solid var(--border);
+}
+
+/* Only shown once the user has scrolled away from the bottom, so following
+   along live is never interrupted by an affordance they do not need. */
+.assistant-jump-latest {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 96px;
+  z-index: 2;
+  font-size: var(--fs-badge);
+  font-weight: 600;
+  color: var(--on-accent);
+  background: var(--accent-primary);
+  border: none;
+  border-radius: 999px;
+  padding: 5px 12px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.assistant-jump-latest:hover {
+  background: var(--accent-primary-hover);
+}
+
+.assistant-stream-row {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -4092,33 +4160,33 @@ select option {
   color: var(--text-secondary);
 }
 
-.claude-stream-pulse {
+.assistant-stream-pulse {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--accent-secondary);
-  animation: claude-pulse 1.2s ease-in-out infinite;
+  animation: assistant-pulse 1.2s ease-in-out infinite;
   flex-shrink: 0;
 }
 
-@keyframes claude-pulse {
+@keyframes assistant-pulse {
   0%, 100% { opacity: 0.35; transform: scale(0.85); }
   50% { opacity: 1; transform: scale(1); }
 }
 
-.claude-stop-btn {
+.assistant-stop-btn {
   margin-left: auto;
   font-size: var(--fs-meta);
   padding: 3px 12px;
 }
 
-.claude-stream-note {
+.assistant-stream-note {
   font-size: var(--fs-meta);
   color: var(--text-muted);
   line-height: 1.5;
 }
 
-.claude-proposal {
+.assistant-proposal {
   border: 1px solid var(--border-strong);
   border-radius: var(--card-radius);
   background: var(--bg-surface-2);
@@ -4128,13 +4196,13 @@ select option {
   gap: 8px;
 }
 
-.claude-diff-chips {
+.assistant-diff-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-.claude-diff-chip {
+.assistant-diff-chip {
   font-size: var(--fs-badge);
   font-weight: 600;
   padding: 3px 9px;
@@ -4144,30 +4212,30 @@ select option {
   white-space: nowrap;
 }
 
-.claude-diff-removals {
+.assistant-diff-removals {
   font-size: var(--fs-meta);
   color: var(--error-bright);
   line-height: 1.5;
 }
 
-.claude-warning {
+.assistant-warning {
   font-size: var(--fs-meta);
   color: var(--warning);
   line-height: 1.5;
 }
 
-.claude-proposal-actions {
+.assistant-proposal-actions {
   display: flex;
   align-items: center;
   gap: 12px;
   margin-top: 2px;
 }
 
-.claude-proposal-actions .btn-quiet {
+.assistant-proposal-actions .btn-quiet {
   margin-top: 0;
 }
 
-.claude-composer {
+.assistant-composer {
   border-top: 1px solid var(--border);
   padding: 10px 14px 12px;
   display: flex;
@@ -4176,7 +4244,7 @@ select option {
   flex-shrink: 0;
 }
 
-.claude-composer textarea {
+.assistant-composer textarea {
   resize: vertical;
   min-height: 56px;
   max-height: 180px;
@@ -4190,25 +4258,25 @@ select option {
   line-height: 1.5;
 }
 
-.claude-composer textarea:focus {
+.assistant-composer textarea:focus {
   outline: none;
   border-color: var(--accent-secondary);
 }
 
-.claude-composer-row {
+.assistant-composer-row {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.claude-composer-hint {
+.assistant-composer-hint {
   flex: 1;
   text-align: right;
   font-size: var(--fs-meta);
   color: var(--text-muted);
 }
 
-.claude-model-select {
+.assistant-model-select {
   max-width: 46%;
   font-size: var(--fs-meta);
   font-family: var(--font-body);
@@ -4220,39 +4288,248 @@ select option {
   cursor: pointer;
 }
 
-.claude-model-select:hover {
+.assistant-model-select:hover {
   color: var(--text-primary);
   border-color: var(--border-strong);
 }
 
-.claude-model-select:focus {
+.assistant-model-select:focus {
   outline: none;
   border-color: var(--accent-secondary);
 }
 
-.claude-key-link {
+.assistant-effort-select {
+  background: var(--bg-surface-2);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 6px;
+  font-size: var(--fs-meta);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.assistant-effort-select:hover {
+  border-color: var(--border-strong);
+}
+
+.assistant-effort-select:focus {
+  outline: none;
+  border-color: var(--accent-secondary);
+}
+
+.assistant-providers-link {
   margin-top: 0;
   white-space: nowrap;
 }
 
-.claude-key-form input {
+.assistant-key-error {
+  color: var(--error-bright) !important;
+}
+
+/* Negotiated JSON strictness, shown only when it is below schema-enforced.
+   Type comes from the badge device above. */
+.assistant-json-mode {
+  color: var(--warning);
+  border: 1px solid var(--warning);
+  border-radius: 999px;
+  padding: 1px 7px;
+  white-space: nowrap;
+}
+
+/* A panel notice (provider switched) — not a model reply, so it reads as
+   chrome rather than conversation. */
+.assistant-msg.is-notice {
+  background: none;
+  border: 1px dashed var(--border-strong);
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+
+/* ===== Provider settings dialog ===== */
+
+/* Three bands: head and actions hold their ground, only the body scrolls.
+   With the whole dialog scrolling instead, the primary button rode the
+   content off the bottom of the window on any short viewport — the form is
+   ~420px tall, so at 593px the Save button landed at y=697 and there was
+   nothing to suggest it existed. */
+.ai-provider-modal {
+  width: 480px;
+  max-width: 92vw;
+  max-height: min(84vh, 640px);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ai-provider-head {
+  padding: 20px 24px 12px;
+  flex-shrink: 0;
+}
+
+.ai-provider-head h2 {
+  margin-bottom: 4px;
+}
+
+.ai-provider-head .modal-copy {
+  margin: 0;
+}
+
+.ai-provider-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 24px 16px;
+}
+
+.ai-provider-modal .modal-actions {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 12px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-surface);
+}
+
+.ai-provider-list {
+  list-style: none;
+  margin: 4px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ai-provider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-surface-2);
+}
+
+.ai-provider-row.is-active {
+  border-color: var(--accent-secondary);
+}
+
+.ai-provider-row-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.ai-provider-row-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-row);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ai-provider-row-meta {
+  display: block;
+  font-size: var(--fs-meta);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-provider-active-chip {
+  color: var(--accent-secondary);
+  flex-shrink: 0;
+}
+
+.ai-provider-delete.confirm {
+  color: var(--error-bright);
+}
+
+.ai-provider-add-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* One field = label, control, then exactly one line of feedback. The hint
+   and the error occupy the same slot so the form does not jump as validation
+   messages appear and disappear under the cursor. */
+.ai-provider-field {
+  margin-top: 14px;
+}
+
+.ai-provider-field:first-child {
+  margin-top: 4px;
+}
+
+.ai-provider-field input,
+.ai-provider-field select,
+.ai-provider-field textarea {
   width: 100%;
-  max-width: 260px;
   background: var(--bg-app);
   color: var(--text-primary);
   border: 1px solid var(--border-strong);
   border-radius: 8px;
-  padding: 8px 10px;
-  font-family: var(--font-body);
+  padding: 7px 10px;
   font-size: var(--fs-body);
-  margin-bottom: 10px;
 }
 
-.claude-key-form input:focus {
+.ai-provider-field textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.ai-provider-field input:focus,
+.ai-provider-field select:focus,
+.ai-provider-field textarea:focus {
   outline: none;
   border-color: var(--accent-secondary);
 }
 
-.claude-key-error {
-  color: var(--error-bright) !important;
+.ai-provider-field input[aria-invalid='true'],
+.ai-provider-field textarea[aria-invalid='true'] {
+  border-color: var(--error-bright);
+}
+
+.ai-provider-required {
+  color: var(--brand-accent);
+  margin-left: 1px;
+}
+
+.ai-provider-hint,
+.ai-provider-error,
+.ai-provider-ok {
+  font-size: var(--fs-meta);
+  line-height: 1.45;
+  margin: 5px 0 0;
+}
+
+.ai-provider-hint { color: var(--text-muted); }
+.ai-provider-error { color: var(--error-bright); }
+.ai-provider-ok { color: var(--success); }
+
+.ai-provider-models-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ai-provider-models-head .btn-quiet {
+  margin-top: 0;
+}
+
+.ai-provider-switch {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.ai-provider-switch select {
+  background: var(--bg-app);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: var(--fs-body);
 }

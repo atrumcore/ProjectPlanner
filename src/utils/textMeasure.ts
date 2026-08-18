@@ -13,6 +13,8 @@
  * re-measures every visible bar on each render.
  */
 
+import { DAY_MONTH_TOKENS } from './dateUtils';
+
 const FONT_STACK = "'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif";
 
 let ctx: CanvasRenderingContext2D | null = null;
@@ -74,8 +76,25 @@ export function fitText(text: string, maxWidth: number, fontSize: number, fontWe
 }
 
 /** Width reserved for a bar's start-date so every label on the chart begins
- * at the same offset instead of jittering with the date's own width. Sized
- * from the widest date `formatDayMonth` can produce. */
+ * at the same offset instead of jittering with the date's own width.
+ *
+ * Measured across every date `formatDayMonth` can actually produce rather
+ * than assuming one. The previous '30 Sep' stand-in under-reserved: "Aug" is
+ * wider than "Sep" in Montserrat, so an August bar's date ran to the very
+ * edge of its slot and crowded whatever followed it. */
 export function dateSlotWidth(fontSize: number, fontWeight: number): number {
-  return measureText('30 Sep', fontSize, fontWeight);
+  const key = `slot|${fontSize}|${fontWeight}`;
+  const hit = cache.get(key);
+  if (hit !== undefined) return hit;
+
+  const digits = '0123456789'.split('');
+  const widestDigit = digits.reduce((a, d) =>
+    measureText(d, fontSize, fontWeight) > measureText(a, fontSize, fontWeight) ? d : a, '0');
+  const widestDay = widestDigit + widestDigit;
+  const width = DAY_MONTH_TOKENS.reduce(
+    (max, mon) => Math.max(max, measureText(`${widestDay} ${mon}`, fontSize, fontWeight)),
+    0,
+  );
+  cache.set(key, width);
+  return width;
 }

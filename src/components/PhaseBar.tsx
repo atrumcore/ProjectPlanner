@@ -6,7 +6,7 @@ import { getPhaseDef } from '../data/phasePresets';
 import { useExportLayout } from './ExportLayoutContext';
 import { useGanttStore } from '../store/useGanttStore';
 import { getDateAtWeekOffset, formatDayMonth } from '../utils/dateUtils';
-import { fitText, measureText, dateSlotWidth } from '../utils/textMeasure';
+import { fitText, measureText } from '../utils/textMeasure';
 import { getContentionsForBar, getPeopleContentionsForBar } from '../utils/contention';
 import { useTheme } from '../theme/ThemeContext';
 import ContextMenu from './ContextMenu';
@@ -239,10 +239,8 @@ export default function PhaseBar({ bar, rowY }: Props) {
   // every bar regardless of width.
   const SHORT_BAR_THRESHOLD = 24;
   const TAG_WIDTH = 5;
-  // Date and label share one baseline (correct for mixed sizes on a line).
-  // The offset centres 10px Montserrat caps in a 30px bar: half the cap
-  // height, ~0.72em.
-  const TEXT_BASELINE_OFFSET = 3.6;
+  // Rows are placed by centre and drawn with dominantBaseline="central", so
+  // there is no hand-tuned baseline nudge to keep in step with the bar height.
   const DATE_FONT_SIZE = FS.badge;
   const DATE_FONT_WEIGHT = FW.badge;
   const LABEL_FONT_SIZE = FS.label;
@@ -254,6 +252,95 @@ export default function PhaseBar({ bar, rowY }: Props) {
   // dark, dark on light). The phase-type's own `text` only applies to the
   // solid pill path, where the bar fill is the phase colour.
   const labelFill = useSolidPill ? colors.text : c.TEXT_PRIMARY;
+
+  // ── Shared inner layout ───────────────────────────────────────────────────
+  // The bar's contents are one left-to-right run: [date] [chips] [label].
+  // Every piece is measured here, once, so the label knows what is in front of
+  // it. Previously the chip row and the label each computed their own left
+  // edge from the bar origin: the label reserved a slot for the date but knew
+  // nothing about the chips, so with dates off they began at exactly the same
+  // x and the chips were painted straight over the label — and the row of
+  // 16px chips sat bottom-aligned across the label's own line, so there was no
+  // vertical escape either.
+  // 14px chips: small enough to read as metadata rather than as the loudest
+  // thing on the bar, large enough to still hold two initials at the type
+  // scale's 9px floor. The old 16px chips carried a white stroke, which made
+  // them look pasted on top of the bar instead of set into it.
+  const CHIP_R = 7;
+  const CHIP_STEP = CHIP_R * 2 + 3;
+  const CHIP_MAX_VISIBLE = 3;
+  const CHIP_OVERFLOW_W = 16;
+  const CHIP_RING = useSolidPill ? colors.fill : c.BG_SURFACE_2;
+
+  const assignedTeams = bar.teamIds
+    .map(id => teams.find(t => t.id === id))
+    .filter((t): t is NonNullable<typeof t> => !!t);
+  const assignedPeople = bar.assigneeIds
+    .map(id => people.find(p => p.id === id))
+    .filter((p): p is NonNullable<typeof p> => !!p);
+  const chips: Array<{ key: string; color: string; text: string; isTeam: boolean; title: string }> = [
+    ...assignedTeams.map(t => ({ key: `t-${t.id}`, color: t.color, text: initials(t.name), isTeam: true, title: `Team: ${t.name}` })),
+    ...assignedPeople.map(p => ({ key: `p-${p.id}`, color: p.color, text: initials(p.name), isTeam: false, title: p.role ? `${p.name} (${p.role})` : p.name })),
+  ];
+  // Mirrors the render condition below — the label must reserve space only
+  // when the chips are actually painted, or short bars lose their label for
+  // chips that never appear.
+  const chipsRendered = !editing && showPeopleIndicators && displayWidth >= 40
+    && (chips.length > 0 || isHovered || isSelected);
+
+  const innerLeft = x + (useSolidPill ? 8 : TAG_WIDTH + 7);
+  const dateStr = formatDayMonth(startDate);
+  const barInnerRight = x + displayWidth - 8;
+  const innerW = barInnerRight - innerLeft;
+  const dateW = measureText(dateStr, DATE_FONT_SIZE, DATE_FONT_WEIGHT);
+  const showDate = showBarDates && innerW >= dateW;
+
+  // Smallest label worth drawing. A truncation like "D…" tells you nothing,
+  // so below this the label is dropped rather than rendered as a stub — the
+  // full text stays in the tooltip either way.
+  const MIN_LABEL_W = measureText('ABC…', LABEL_FONT_SIZE, LABEL_FONT_WEIGHT);
+
+  // ── Two rows, per design-system/components/phase-bar.html ─────────────────
+  // The label owns the top row across the bar's whole width; the date and the
+  // people chips share a quieter row beneath it. Running all three along one
+  // line — which is what this did — spent the left third of every bar on
+  // metadata and truncated the phase name to "SIT (…" while two-thirds of the
+  // bar sat empty. Splitting the rows gives the label the full span and lets
+  // the chips sit right-aligned, so the bar reads left-to-right as name first,
+  // detail second.
+  const hasSecondRow = showDate || chipsRendered;
+  const LABEL_LINE = 10;
+  const ROW_GAP = 3;
+  const secondRowH = CHIP_R * 2;
+  const stackH = hasSecondRow ? LABEL_LINE + ROW_GAP + secondRowH : LABEL_LINE;
+  const stackTop = y + (BAR_HEIGHT - stackH) / 2;
+  const labelCy = stackTop + LABEL_LINE / 2;
+  const metaCy = stackTop + LABEL_LINE + ROW_GAP + secondRowH / 2;
+
+  const chipRowWidthFor = (n: number) =>
+    n === 0 ? 0 : n * CHIP_STEP - 3 + (chips.length - n > 0 ? CHIP_OVERFLOW_W : 0);
+
+  // Chips are right-aligned on the meta row, so they shed into "+N" only when
+  // they would run into the date coming the other way.
+  const metaLeftEnd = innerLeft + (showDate ? dateW : 0);
+  let visibleCount = Math.min(CHIP_MAX_VISIBLE, chips.length);
+  if (chipsRendered && chips.length > 0) {
+    while (visibleCount > 1
+      && barInnerRight - chipRowWidthFor(visibleCount) < metaLeftEnd + LABEL_GAP) {
+      visibleCount--;
+    }
+  }
+
+  const visibleChips = chips.slice(0, visibleCount);
+  const chipOverflow = chips.length - visibleChips.length;
+  const chipRowW = !chipsRendered
+    ? 0
+    : chips.length > 0
+      ? chipRowWidthFor(visibleCount)
+      : CHIP_R * 2; // the lone dashed "add" affordance
+  const chipsLeft = Math.max(metaLeftEnd + (showDate ? LABEL_GAP : 0), barInnerRight - chipRowW);
+  // The label no longer yields to anything horizontally — it has its own row.
+  const labelLeft = innerLeft;
 
   return (
     <g onDoubleClick={(e) => e.stopPropagation()}>
@@ -340,44 +427,45 @@ export default function PhaseBar({ bar, rowY }: Props) {
           date sits in a fixed-width slot so every label on the chart starts
           at the same offset instead of jittering with its date's width. */}
       {!editing && (() => {
-        const innerLeft = x + (useSolidPill ? 8 : TAG_WIDTH + 7);
-        const availW = x + displayWidth - 8 - innerLeft;
-        const dateStr = formatDayMonth(startDate);
-        const slotW = dateSlotWidth(DATE_FONT_SIZE, DATE_FONT_WEIGHT);
-        const showDate = showBarDates && availW >= measureText(dateStr, DATE_FONT_SIZE, DATE_FONT_WEIGHT);
-        const labelLeft = innerLeft + (showDate ? slotW + LABEL_GAP : 0);
-        const label = fitText(
-          bar.label,
-          x + displayWidth - 8 - labelLeft,
-          LABEL_FONT_SIZE,
-          LABEL_FONT_WEIGHT,
-        );
+        const labelSpace = barInnerRight - labelLeft;
+        // Below the minimum, draw nothing rather than a one-letter stub.
+        const label = labelSpace >= MIN_LABEL_W
+          ? fitText(bar.label, labelSpace, LABEL_FONT_SIZE, LABEL_FONT_WEIGHT)
+          : '';
         return (
           <>
-            {showDate && (
-              <text
-                x={innerLeft}
-                y={y + BAR_HEIGHT / 2 + TEXT_BASELINE_OFFSET}
-                fill={labelFill}
-                fontSize={DATE_FONT_SIZE}
-                fontWeight={DATE_FONT_WEIGHT}
-                fontFamily={FONT_DISPLAY}
-                style={{ pointerEvents: 'none', userSelect: 'none', opacity: 0.7 }}
-              >
-                {dateStr}
-              </text>
-            )}
             {label && (
               <text
                 x={labelLeft}
-                y={y + BAR_HEIGHT / 2 + TEXT_BASELINE_OFFSET}
+                y={labelCy}
+                dominantBaseline="central"
                 fill={labelFill}
                 fontSize={LABEL_FONT_SIZE}
                 fontWeight={LABEL_FONT_WEIGHT}
                 fontFamily={FONT_DISPLAY}
+                // No tracking: the type card gives the wide tracking to
+                // eyebrows and kickers only, and fitText measures without it —
+                // so a tracked label overran the width it was truncated to.
                 style={{ pointerEvents: 'none', userSelect: 'none' }}
               >
                 {label}
+              </text>
+            )}
+            {showDate && (
+              // Meta row: the date is supporting information, so it takes the
+              // secondary ink rather than the label's colour at 70% opacity —
+              // a washed-out copy of the primary read as a second heading.
+              <text
+                x={innerLeft}
+                y={metaCy}
+                dominantBaseline="central"
+                fill={useSolidPill ? labelFill : c.TEXT_SECONDARY}
+                fontSize={DATE_FONT_SIZE}
+                fontWeight={DATE_FONT_WEIGHT}
+                fontFamily={FONT_DISPLAY}
+                style={{ pointerEvents: 'none', userSelect: 'none', opacity: useSolidPill ? 0.75 : 1 }}
+              >
+                {dateStr}
               </text>
             )}
           </>
@@ -624,29 +712,18 @@ export default function PhaseBar({ bar, rowY }: Props) {
 
       {/* People chips — teams first, then person initials, bottom-left of the
           bar. Click opens the multi-select people picker. */}
-      {!editing && showPeopleIndicators && displayWidth >= 40 && (() => {
-        const assignedTeams = bar.teamIds
-          .map(id => teams.find(t => t.id === id))
-          .filter((t): t is NonNullable<typeof t> => !!t);
-        const assignedPeople = bar.assigneeIds
-          .map(id => people.find(p => p.id === id))
-          .filter((p): p is NonNullable<typeof p> => !!p);
-        const chips: Array<{ key: string; color: string; text: string; isTeam: boolean; title: string }> = [
-          ...assignedTeams.map(t => ({ key: `t-${t.id}`, color: t.color, text: initials(t.name), isTeam: true, title: `Team: ${t.name}` })),
-          ...assignedPeople.map(p => ({ key: `p-${p.id}`, color: p.color, text: initials(p.name), isTeam: false, title: p.role ? `${p.name} (${p.role})` : p.name })),
-        ];
+      {chipsRendered && (() => {
         const hasAny = chips.length > 0;
-        if (!hasAny && !(isHovered || isSelected)) return null;
 
         // 16px chips: the smallest that fit two-letter initials at the type
         // scale's 9px floor. All chip layout derives from this radius.
-        const chipR = 8;
-        const step = chipR * 2 + 2;
-        const maxVisible = 3;
-        const visible = chips.slice(0, maxVisible);
-        const overflow = chips.length - visible.length;
-        const baseX = x + (useSolidPill ? 8 : TAG_WIDTH + 8);
-        const cyChip = y + BAR_HEIGHT - chipR - 2;
+        const chipR = CHIP_R;
+        const step = CHIP_STEP;
+        const visible = visibleChips;
+        const overflow = chipOverflow;
+        // Sits after the date and before the label, on the shared centreline.
+        const baseX = chipsLeft;
+        const cyChip = metaCy;
         const openPicker = (e: React.MouseEvent) => {
           e.stopPropagation();
           setPeoplePicker({ x: e.clientX, y: e.clientY });
@@ -676,11 +753,11 @@ export default function PhaseBar({ bar, rowY }: Props) {
                           rx={3}
                           ry={3}
                           fill={ch.color}
-                          stroke="#ffffff"
-                          strokeWidth={1.25}
+                          stroke={CHIP_RING}
+                          strokeWidth={1.5}
                         />
                       ) : (
-                        <circle cx={cxChip} cy={cyChip} r={chipR} fill={ch.color} stroke="#ffffff" strokeWidth={1.25} />
+                        <circle cx={cxChip} cy={cyChip} r={chipR} fill={ch.color} stroke={CHIP_RING} strokeWidth={1.5} />
                       )}
                       <text
                         x={cxChip}
