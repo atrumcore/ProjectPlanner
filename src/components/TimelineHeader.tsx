@@ -16,6 +16,11 @@ interface Props {
   scrollLeft: number;
 }
 
+/** "Today" pill in the month band — the label centres off these rather
+ * than a hardcoded baseline. */
+const TODAY_PILL_Y = 2;
+const TODAY_PILL_H = 16;
+
 export default function TimelineHeader({ totalWeeks, startMonth, startYear, scrollLeft }: Props) {
   const c = useThemeColors();
   const weekWidth = useGanttStore(s => s.timeline.weekWidthPx);
@@ -117,15 +122,16 @@ export default function TimelineHeader({ totalWeeks, startMonth, startYear, scro
               />
               <rect
                 x={tx - 22}
-                y={2}
+                y={TODAY_PILL_Y}
                 width={44}
-                height={16}
+                height={TODAY_PILL_H}
                 rx={3}
                 fill={c.TODAY_LINE}
               />
               <text
                 x={tx}
-                y={13}
+                y={TODAY_PILL_Y + TODAY_PILL_H / 2}
+                dominantBaseline="central"
                 textAnchor="middle"
                 fill="white"
                 fontSize={9}
@@ -149,7 +155,8 @@ export default function TimelineHeader({ totalWeeks, startMonth, startYear, scro
                 <text
                   key={`md-${month.year}-${month.month}-${i}`}
                   x={(month.weekStart + (d - 1) / 7) * weekWidth}
-                  y={HEADER_HEIGHT + WEEK_LABEL_HEIGHT / 2 + 3}
+                  y={HEADER_HEIGHT + WEEK_LABEL_HEIGHT / 2}
+                  dominantBaseline="central"
                   textAnchor="middle"
                   fill={c.WEEK_LABEL_COLOR}
                   fontSize={10}
@@ -191,7 +198,8 @@ export default function TimelineHeader({ totalWeeks, startMonth, startYear, scro
                   <text
                     key={`wl-${i}-${b.weekNumber}`}
                     x={centerX}
-                    y={HEADER_HEIGHT + WEEK_LABEL_HEIGHT / 2 + 3}
+                    y={HEADER_HEIGHT + WEEK_LABEL_HEIGHT / 2}
+                    dominantBaseline="central"
                     textAnchor="middle"
                     fill={c.WEEK_LABEL_COLOR}
                     fontSize={10}
