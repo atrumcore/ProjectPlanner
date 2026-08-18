@@ -145,8 +145,11 @@ export const SWIMLANE_COLOR_PRESETS = [
   '#e93d82', // pink
 ] as const;
 
-/** Opacity used when compositing a swimlane's tint over the row background. */
-export const SWIMLANE_TINT_ALPHA = 0.32;
+/** Opacity used when compositing a swimlane's tint over the row background.
+ * Kept low on purpose: the tint groups projects, it does not compete with the
+ * phase bars sitting on top of it. At the old 0.32 the bands read as solid
+ * colour and flattened the hierarchy. */
+export const SWIMLANE_TINT_ALPHA = 0.16;
 
 export interface FloatingNote {
   id: string;

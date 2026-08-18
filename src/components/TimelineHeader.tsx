@@ -67,7 +67,8 @@ export default function TimelineHeader({ totalWeeks, startMonth, startYear, scro
             <g key={`mh-${mi}`}>
               <text
                 x={x + w / 2}
-                y={HEADER_HEIGHT / 2 + 4}
+                y={HEADER_HEIGHT / 2}
+                dominantBaseline="central"
                 textAnchor="middle"
                 fill={c.TEXT_HEADER}
                 fontSize={11}

@@ -396,7 +396,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
 
         if (env && (isHovered || isSelected)) {
           const text = env.name;
-          const pillW = Math.max(28, Math.ceil(text.length * 5.5) + 12);
+          const pillW = Math.max(28, Math.ceil(measureText(text, 9, 700)) + 14);
           const pillH = 14;
           const px = x + 4;
           const py = y - pillH - 2;
@@ -419,7 +419,8 @@ export default function PhaseBar({ bar, rowY }: Props) {
               />
               <text
                 x={px + pillW / 2}
-                y={py + pillH / 2 + 3}
+                y={py + pillH / 2}
+                dominantBaseline="central"
                 textAnchor="middle"
                 fill="#ffffff"
                 fontSize={9}
@@ -458,7 +459,8 @@ export default function PhaseBar({ bar, rowY }: Props) {
               />
               <text
                 x={px + pillW / 2}
-                y={py + pillH / 2 + 3}
+                y={py + pillH / 2}
+                dominantBaseline="central"
                 textAnchor="middle"
                 fill={c.TEXT_SECONDARY}
                 fontSize={9}
@@ -485,9 +487,10 @@ export default function PhaseBar({ bar, rowY }: Props) {
               height: '100%',
               border: 'none',
               background: 'transparent',
-              textAlign: 'center',
-              fontSize: 10,
-              fontWeight: 700,
+              textAlign: 'left',
+              paddingLeft: useSolidPill ? 8 : TAG_WIDTH + 7,
+              fontSize: LABEL_FONT_SIZE,
+              fontWeight: LABEL_FONT_WEIGHT,
               fontFamily: "'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif",
               color: colors.text,
               outline: 'none',
