@@ -6,6 +6,7 @@ import { getPhaseDef } from '../data/phasePresets';
 import { useExportLayout } from './ExportLayoutContext';
 import { useGanttStore } from '../store/useGanttStore';
 import { getDateAtWeekOffset, formatDayMonth } from '../utils/dateUtils';
+import { fitText, measureText, dateSlotWidth } from '../utils/textMeasure';
 import { getContentionsForBar, getPeopleContentionsForBar } from '../utils/contention';
 import { useTheme } from '../theme/ThemeContext';
 import ContextMenu from './ContextMenu';
@@ -237,6 +238,15 @@ export default function PhaseBar({ bar, rowY }: Props) {
   // every bar regardless of width.
   const SHORT_BAR_THRESHOLD = 24;
   const TAG_WIDTH = 5;
+  // Date and label share one baseline (correct for mixed sizes on a line).
+  // The offset centres 10px Montserrat caps in a 30px bar: half the cap
+  // height, ~0.72em.
+  const TEXT_BASELINE_OFFSET = 3.6;
+  const DATE_FONT_SIZE = 9;
+  const DATE_FONT_WEIGHT = 600;
+  const LABEL_FONT_SIZE = 10;
+  const LABEL_FONT_WEIGHT = 700;
+  const LABEL_GAP = 8;
   const useSolidPill = displayWidth < SHORT_BAR_THRESHOLD || barStyle === 'legacy';
   const clipId = `bar-clip-${bar.id}`;
   // On the neutral card body we use the theme's primary text colour (light on
@@ -324,31 +334,32 @@ export default function PhaseBar({ bar, rowY }: Props) {
 
       {/* Date + label — left-aligned per the v2 phase-bar card: the start
           date (when enabled) always leads, the label follows and truncates
-          with an ellipsis to fit. Every bar wide enough to hold "23 Mar"
-          shows its date; only physically-too-narrow bars fall back to the
-          hover tooltip (which always carries the full range).
-          Widths are conservative estimates — 9px date ≈ 5.2px/char, 10px
-          Montserrat 700 caps ≈ 6.8px/char — so no SVG measurement is needed. */}
+          with an ellipsis to fit. Both are measured against the real font
+          (utils/textMeasure) rather than estimated per character, and the
+          date sits in a fixed-width slot so every label on the chart starts
+          at the same offset instead of jittering with its date's width. */}
       {!editing && (() => {
         const innerLeft = x + (useSolidPill ? 8 : TAG_WIDTH + 7);
         const availW = x + displayWidth - 8 - innerLeft;
         const dateStr = formatDayMonth(startDate);
-        const dateW = dateStr.length * 5.2;
-        const showDate = showBarDates && availW >= dateW;
-        const labelAvail = availW - (showDate ? dateW + 8 : 0);
-        const maxChars = Math.floor(labelAvail / 6.8);
-        const label = bar.label.length <= maxChars
-          ? bar.label
-          : maxChars >= 2 ? `${bar.label.slice(0, maxChars - 1)}…` : '';
+        const slotW = dateSlotWidth(DATE_FONT_SIZE, DATE_FONT_WEIGHT);
+        const showDate = showBarDates && availW >= measureText(dateStr, DATE_FONT_SIZE, DATE_FONT_WEIGHT);
+        const labelLeft = innerLeft + (showDate ? slotW + LABEL_GAP : 0);
+        const label = fitText(
+          bar.label,
+          x + displayWidth - 8 - labelLeft,
+          LABEL_FONT_SIZE,
+          LABEL_FONT_WEIGHT,
+        );
         return (
           <>
             {showDate && (
               <text
                 x={innerLeft}
-                y={y + BAR_HEIGHT / 2 + 3}
+                y={y + BAR_HEIGHT / 2 + TEXT_BASELINE_OFFSET}
                 fill={labelFill}
-                fontSize={9}
-                fontWeight={600}
+                fontSize={DATE_FONT_SIZE}
+                fontWeight={DATE_FONT_WEIGHT}
                 fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
                 style={{ pointerEvents: 'none', userSelect: 'none', opacity: 0.7 }}
               >
@@ -357,11 +368,11 @@ export default function PhaseBar({ bar, rowY }: Props) {
             )}
             {label && (
               <text
-                x={innerLeft + (showDate ? dateW + 8 : 0)}
-                y={y + BAR_HEIGHT / 2 + 3}
+                x={labelLeft}
+                y={y + BAR_HEIGHT / 2 + TEXT_BASELINE_OFFSET}
                 fill={labelFill}
-                fontSize={10}
-                fontWeight={700}
+                fontSize={LABEL_FONT_SIZE}
+                fontWeight={LABEL_FONT_WEIGHT}
                 fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
                 style={{ pointerEvents: 'none', userSelect: 'none' }}
               >
