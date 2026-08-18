@@ -20,12 +20,12 @@ export const API_TYPE_OPTIONS: Array<{ id: ApiType; label: string; hint: string 
   {
     id: 'openai-chat',
     label: 'Chat Completions',
-    hint: 'OpenAI and anything that speaks its API — Azure, OpenRouter, Groq, Together, vLLM, Ollama, LM Studio, most corporate gateways.',
+    hint: 'Works with most endpoints — OpenAI, Azure, OpenRouter, and local runners like Ollama.',
   },
   {
     id: 'anthropic',
     label: 'Anthropic Messages',
-    hint: "Anthropic's own API. Adds streamed reasoning, prompt caching and refusal fallback.",
+    hint: 'Adds streamed reasoning and prompt caching.',
   },
 ];
 
