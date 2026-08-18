@@ -3,6 +3,7 @@ import { useGanttStore } from '../store/useGanttStore';
 import { useExportLayout } from './ExportLayoutContext';
 import { getDateAtWeekOffset, formatDayMonth } from '../utils/dateUtils';
 import { useThemeColors } from '../theme/ThemeContext';
+import { FS, FONT_DISPLAY } from '../theme/typography';
 
 interface Props {
   id: string;
@@ -113,9 +114,9 @@ export default function MilestoneMarker({ id, week, rowY }: Props) {
         y={cy}
         textAnchor="middle"
         dominantBaseline="middle"
-        fontSize={10}
+        fontSize={FS.label}
         fontWeight={700}
-        fontFamily="'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif"
+        fontFamily={FONT_DISPLAY}
         fill={c.MILESTONE_TEXT}
         transform={`rotate(-90, ${cx}, ${cy})`}
         style={{ pointerEvents: 'none', userSelect: 'none' }}

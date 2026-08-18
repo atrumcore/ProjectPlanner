@@ -26,17 +26,21 @@
 
 <h2>Typefaces</h2>
 <div class="note" style="margin-top:0">Primary display: <b class="mont" style="color:#eee">Montserrat</b> (bundled OTF, 400–800) — titles, headings, eyebrows, kickers, on-bar labels. Body: <b style="color:#eee">Open Sans</b> (bundled TTF) — panels, menus, inputs, captions. Monospace only for token values, never UI. Emphasis pattern: mix Light + Bold inside one headline to stress keywords.</div>
+<div class="note">Form controls do not inherit the document font — a bare <b style="color:#eee">&lt;button&gt;</b> falls back to the browser's own UI font. App.css defaults every control to the body face in one base rule; never rely on inheritance to put a control in the brand.</div>
 
 <h2>Scale — every size in the app</h2>
 <div class="spec"><span class="mont" style="font-size:15px;font-weight:700">App title / launcher heading</span><span class="meta">15px · Montserrat 700</span></div>
 <div class="spec"><span class="mont" style="font-size:14px;font-weight:600">Panel detail name</span><span class="meta">14px · Montserrat 600</span></div>
 <div class="spec"><span style="font-size:13px;font-weight:600">Row titles, buttons, plan names</span><span class="meta">13px · Open Sans 600</span></div>
 <div class="spec"><span style="font-size:12px">Body — panels, menus, inputs</span><span class="meta">12px · Open Sans 400</span></div>
+<div class="spec"><span class="mont" style="font-size:12px;font-weight:700">Canvas month heading (SVG)</span><span class="meta">12px · Montserrat 700 · sentence case</span></div>
 <div class="spec"><span style="font-size:11px;color:#8A9298">Secondary — meta, hints, toolbar attribution</span><span class="meta">11px · Open Sans 400</span></div>
 <div class="spec"><span class="mont" style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#8A9298">Section labels / eyebrows</span><span class="meta">10px · Montserrat 700 · caps · +0.12em</span></div>
-<div class="spec"><span class="mont" style="font-size:10px;font-weight:700">On-bar labels (SVG)</span><span class="meta">10px · Montserrat 700 · phase bars</span></div>
-<div class="spec"><span style="font-size:9px;font-weight:700">Badges, pills, chip initials</span><span class="meta">9px · 700 · floor — never smaller</span></div>
+<div class="spec"><span class="mont" style="font-size:10px;font-weight:700">On-bar &amp; week labels (SVG)</span><span class="meta">10px · Montserrat 700 · phase bars</span></div>
+<div class="spec"><span class="mont" style="font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">Badges, pills, chip initials</span><span class="meta">9px · Montserrat 700 · +0.04em · floor</span></div>
 <div class="note">Kickers and eyebrows carry the brand's wide tracking (.12em); everything else stays dense. Sentence case in titles — never Title Case.</div>
+<div class="note"><b style="color:#eee">A size does not settle the face.</b> 11px is body-face secondary text and nothing else — the timeline month heading sat there at Montserrat 700, one pixel above the week labels beneath it, which is too small a gap to read as a hierarchy. It now takes the 12px step. Likewise 10px is the eyebrow: a section header is not entitled to 11px because it feels more senior, it earns that through its band, tint and accent edge.</div>
+<div class="note"><b style="color:#eee">Tracking is always em, never px.</b> px tracking stops scaling with the size, so the same device drifts every time it is reused a step up or down — which is how the eyebrow ended up carrying .12em, 0.3px, 0.4px and 1px in different corners of the app.</div>
 
 <h2>The kicker device</h2>
 <div style="padding:10px">

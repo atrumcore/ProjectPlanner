@@ -1,4 +1,7 @@
 import { Component, type ReactNode } from 'react';
+// Inline styles, so the CSS custom properties are out of reach — take the
+// scale from the shared constants rather than restating the font stacks here.
+import { FS, FONT_BODY, FONT_DISPLAY } from '../theme/typography';
 
 interface Props {
   children: ReactNode;
@@ -26,17 +29,18 @@ export default class ErrorBoundary extends Component<Props, State> {
       return (
         <div style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          height: '100vh', fontFamily: "'Open Sans', Helvetica, Arial, sans-serif", background: 'var(--bg-app)', color: 'var(--text-primary)',
+          height: '100vh', fontFamily: FONT_BODY, background: 'var(--bg-app)', color: 'var(--text-primary)',
         }}>
-          <h1 style={{ fontSize: 15, fontFamily: "'Montserrat', 'Open Sans', sans-serif", marginBottom: 8 }}>Something went wrong</h1>
-          <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 16, maxWidth: 400, textAlign: 'center' }}>
+          <h1 style={{ fontSize: FS.title, fontFamily: FONT_DISPLAY, marginBottom: 8 }}>Something went wrong</h1>
+          <p style={{ fontSize: FS.body, color: 'var(--text-secondary)', marginBottom: 16, maxWidth: 400, textAlign: 'center' }}>
             {this.state.error?.message || 'An unexpected error occurred.'}
           </p>
           <button
             onClick={this.handleReset}
             style={{
               padding: '8px 20px', border: '1px solid var(--accent-primary)', borderRadius: 999,
-              background: 'var(--accent-primary)', color: 'var(--on-accent)', fontWeight: 600, fontSize: 12, cursor: 'pointer',
+              background: 'var(--accent-primary)', color: 'var(--on-accent)', fontWeight: 600, fontSize: FS.body,
+              fontFamily: FONT_BODY, cursor: 'pointer',
             }}
           >
             Reset &amp; reload
