@@ -621,8 +621,7 @@ select option {
 .gantt-container.is-exporting .collapse-btn,
 .gantt-container.is-exporting .swimlane-features-more,
 .gantt-container.is-exporting .swimlane-add-note-btn,
-.gantt-container.is-exporting .swimlane-note-badge,
-.gantt-container.is-exporting .swimlane-dep-badge {
+.gantt-container.is-exporting .swimlane-item-badge {
   display: none !important;
 }
 
@@ -2502,7 +2501,11 @@ select option {
   padding: 4px 0;
 }
 
-.action-item-row {
+/* ─── Open Items register (rail tab) ─────────────────────────────────────
+   One row style for all six kinds — the CSS that Notes and Key Dependencies
+   each used to own a near-identical copy of. Kind-specific colour arrives
+   per-row as the --kind-color custom property. */
+.item-row {
   display: flex;
   align-items: flex-start;
   gap: 8px;
@@ -2511,169 +2514,195 @@ select option {
   cursor: grab;
 }
 
-.action-item-row:active {
-  cursor: grabbing;
-}
+.item-row:active { cursor: grabbing; }
+.item-row:hover { background: var(--hover); }
+.item-row.done { opacity: 0.55; }
+.item-row.done .item-row-text { text-decoration: line-through; }
 
-.action-item-row:hover {
-  background: var(--hover);
-}
-
-.action-item-row:hover .action-item-delete {
-  opacity: 1;
-}
-
-.action-item-checkbox {
+.item-row-checkbox {
   margin-top: 2px;
   flex-shrink: 0;
   cursor: pointer;
-  accent-color: var(--accent-primary);
 }
 
-.action-item-content {
+.item-row-content {
   flex: 1;
   min-width: 0;
-}
-
-.action-item-top-row {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  gap: 5px;
 }
 
-.action-item-text {
+.item-row-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.item-row-text {
+  flex: 1;
   font-size: 12px;
+  line-height: 1.45;
   color: var(--text-primary);
   cursor: text;
+  overflow-wrap: anywhere;
+}
+
+.item-row-text-input {
   flex: 1;
-  min-width: 0;
-  word-break: break-word;
-  border-bottom: 1px solid transparent;
-  transition: border-color 150ms;
-}
-
-.action-item-text:hover {
-  border-color: var(--border);
-}
-
-.action-item-text-input {
   font-size: 12px;
-  font-family: inherit;
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  padding: 3px 6px;
-  width: 100%;
-  outline: none;
+  font-family: var(--font-body);
+  padding: 2px 6px;
+  border: 1px solid var(--accent-secondary);
+  border-radius: 4px;
+  background: var(--bg-app);
+  color: var(--text-primary);
 }
 
-.action-item-text-input:focus {
-  border-color: var(--accent-secondary);
-}
-
-.action-item-swimlane-tag {
-  font-size: 9px;
-  font-weight: 600;
-  background: var(--hover);
-  color: var(--text-secondary);
-  padding: 1px 5px;
-  border-radius: 3px;
-  white-space: nowrap;
-  cursor: pointer;
-  flex-shrink: 0;
-  border: 1px solid transparent;
-  transition: border-color 150ms;
-}
-
-.action-item-swimlane-tag:hover {
-  background: var(--hover-strong);
-  border-color: var(--border);
-}
-
-.action-item-swimlane-tag.unlinked {
-  opacity: 0;
-  background: none;
-  border: 1px dashed var(--border);
-  font-style: italic;
-  transition: opacity 150ms;
-}
-
-.action-item-row:hover .action-item-swimlane-tag.unlinked {
-  opacity: 0.6;
-}
-
-.action-item-swimlane-tag.unlinked:hover {
-  opacity: 1;
-}
-
-.action-item-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 2px;
-}
-
-.action-item-owner {
-  font-size: 11px;
-  color: var(--text-secondary);
-  cursor: text;
-  border-bottom: 1px solid transparent;
-  transition: border-color 150ms;
-}
-
-.action-item-owner:hover {
-  border-color: var(--border);
-}
-
-.action-item-owner:empty::before {
-  content: 'Assign owner...';
-  opacity: 0.65;
-}
-
-.action-item-owner-input {
-  font-size: 11px;
-  font-family: inherit;
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  padding: 3px 6px;
-  width: 120px;
-  outline: none;
-  color: var(--text-secondary);
-}
-
-.action-item-owner-input:focus {
-  border-color: var(--accent-secondary);
-}
-
-.action-item-delete {
-  align-self: flex-start;
-  margin-top: 4px;
-  flex-shrink: 0;
-  opacity: 0;
+.item-row-delete {
   background: none;
   border: none;
-  color: var(--error-bright);
-  font-size: 12px;
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 3px;
+  color: var(--text-muted);
+  font-size: 14px;
   line-height: 1;
+  padding: 1px 5px;
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 0;
 }
 
-.action-item-delete:hover {
-  background: rgba(181, 34, 34, 0.1);
+.item-row:hover .item-row-delete,
+.item-row-delete.confirm { opacity: 1; }
+
+.item-row-delete:hover {
+  color: var(--error-bright);
+  background: var(--hover-strong);
 }
 
-.action-item-row.done .action-item-text {
-  text-decoration: line-through;
-  opacity: 0.5;
+.item-row-delete.confirm {
+  font-size: 10px;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--error-bright);
 }
 
-.action-item-row.done .action-item-owner {
-  opacity: 0.4;
+/* Meta line: kind, the projects it touches, and who owns it. */
+.item-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
 }
 
-.action-item-row.done .action-item-swimlane-tag {
-  opacity: 0.4;
+.item-kind-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--kind-color, var(--border));
+  background: none;
+  color: var(--kind-color, var(--text-secondary));
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.item-kind-chip:hover { background: var(--hover); }
+
+.item-kind-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--kind-color, var(--text-muted));
+  flex-shrink: 0;
+}
+
+.item-chip {
+  font-size: 10px;
+  font-family: var(--font-body);
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-surface-2);
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item-chip:hover {
+  border-color: var(--error-bright);
+  color: var(--error-bright);
+}
+
+.item-chip-x { opacity: 0.5; }
+.item-chip:hover .item-chip-x { opacity: 1; }
+
+.item-chip-none {
+  font-size: 10px;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.item-link-btn {
+  font-size: 10px;
+  font-family: var(--font-body);
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px dashed var(--border-strong);
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.item-link-btn:hover {
+  color: var(--accent-secondary);
+  border-color: var(--accent-secondary);
+}
+
+.item-kind-select,
+.item-link-select,
+.item-owner-input {
+  font-size: 10px;
+  font-family: var(--font-body);
+  padding: 2px 4px;
+  border: 1px solid var(--accent-secondary);
+  border-radius: 4px;
+  background: var(--bg-app);
+  color: var(--text-primary);
+  max-width: 140px;
+}
+
+.item-owner {
+  font-size: 10px;
+  font-family: var(--font-body);
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: var(--hover);
+  color: var(--text-secondary);
+  cursor: pointer;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.item-owner.empty {
+  background: none;
+  color: var(--text-muted);
+  opacity: 0;
+}
+
+.item-row:hover .item-owner.empty { opacity: 1; }
+
+.item-owner:hover {
+  color: var(--text-primary);
+  background: var(--hover-strong);
 }
 
 .notes-panel-divider {
@@ -2751,13 +2780,17 @@ select option {
   color: var(--text-primary);
 }
 
-.swimlane-row.action-item-drop-target {
+.swimlane-row.item-drop-target {
   outline: 2px solid var(--today-line);
   outline-offset: -2px;
   background: color-mix(in srgb, var(--accent-secondary) 16%, transparent) !important;
 }
 
-.swimlane-note-badge {
+/* Open-item count for the project, bottom-right of the name cell. One badge
+   for the whole register; it switches to the warning hue when any open item is
+   a dependency, risk or issue, so "held up" still reads at a glance the way
+   the old two-badge layout did. */
+.swimlane-item-badge {
   position: absolute;
   bottom: 3px;
   right: 3px;
@@ -2776,34 +2809,13 @@ select option {
   z-index: 2;
 }
 
-.swimlane-note-badge:hover {
-  background: #ffa060;
-}
+.swimlane-item-badge:hover { filter: brightness(1.12); }
 
-/* Outstanding-dependency count. Sits left of the note badge, in the warning
-   hue so "blocked" reads differently from "has action items". */
-.swimlane-dep-badge {
-  position: absolute;
-  bottom: 3px;
-  right: 23px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  border-radius: 8px;
+.swimlane-item-badge.blocked {
   background: var(--warning);
   color: #1a1408;
-  font-size: 9px;
-  font-weight: 700;
-  line-height: 16px;
-  text-align: center;
-  border: none;
-  cursor: pointer;
-  z-index: 2;
 }
 
-.swimlane-dep-badge:hover {
-  filter: brightness(1.15);
-}
 
 /* ========================================================================
  * Environments & contention
@@ -4011,184 +4023,6 @@ select option {
   background: var(--error-bright);
   border-color: var(--error-bright);
   font-size: 11px;
-}
-
-/* ─── Key Dependencies (rail tab) ───────────────────────────────────────────
-   Shared dependency items — one item can block several projects, so each row
-   carries project chips rather than living under a project heading. Reuses
-   the notes panel's filter bar / add row / list / divider chrome so the two
-   tracking tabs read as one family. */
-.dep-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 8px 14px;
-  border-bottom: 1px solid var(--border);
-}
-
-.dep-row.done {
-  opacity: 0.55;
-}
-
-.dep-row.done .dep-row-text {
-  text-decoration: line-through;
-}
-
-.dep-row-checkbox {
-  margin-top: 2px;
-  flex-shrink: 0;
-  cursor: pointer;
-}
-
-.dep-row-content {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.dep-row-top {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-.dep-row-text {
-  flex: 1;
-  font-size: 12px;
-  line-height: 1.45;
-  color: var(--text-primary);
-  cursor: text;
-  overflow-wrap: anywhere;
-}
-
-.dep-row-text-input {
-  flex: 1;
-  font-size: 12px;
-  font-family: var(--font-body);
-  padding: 2px 6px;
-  border: 1px solid var(--accent-secondary);
-  border-radius: 4px;
-  background: var(--bg-app);
-  color: var(--text-primary);
-}
-
-.dep-row-delete {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 14px;
-  line-height: 1;
-  padding: 1px 5px;
-  border-radius: 4px;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.dep-row-delete:hover {
-  color: var(--error-bright);
-  background: var(--hover);
-}
-
-.dep-row-delete.confirm {
-  font-size: 10px;
-  font-weight: 600;
-  color: #ffffff;
-  background: var(--error-bright);
-}
-
-/* Meta line: which projects this blocks, plus who's chasing it. */
-.dep-row-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 5px;
-}
-
-.dep-chip {
-  font-size: 10px;
-  font-family: var(--font-body);
-  padding: 2px 7px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--bg-surface-2);
-  color: var(--text-secondary);
-  cursor: pointer;
-  white-space: nowrap;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.dep-chip:hover {
-  border-color: var(--error-bright);
-  color: var(--error-bright);
-}
-
-.dep-chip-x {
-  opacity: 0.5;
-}
-
-.dep-chip:hover .dep-chip-x {
-  opacity: 1;
-}
-
-.dep-chip-none {
-  font-size: 10px;
-  font-style: italic;
-  color: var(--text-muted);
-}
-
-.dep-link-btn {
-  font-size: 10px;
-  font-family: var(--font-body);
-  padding: 2px 7px;
-  border-radius: 999px;
-  border: 1px dashed var(--border-strong);
-  background: none;
-  color: var(--text-muted);
-  cursor: pointer;
-}
-
-.dep-link-btn:hover {
-  color: var(--accent-secondary);
-  border-color: var(--accent-secondary);
-}
-
-.dep-link-select,
-.dep-owner-input {
-  font-size: 10px;
-  font-family: var(--font-body);
-  padding: 2px 4px;
-  border: 1px solid var(--accent-secondary);
-  border-radius: 4px;
-  background: var(--bg-app);
-  color: var(--text-primary);
-  max-width: 140px;
-}
-
-.dep-owner {
-  font-size: 10px;
-  font-family: var(--font-body);
-  padding: 2px 7px;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  background: var(--hover);
-  color: var(--text-secondary);
-  cursor: pointer;
-  margin-left: auto;
-  white-space: nowrap;
-}
-
-.dep-owner.empty {
-  background: none;
-  color: var(--text-muted);
-}
-
-.dep-owner:hover {
-  color: var(--text-primary);
-  background: var(--hover-strong);
 }
 
 /* ─── Claude assistant (rail tab) ───────────────────────────────────────────

@@ -6,10 +6,9 @@ import RightPanel from './RightPanel';
 import TimelineHeader from './TimelineHeader';
 import TimelineContent from './TimelineContent';
 import Toolbar from './Toolbar';
-import NotesPanel from './NotesPanel';
+import OpenItemsPanel from './OpenItemsPanel';
 import EnvironmentsPanel from './EnvironmentsPanel';
 import PeoplePanel from './PeoplePanel';
-import DependenciesPanel from './DependenciesPanel';
 import Rail from './rail/Rail';
 import RailPanel from './rail/RailPanel';
 import InspectorTab from './rail/InspectorTab';
@@ -23,7 +22,7 @@ import { useAuthStore } from '../auth/useAuthStore';
 import ManagePhaseTypesModal from './ManagePhaseTypesModal';
 import { useGanttStore } from '../store/useGanttStore';
 import { getTodayWeekOffset } from '../utils/dateUtils';
-import { buildNotesEmail } from '../utils/notesEmail';
+import { buildOpenItemsEmail } from '../utils/notesEmail';
 import { buildSwimlaneCsv } from '../utils/swimlaneExport';
 import { useThemeColors } from '../theme/ThemeContext';
 import {
@@ -41,10 +40,9 @@ const RIGHT_DEFAULT = 180;
 
 const RAIL_TITLES = {
   inspector: 'Inspector',
-  notes: 'Notes & Action Items',
+  items: 'Open Items',
   environments: 'Environments & Contention',
   people: 'People & Teams',
-  dependencies: 'Key Dependencies',
   claude: 'Claude Assistant',
 } as const;
 
@@ -97,6 +95,7 @@ export default function GanttChart() {
   const railTab = useGanttStore(s => s.railTab);
   const setRailTab = useGanttStore(s => s.setRailTab);
   const toggleRailTab = useGanttStore(s => s.toggleRailTab);
+  const openTrackedItemsFor = useGanttStore(s => s.openTrackedItemsFor);
   const claudeHasChat = useClaudeStore(s => s.messages.length > 0);
   const clearClaudeChat = useClaudeStore(s => s.clearChat);
   const environmentFocusId = useGanttStore(s => s.environmentFocusId);
@@ -104,7 +103,7 @@ export default function GanttChart() {
   const peopleFocus = useGanttStore(s => s.peopleFocus);
   const setPeopleFocus = useGanttStore(s => s.setPeopleFocus);
   const phaseTypesModalOpen = useGanttStore(s => s.phaseTypesModalOpen);
-  const actionItems = useGanttStore(s => s.actionItems);
+  const trackedItems = useGanttStore(s => s.trackedItems);
   const swimlanes = useGanttStore(s => s.swimlanes);
   const sections = useGanttStore(s => s.sections);
   const phaseBars = useGanttStore(s => s.phaseBars);
@@ -268,7 +267,7 @@ export default function GanttChart() {
       }
       if (mod && e.shiftKey && key === 'n') {
         e.preventDefault();
-        toggleRailTab('notes');
+        toggleRailTab('items');
         return;
       }
       if (mod && e.shiftKey && key === 'e') {
@@ -287,8 +286,14 @@ export default function GanttChart() {
         return;
       }
       if (mod && e.shiftKey && key === 'd') {
+        // Kept from when Dependencies was its own tab: opens the register
+        // already filtered to that lens, so the old habit still lands.
         e.preventDefault();
-        toggleRailTab('dependencies');
+        if (railTab === 'items' && useGanttStore.getState().trackedFilterKind === 'dependency') {
+          setRailTab(null);
+        } else {
+          openTrackedItemsFor(null, 'dependency');
+        }
         return;
       }
       if (mod && key === 'n') {
@@ -339,7 +344,7 @@ export default function GanttChart() {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [undo, redo, selectedBarId, removePhaseBar, selectBar, saveFile, saveFileAs, openFile, newFile, toggleRailTab, railTab, setRailTab, environmentFocusId, setEnvironmentFocus, peopleFocus, setPeopleFocus]);
+  }, [undo, redo, selectedBarId, removePhaseBar, selectBar, saveFile, saveFileAs, openFile, newFile, toggleRailTab, openTrackedItemsFor, railTab, setRailTab, environmentFocusId, setEnvironmentFocus, peopleFocus, setPeopleFocus]);
 
   const handleSpacePanStart = useCallback((e: React.PointerEvent) => {
     if (spaceHeld.current && e.button === 0) {
@@ -503,9 +508,9 @@ export default function GanttChart() {
   }, [captureCanvas, exportBaseName]);
 
   const emailNotes = useCallback(() => {
-    const { subject, body } = buildNotesEmail(swimlanes, sections, actionItems, currentFileName);
+    const { subject, body } = buildOpenItemsEmail(swimlanes, sections, trackedItems, currentFileName);
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  }, [swimlanes, sections, actionItems, currentFileName]);
+  }, [swimlanes, sections, trackedItems, currentFileName]);
 
   const exportSwimlanes = useCallback(() => {
     const csv = buildSwimlaneCsv(swimlanes, sections, phaseBars, phaseTypes, timeline, people, teams);
@@ -626,17 +631,16 @@ export default function GanttChart() {
       <RailPanel
         title={RAIL_TITLES[railTab]}
         onClose={() => setRailTab(null)}
-        headerActions={railTab === 'notes'
+        headerActions={railTab === 'items'
           ? <button onClick={emailNotes} title="Email notes" aria-label="Email notes">&#x2709;</button>
           : railTab === 'claude' && claudeHasChat
             ? <button className="claude-clear-btn" onClick={clearClaudeChat} title="Clear conversation">Clear</button>
             : undefined}
       >
         {railTab === 'inspector' && <InspectorTab />}
-        {railTab === 'notes' && <NotesPanel />}
+        {railTab === 'items' && <OpenItemsPanel />}
         {railTab === 'environments' && <EnvironmentsPanel />}
         {railTab === 'people' && <PeoplePanel />}
-        {railTab === 'dependencies' && <DependenciesPanel />}
         {railTab === 'claude' && <ClaudeChat />}
       </RailPanel>
     )}

@@ -3,8 +3,8 @@ import type {
   GanttState,
   Swimlane,
   PhaseBar,
-  ActionItem,
-  DependencyItem,
+  TrackedItem,
+  TrackedKind,
   TimelineConfig,
   SwimlaneSection,
   Section,
@@ -31,6 +31,7 @@ import {
   FLOATING_NOTE_MIN_HEIGHT,
 } from '../types/gantt';
 import { pickNextEnvColor } from '../utils/contention';
+import { isTrackedKind } from '../data/trackedKinds';
 import { PRESET_MATRIX } from '../data/displayPresets';
 import { getBuiltinPhaseTypes, getPhaseDef, deriveColorScheme, applyThemePresetsToBuiltins } from '../data/phasePresets';
 import type { ThemeName } from '../theme/colors';
@@ -57,11 +58,12 @@ const MAX_HISTORY = 50;
 // Single version stamp written by BOTH localStorage autosave and file export.
 // History: v2 real-calendar model · v5 env exclusive flag · v6 bar environmentId
 // · v7 teams/people + bar/lane assigneeIds+teamIds · v8 shared DependencyItems
-// (per-project keyDependencies text → items that can block several projects).
+// (per-project keyDependencies text → items that can block several projects)
+// · v9 one TrackedItem register (action items + dependencies merged, RAID kinds).
 // Bump when the schema changes and add a matching migration in loadFromStorage /
 // importFromJSON (they run idempotent field migrations regardless of version;
 // the only hard gate is `< 2`, which discards pre-real-calendar data).
-const SCHEMA_VERSION = 8;
+const SCHEMA_VERSION = 9;
 
 interface GanttActions {
   // Sections
@@ -112,19 +114,18 @@ interface GanttActions {
   selectBar: (id: string | null) => void;
 
   // Action items
-  addActionItem: (text: string, swimlaneId?: string | null) => void;
-  updateActionItem: (id: string, updates: Partial<ActionItem>) => void;
-  removeActionItem: (id: string) => void;
-  clearDoneActionItems: () => void;
+  addTrackedItem: (kind: TrackedKind, text: string, swimlaneIds?: string[]) => void;
+  updateTrackedItem: (id: string, updates: Partial<TrackedItem>) => void;
+  removeTrackedItem: (id: string) => void;
+  /** Link/unlink one project on an item (the sharing affordance). */
+  toggleTrackedItemProject: (id: string, swimlaneId: string) => void;
+  /** Clear done items — scoped to one kind when a lens is active. */
+  clearDoneTrackedItems: (kind?: TrackedKind | null) => void;
+  /** Open the Open Items rail tab scoped to a project and/or kind. */
+  openTrackedItemsFor: (swimlaneId: string | null, kind?: TrackedKind | null) => void;
+  setTrackedFilterSwimlane: (id: string | null) => void;
+  setTrackedFilterKind: (kind: TrackedKind | null) => void;
 
-  // Key dependencies (shared across projects)
-  addDependencyItem: (text: string, swimlaneIds?: string[]) => void;
-  updateDependencyItem: (id: string, updates: Partial<DependencyItem>) => void;
-  removeDependencyItem: (id: string) => void;
-  /** Link/unlink one project on a dependency (the sharing affordance). */
-  toggleDependencyItemProject: (id: string, swimlaneId: string) => void;
-  /** Open the Key Dependencies rail tab scoped to one project. */
-  openDependenciesForSwimlane: (swimlaneId: string | null) => void;
 
   // Floating notes (free-positioned sticky notes)
   addFloatingNote: (x: number, y: number) => string;
@@ -140,12 +141,6 @@ interface GanttActions {
   setRailTab: (tab: RailTab | null) => void;
   /** Open the tab, or close the panel if it's already the active tab. */
   toggleRailTab: (tab: RailTab) => void;
-
-  // Notes panel
-  openNotesPanelForSwimlane: (swimlaneId: string) => void;
-  openNotesPanelFiltered: (swimlaneId: string) => void;
-  setNotesPanelFilter: (id: string | null) => void;
-  clearNotesPanelFilter: () => void;
 
   // Environments
   addEnvironment: (name: string, color?: string) => string;
@@ -244,8 +239,7 @@ const defaultState: GanttState = {
   phaseBars: [],
   milestones: [],
   dependencies: [],
-  actionItems: [],
-  dependencyItems: [],
+  trackedItems: [],
   floatingNotes: [],
   environments: [],
   teams: [],
@@ -274,9 +268,8 @@ const defaultState: GanttState = {
   creatingBarId: null,
   isSpaceHeld: false,
   railTab: null,
-  notesPanelSwimlaneId: null,
-  notesPanelFilterId: null,
-  dependenciesFilterId: null,
+  trackedFilterSwimlaneId: null,
+  trackedFilterKind: null,
   environmentFocusId: null,
   peopleFocus: null,
   hoveredBarId: null,
@@ -328,8 +321,7 @@ function snapshot(state: GanttState): GanttState {
     phaseBars: state.phaseBars,
     milestones: state.milestones,
     dependencies: state.dependencies,
-    actionItems: state.actionItems,
-    dependencyItems: state.dependencyItems,
+    trackedItems: state.trackedItems,
     floatingNotes: state.floatingNotes,
     environments: state.environments,
     teams: state.teams,
@@ -364,57 +356,98 @@ function htmlToBulletTexts(html: string): string[] {
 }
 
 /**
- * v7 → v8: per-project `keyDependencies` rich text becomes shared
- * `DependencyItem`s. Identical text across projects collapses into ONE item
- * listing every project it blocks — the whole point of the new model, and
- * visible to the user the first time they open an old plan.
+ * Builds the unified register from whatever shape the file is in.
  *
- * Idempotent: once `dependencyItems` exists in the file we trust it and only
- * normalise shapes, so re-saving never re-imports stale legacy text.
+ * Four possible sources, in precedence order:
+ *   1. `trackedItems` (v9)      — trust it, normalise shapes only.
+ *   2. `actionItems`  (any)     — become kind 'action'; the old single
+ *                                  `swimlaneId` widens to a one-element list.
+ *   3. `dependencyItems` (v8)   — become kind 'dependency'.
+ *   4. `swimlane.keyDependencies` HTML (v7) — become kind 'dependency',
+ *      with identical text across projects collapsing into ONE item listing
+ *      every project it blocks. That collapse is the visible payoff the first
+ *      time an old plan is opened.
+ *
+ * Idempotent by construction: once `trackedItems` exists we never look at the
+ * legacy fields again, so re-saving can't re-import stale text.
  */
-function migrateDependencyItems(raw: unknown, swimlanes: Swimlane[]): DependencyItem[] {
+function migrateTrackedItems(
+  raw: unknown,
+  legacyActionItems: unknown,
+  legacyDependencyItems: unknown,
+  swimlanes: Swimlane[],
+): TrackedItem[] {
+  const nowIso = new Date().toISOString();
+
+  const normalise = (r: unknown, fallbackKind: TrackedKind): TrackedItem | null => {
+    const d = r as Partial<TrackedItem> & { swimlaneId?: unknown; kind?: unknown };
+    if (typeof d.text !== 'string' || !d.text.trim()) return null;
+    // Tolerate the old single-id shape from action items.
+    const ids = idArray(d.swimlaneIds).length > 0
+      ? idArray(d.swimlaneIds)
+      : typeof d.swimlaneId === 'string' ? [d.swimlaneId] : [];
+    return {
+      id: typeof d.id === 'string' ? d.id : uid(),
+      kind: isTrackedKind(d.kind) ? d.kind : fallbackKind,
+      text: d.text,
+      owner: typeof d.owner === 'string' ? d.owner : '',
+      done: d.done === true,
+      swimlaneIds: ids,
+      createdAt: typeof d.createdAt === 'string' ? d.createdAt : nowIso,
+    };
+  };
+
   if (Array.isArray(raw)) {
-    return raw
-      .map(r => {
-        const d = r as Partial<DependencyItem> & { swimlaneId?: unknown };
-        if (typeof d.text !== 'string' || !d.text.trim()) return null;
-        // Tolerate a single-id shape in case anything wrote one.
-        const ids = idArray(d.swimlaneIds).length > 0
-          ? idArray(d.swimlaneIds)
-          : typeof d.swimlaneId === 'string' ? [d.swimlaneId] : [];
-        return {
-          id: typeof d.id === 'string' ? d.id : uid(),
-          text: d.text,
-          swimlaneIds: ids,
-          done: d.done === true,
-          owner: typeof d.owner === 'string' ? d.owner : '',
-          createdAt: typeof d.createdAt === 'string' ? d.createdAt : new Date().toISOString(),
-        };
-      })
-      .filter((d): d is DependencyItem => d !== null);
+    return raw.map(r => normalise(r, 'action')).filter((d): d is TrackedItem => d !== null);
   }
 
-  const byText = new Map<string, DependencyItem>();
-  const createdAt = new Date().toISOString();
-  for (const lane of swimlanes) {
-    for (const text of htmlToBulletTexts(lane.keyDependencies)) {
-      const key = text.toLowerCase();
-      const existing = byText.get(key);
-      if (existing) {
-        if (!existing.swimlaneIds.includes(lane.id)) existing.swimlaneIds.push(lane.id);
-      } else {
-        byText.set(key, { id: uid(), text, swimlaneIds: [lane.id], done: false, owner: '', createdAt });
-      }
+  const items: TrackedItem[] = [];
+
+  if (Array.isArray(legacyActionItems)) {
+    for (const r of legacyActionItems) {
+      const item = normalise(r, 'action');
+      if (item) items.push({ ...item, kind: 'action' });
     }
   }
-  return [...byText.values()];
+
+  if (Array.isArray(legacyDependencyItems)) {
+    for (const r of legacyDependencyItems) {
+      const item = normalise(r, 'dependency');
+      if (item) items.push({ ...item, kind: 'dependency' });
+    }
+  } else {
+    // v7 and earlier: dependencies were per-project rich text.
+    const byText = new Map<string, TrackedItem>();
+    for (const lane of swimlanes) {
+      for (const text of htmlToBulletTexts(lane.keyDependencies)) {
+        const key = text.toLowerCase();
+        const existing = byText.get(key);
+        if (existing) {
+          if (!existing.swimlaneIds.includes(lane.id)) existing.swimlaneIds.push(lane.id);
+        } else {
+          byText.set(key, {
+            id: uid(), kind: 'dependency', text, owner: '',
+            done: false, swimlaneIds: [lane.id], createdAt: nowIso,
+          });
+        }
+      }
+    }
+    items.push(...byText.values());
+  }
+
+  return items;
 }
 
-/** Per-project dependency text derived from the shared items — used by the
- * export column and written into saved files so older builds still show
- * something sensible. Outstanding first, done last (struck through). */
-export function dependenciesHtmlForSwimlane(items: DependencyItem[], swimlaneId: string): string {
-  const mine = items.filter(d => d.swimlaneIds.includes(swimlaneId));
+/** Per-project text for one kind, derived from the register — used by the
+ * export-only dependencies column and written into saved files so older
+ * builds still show something sensible. Outstanding first, done last
+ * (struck through). */
+export function trackedHtmlForSwimlane(
+  items: TrackedItem[],
+  swimlaneId: string,
+  kind: TrackedKind,
+): string {
+  const mine = items.filter(d => d.kind === kind && d.swimlaneIds.includes(swimlaneId));
   if (mine.length === 0) return '';
   const ordered = [...mine.filter(d => !d.done), ...mine.filter(d => d.done)];
   const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -627,9 +660,10 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
       swimlanes: state.swimlanes.filter(s => s.id !== id),
       phaseBars: state.phaseBars.filter(b => b.swimlaneId !== id),
       milestones: state.milestones.filter(m => m.swimlaneId !== id),
-      // Unlink the deleted project; a dependency that blocked only this one
-      // becomes plan-level rather than vanishing silently.
-      dependencyItems: state.dependencyItems.map(d =>
+      // Unlink the deleted project from every tracked item; one that related
+      // only to this project becomes plan-level rather than vanishing (or, as
+      // action items used to, keeping a dangling id).
+      trackedItems: state.trackedItems.map(d =>
         d.swimlaneIds.includes(id)
           ? { ...d, swimlaneIds: d.swimlaneIds.filter(s => s !== id) }
           : d
@@ -862,94 +896,51 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
   // === Selection ===
   selectBar: (id) => set({ selectedBarId: id, creatingBarId: null }),
 
-  // === Action items ===
-  addActionItem: (text, swimlaneId) => {
-    pushUndo(get());
-    set(state => ({
-      actionItems: [...state.actionItems, {
-        id: uid(),
-        text,
-        owner: '',
-        done: false,
-        swimlaneId: swimlaneId ?? null,
-        createdAt: new Date().toISOString(),
-      }],
-    }));
-    get().saveToStorage();
-  },
-
-  updateActionItem: (id, updates) => {
-    pushUndo(get());
-    set(state => ({
-      actionItems: state.actionItems.map(item =>
-        item.id === id ? { ...item, ...updates } : item
-      ),
-    }));
-    get().saveToStorage();
-  },
-
-  removeActionItem: (id) => {
-    pushUndo(get());
-    set(state => ({
-      actionItems: state.actionItems.filter(item => item.id !== id),
-    }));
-    get().saveToStorage();
-  },
-
-  clearDoneActionItems: () => {
-    pushUndo(get());
-    set(state => ({
-      actionItems: state.actionItems.filter(item => !item.done),
-    }));
-    get().saveToStorage();
-  },
-
-  // === Key dependencies ===
-  addDependencyItem: (text, swimlaneIds) => {
+  // === Tracked items (the Open Items register) ===
+  addTrackedItem: (kind, text, swimlaneIds) => {
     const trimmed = text.trim();
     if (!trimmed) return;
     pushUndo(get());
     set(state => ({
-      dependencyItems: [...state.dependencyItems, {
+      trackedItems: [...state.trackedItems, {
         id: uid(),
+        kind,
         text: trimmed,
-        swimlaneIds: swimlaneIds ? [...swimlaneIds] : [],
-        done: false,
         owner: '',
+        done: false,
+        swimlaneIds: swimlaneIds ? [...swimlaneIds] : [],
         createdAt: new Date().toISOString(),
       }],
     }));
     get().saveToStorage();
   },
 
-  updateDependencyItem: (id, updates) => {
+  updateTrackedItem: (id, updates) => {
     pushUndo(get());
     set(state => ({
-      dependencyItems: state.dependencyItems.map(d =>
-        d.id === id ? { ...d, ...updates } : d
-      ),
+      trackedItems: state.trackedItems.map(d => (d.id === id ? { ...d, ...updates } : d)),
     }));
     get().saveToStorage();
   },
 
-  removeDependencyItem: (id) => {
+  removeTrackedItem: (id) => {
     pushUndo(get());
     set(state => ({
-      dependencyItems: state.dependencyItems.filter(d => d.id !== id),
+      trackedItems: state.trackedItems.filter(d => d.id !== id),
     }));
     get().saveToStorage();
   },
 
-  toggleDependencyItemProject: (id, swimlaneId) => {
+  toggleTrackedItemProject: (id, swimlaneId) => {
     pushUndo(get());
     set(state => ({
-      dependencyItems: state.dependencyItems.map(d => {
+      trackedItems: state.trackedItems.map(d => {
         if (d.id !== id) return d;
         const linked = d.swimlaneIds.includes(swimlaneId);
         return {
           ...d,
           swimlaneIds: linked
-            ? d.swimlaneIds.filter(s => s !== swimlaneId)
+            ? d.swimlaneIds.filter(x => x !== swimlaneId)
             : [...d.swimlaneIds, swimlaneId],
         };
       }),
@@ -957,8 +948,24 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
     get().saveToStorage();
   },
 
-  openDependenciesForSwimlane: (swimlaneId) =>
-    set({ railTab: 'dependencies', dependenciesFilterId: swimlaneId }),
+  clearDoneTrackedItems: (kind) => {
+    pushUndo(get());
+    set(state => ({
+      trackedItems: state.trackedItems.filter(
+        d => !d.done || (kind != null && d.kind !== kind)
+      ),
+    }));
+    get().saveToStorage();
+  },
+
+  openTrackedItemsFor: (swimlaneId, kind) => set({
+    railTab: 'items',
+    trackedFilterSwimlaneId: swimlaneId,
+    trackedFilterKind: kind ?? null,
+  }),
+
+  setTrackedFilterSwimlane: (id) => set({ trackedFilterSwimlaneId: id }),
+  setTrackedFilterKind: (kind) => set({ trackedFilterKind: kind }),
 
   // === Floating notes ===
   addFloatingNote: (x, y) => {
@@ -1026,35 +1033,14 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
   // === Rail ===
   setRailTab: (tab) => set(state => ({
     railTab: tab,
-    // Leaving the notes tab drops its lane filter and seed, matching the old
-    // notes-panel close behaviour.
-    ...(state.railTab === 'notes' && tab !== 'notes'
-      ? { notesPanelFilterId: null, notesPanelSwimlaneId: null }
-      : {}),
-    // Same for the dependencies tab's per-project scope.
-    ...(state.railTab === 'dependencies' && tab !== 'dependencies'
-      ? { dependenciesFilterId: null }
+    // Leaving the Open Items tab drops its filters, so reopening it always
+    // starts from the whole register rather than a stale scope.
+    ...(state.railTab === 'items' && tab !== 'items'
+      ? { trackedFilterSwimlaneId: null, trackedFilterKind: null }
       : {}),
   })),
 
   toggleRailTab: (tab) => get().setRailTab(get().railTab === tab ? null : tab),
-
-  // === Notes panel ===
-  openNotesPanelForSwimlane: (swimlaneId) => set({
-    railTab: 'notes',
-    notesPanelSwimlaneId: swimlaneId,
-    notesPanelFilterId: null,
-  }),
-
-  openNotesPanelFiltered: (swimlaneId) => set({
-    railTab: 'notes',
-    notesPanelFilterId: swimlaneId,
-    notesPanelSwimlaneId: swimlaneId,
-  }),
-
-  setNotesPanelFilter: (id) => set({ notesPanelFilterId: id }),
-
-  clearNotesPanelFilter: () => set({ notesPanelFilterId: null }),
 
   // === Environments ===
   addEnvironment: (name, color) => {
@@ -1434,8 +1420,7 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         phaseBars: state.phaseBars,
         milestones: state.milestones,
         dependencies: state.dependencies,
-        actionItems: state.actionItems,
-        dependencyItems: state.dependencyItems,
+        trackedItems: state.trackedItems,
         floatingNotes: state.floatingNotes,
         environments: state.environments,
         teams: state.teams,
@@ -1489,8 +1474,7 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         phaseBars: migratePhaseBars(data.phaseBars),
         milestones: data.milestones || [],
         dependencies: data.dependencies || [],
-        actionItems: data.actionItems || [],
-        dependencyItems: migrateDependencyItems(data.dependencyItems, restoredLanes),
+        trackedItems: migrateTrackedItems(data.trackedItems, data.actionItems, data.dependencyItems, restoredLanes),
         floatingNotes: Array.isArray(data.floatingNotes) ? data.floatingNotes : [],
         environments: migrateEnvironments(data.environments),
         teams: migrateTeams(data.teams),
@@ -1528,13 +1512,12 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
       // anything else reading the old field). v8+ ignores it on load.
       swimlanes: state.swimlanes.map(lane => ({
         ...lane,
-        keyDependencies: dependenciesHtmlForSwimlane(state.dependencyItems, lane.id),
+        keyDependencies: trackedHtmlForSwimlane(state.trackedItems, lane.id, 'dependency'),
       })),
       phaseBars: state.phaseBars,
       milestones: state.milestones,
       dependencies: state.dependencies,
-      actionItems: state.actionItems,
-      dependencyItems: state.dependencyItems,
+      trackedItems: state.trackedItems,
       floatingNotes: state.floatingNotes,
       environments: state.environments,
       teams: state.teams,
@@ -1580,8 +1563,7 @@ export const useGanttStore = create<GanttStore>((set, get) => ({
         phaseBars: migratePhaseBars(data.phaseBars),
         milestones: data.milestones || [],
         dependencies: data.dependencies || [],
-        actionItems: data.actionItems || [],
-        dependencyItems: migrateDependencyItems(data.dependencyItems, importedLanes),
+        trackedItems: migrateTrackedItems(data.trackedItems, data.actionItems, data.dependencyItems, importedLanes),
         floatingNotes: Array.isArray(data.floatingNotes) ? data.floatingNotes : [],
         environments: migrateEnvironments(data.environments),
         teams: migrateTeams(data.teams),

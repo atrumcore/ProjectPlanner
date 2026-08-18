@@ -57,34 +57,37 @@ export interface Dependency {
   toBarId: string;
 }
 
-export interface ActionItem {
-  id: string;
-  text: string;
-  owner: string;
-  done: boolean;
-  swimlaneId: string | null;
-  createdAt: string;
-}
-
 /**
- * Something the plan is waiting on from outside — a vendor contract, an
- * upstream API, a signed-off spec. Distinct from `Dependency`, which is a
- * finish-to-start arrow between two phase bars.
+ * One row of the plan's register: everything being tracked that isn't a bar
+ * on the chart. A complete RAID log (Risk, Assumption, Issue, Dependency)
+ * plus the two a planner also needs (Action, Decision).
  *
- * One item can block SEVERAL projects (that's the point: "Core banking API
- * v3" is one dependency, not one per project), so it carries a list of
- * swimlane ids rather than living on a swimlane. An empty list means it
- * blocks the plan generally rather than any one project.
+ * `kind` is the ONLY thing that varies between them — every kind shares this
+ * shape, and everything kind-specific (label, colour, the past-tense word for
+ * `done`) lives in KIND_META in src/data/trackedKinds.ts.
+ *
+ * Not to be confused with `Dependency`, which is a finish-to-start arrow
+ * between two phase bars.
  */
-export interface DependencyItem {
+export type TrackedKind =
+  | 'risk' | 'assumption' | 'issue' | 'dependency'
+  | 'action' | 'decision';
+
+export interface TrackedItem {
   id: string;
+  kind: TrackedKind;
   text: string;
-  /** Projects blocked by this. Empty = plan-level. */
-  swimlaneIds: string[];
-  /** Cleared / satisfied. Done items stay for the record but stop counting. */
-  done: boolean;
-  /** Who is chasing it. '' when unassigned (mirrors ActionItem.owner). */
+  /** Who owns or is chasing it. '' when unassigned. */
   owner: string;
+  /** Closed out — the wording depends on the kind (Completed, Cleared,
+   * Mitigated...). Done items stay for the record but stop counting. */
+  done: boolean;
+  /**
+   * Projects this relates to. A LIST because one item routinely spans
+   * several ("Core banking API v3" is one dependency blocking three
+   * projects, not three dependencies). Empty = plan-level.
+   */
+  swimlaneIds: string[];
   createdAt: string;
 }
 
@@ -111,7 +114,7 @@ export interface Swimlane {
   projectName: string;
   keyFeatures: string; // HTML string (rich text)
   /** LEGACY (pre-v8): dependencies used to live here as per-project rich text.
-   * Migrated into shared `DependencyItem`s on load; still written on export as
+   * Migrated into shared `TrackedItem`s of kind 'dependency' on load; still
    * derived HTML so older builds and saved files keep showing something. Read
    * it only in migration and export code — never as the source of truth. */
   keyDependencies: string;
@@ -222,7 +225,7 @@ export type BarStyle = 'tagged' | 'legacy';
 
 /** Tabs on the right-edge rail. One panel open at a time; the strip itself is
  * always visible. Order mirrors the old toolbar buttons. */
-export type RailTab = 'inspector' | 'notes' | 'environments' | 'people' | 'dependencies' | 'claude';
+export type RailTab = 'inspector' | 'items' | 'environments' | 'people' | 'claude';
 
 export interface GanttState {
   sections: Section[];
@@ -230,8 +233,7 @@ export interface GanttState {
   phaseBars: PhaseBar[];
   milestones: Milestone[];
   dependencies: Dependency[];
-  actionItems: ActionItem[];
-  dependencyItems: DependencyItem[];
+  trackedItems: TrackedItem[];
   floatingNotes: FloatingNote[];
   environments: Environment[];
   teams: Team[];
@@ -259,11 +261,11 @@ export interface GanttState {
   /** Which rail tab's panel is open (one at a time), or null for none.
    * Replaces the three independent panel booleans. */
   railTab: RailTab | null;
-  notesPanelSwimlaneId: string | null;
-  notesPanelFilterId: string | null;
-  /** Scopes the Key Dependencies panel to one project (set by the per-row
-   * badge on the canvas). null = show everything. */
-  dependenciesFilterId: string | null;
+  /** Scopes the Open Items panel to one project (set by the per-row badge
+   * on the canvas). null = every project. */
+  trackedFilterSwimlaneId: string | null;
+  /** Scopes the Open Items panel to one kind. null = every kind. */
+  trackedFilterKind: TrackedKind | null;
   environmentFocusId: string | null;
   /** Focused resource in people focus mode — dims bars not assigned to it. */
   peopleFocus: { kind: 'person' | 'team'; id: string } | null;

@@ -1,6 +1,6 @@
 import { forwardRef } from 'react';
 import type { CSSProperties } from 'react';
-import { useGanttStore, dependenciesHtmlForSwimlane } from '../store/useGanttStore';
+import { useGanttStore, trackedHtmlForSwimlane } from '../store/useGanttStore';
 import type { Swimlane } from '../types/gantt';
 import { SWIMLANE_TINT_ALPHA } from '../types/gantt';
 import { hexToRgba } from '../theme/colors';
@@ -25,7 +25,7 @@ interface Props {
 const RightPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) => {
   const swimlanes = useGanttStore(s => s.swimlanes);
   const sections = useGanttStore(s => s.sections);
-  const dependencyItems = useGanttStore(s => s.dependencyItems);
+  const trackedItems = useGanttStore(s => s.trackedItems);
 
   const sectionedLanes = useSectionedLanes(sections, swimlanes);
 
@@ -49,7 +49,7 @@ const RightPanel = forwardRef<HTMLDivElement, Props>(({ onScroll, width }, ref) 
     };
     return (
       <div key={lane.id} className="deps-cell" style={cellStyle as CSSProperties}>
-        <FeaturesCell html={dependenciesHtmlForSwimlane(dependencyItems, lane.id)} />
+        <FeaturesCell html={trackedHtmlForSwimlane(trackedItems, lane.id, 'dependency')} />
       </div>
     );
   };

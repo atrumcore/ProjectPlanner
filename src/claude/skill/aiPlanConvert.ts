@@ -14,7 +14,7 @@
  */
 
 import type {
-  Dependency, DependencyItem, Milestone, Person, PhaseBar, Section, Swimlane,
+  Dependency, TrackedItem, Milestone, Person, PhaseBar, Section, Swimlane,
   Team, TimelineConfig, PhaseTypeDef,
 } from '../../types/gantt';
 import { PEOPLE_COLOR_PRESETS } from '../../types/gantt';
@@ -36,7 +36,7 @@ export interface ExportedDoc {
   people: Person[];
   phaseTypes: PhaseTypeDef[];
   timeline: TimelineConfig;
-  dependencyItems: DependencyItem[];
+  trackedItems: TrackedItem[];
   [key: string]: unknown;
 }
 
@@ -163,8 +163,8 @@ export function docToAiPlan(doc: ExportedDoc): AiPlanDoc {
     featureBullets: htmlToBullets(lane.keyFeatures),
     // Dependencies are shared items; project them as this lane's outstanding
     // ones so Claude sees per-project text in the format it reasons about.
-    dependencyBullets: (doc.dependencyItems ?? [])
-      .filter(d => !d.done && d.swimlaneIds.includes(lane.id))
+    dependencyBullets: (doc.trackedItems ?? [])
+      .filter(d => d.kind === 'dependency' && !d.done && d.swimlaneIds.includes(lane.id))
       .map(d => d.text),
     ownerPersonNames: lane.assigneeIds.map(id => personById.get(id)?.name).filter((n): n is string => !!n),
     ownerTeamNames: lane.teamIds.map(id => teamById.get(id)?.name).filter((n): n is string => !!n),
@@ -341,8 +341,8 @@ export function aiPlanToDoc(plan: AiPlanDoc, baseDoc: ExportedDoc): ConvertResul
         if (ms.swimlaneId === baseLane.id) milestones.push({ ...ms });
       }
       // Keep this lane's existing dependency links verbatim.
-      depTextsByLane.set(baseLane.id, (baseDoc.dependencyItems ?? [])
-        .filter(d => !d.done && d.swimlaneIds.includes(baseLane.id))
+      depTextsByLane.set(baseLane.id, (baseDoc.trackedItems ?? [])
+        .filter(d => d.kind === 'dependency' && !d.done && d.swimlaneIds.includes(baseLane.id))
         .map(d => d.text));
       continue;
     }
@@ -457,26 +457,29 @@ export function aiPlanToDoc(plan: AiPlanDoc, baseDoc: ExportedDoc): ConvertResul
   }
 
   /* -- 6b. Dependency items ------------------------------------------ */
-  // Claude only ever sees OUTSTANDING, project-linked dependencies, so those
-  // are the only ones it may rewrite. Cleared items and plan-level ones are
-  // preserved untouched — otherwise every applied plan would silently wipe
-  // them. Identical text across projects collapses into one shared item.
-  const baseDepItems = baseDoc.dependencyItems ?? [];
+  // Claude only ever sees OUTSTANDING, project-linked items of kind
+  // 'dependency', so those are the only ones it may rewrite. Every other kind
+  // (actions, risks, issues, decisions, assumptions), plus cleared and
+  // plan-level dependencies, is preserved untouched — otherwise every applied
+  // plan would silently wipe the rest of the register. Identical text across
+  // projects collapses into one shared item.
+  const baseItems = baseDoc.trackedItems ?? [];
   const survivingLaneIds = new Set(swimlanes.map(l => l.id));
-  const rebuiltByText = new Map<string, DependencyItem>();
+  const rebuiltByText = new Map<string, TrackedItem>();
   const nowIso = new Date().toISOString();
   for (const [laneId, texts] of depTextsByLane) {
     for (const text of texts) {
       const key = norm(text);
       let item = rebuiltByText.get(key);
       if (!item) {
-        const prior = baseDepItems.find(d => !d.done && norm(d.text) === key);
+        const prior = baseItems.find(d => d.kind === 'dependency' && !d.done && norm(d.text) === key);
         item = {
           id: prior?.id ?? uid(),
+          kind: 'dependency',
           text,
-          swimlaneIds: [],
-          done: false,
           owner: prior?.owner ?? '',
+          done: false,
+          swimlaneIds: [],
           createdAt: prior?.createdAt ?? nowIso,
         };
         rebuiltByText.set(key, item);
@@ -484,11 +487,15 @@ export function aiPlanToDoc(plan: AiPlanDoc, baseDoc: ExportedDoc): ConvertResul
       if (!item.swimlaneIds.includes(laneId)) item.swimlaneIds.push(laneId);
     }
   }
-  const preservedDeps = baseDepItems
-    .filter(d => (d.done || d.swimlaneIds.length === 0) && !rebuiltByText.has(norm(d.text)))
+  const preserved = baseItems
+    .filter(d =>
+      // Anything Claude never saw is untouchable: every non-dependency kind,
+      // plus cleared and plan-level dependencies.
+      d.kind !== 'dependency' || d.done || d.swimlaneIds.length === 0)
+    .filter(d => d.kind !== 'dependency' || !rebuiltByText.has(norm(d.text)))
     // Drop links to projects the plan no longer contains.
     .map(d => ({ ...d, swimlaneIds: d.swimlaneIds.filter(id => survivingLaneIds.has(id)) }));
-  const dependencyItems = [...preservedDeps, ...rebuiltByText.values()];
+  const trackedItems = [...preserved, ...rebuiltByText.values()];
 
   /* -- 7. Timeline length -------------------------------------------- */
   let maxEnd = 0;
@@ -511,7 +518,7 @@ export function aiPlanToDoc(plan: AiPlanDoc, baseDoc: ExportedDoc): ConvertResul
     phaseBars,
     milestones,
     dependencies,
-    dependencyItems,
+    trackedItems,
     teams,
     people,
     timeline,
@@ -537,8 +544,8 @@ function laneBundle(doc: ExportedDoc, laneId: string): string {
     .filter(m => m.swimlaneId === laneId)
     .map(m => m.week)
     .sort((a, b) => a - b);
-  const deps = (doc.dependencyItems ?? [])
-    .filter(d => !d.done && d.swimlaneIds.includes(laneId))
+  const deps = (doc.trackedItems ?? [])
+    .filter(d => d.kind === 'dependency' && !d.done && d.swimlaneIds.includes(laneId))
     .map(d => d.text)
     .sort();
   // Milestone ids are regenerated on every convert, so compare weeks only.
@@ -582,7 +589,7 @@ function buildDiff(base: ExportedDoc, next: ExportedDoc): PlanDiff {
     modifiedProjects,
     phaseCount: next.phaseBars.length,
     milestoneCount: next.milestones.length,
-    dependencyCount: (next.dependencyItems ?? []).filter(d => !d.done).length,
+    dependencyCount: (next.trackedItems ?? []).filter(d => d.kind === 'dependency' && !d.done).length,
     addedPeople: [...nextPeople.values()].filter(p => !basePeople.has(p.id)).map(p => p.name),
     removedPeople: [...basePeople.values()].filter(p => !nextPeople.has(p.id)).map(p => p.name),
     addedTeams: [...nextTeams.values()].filter(t => !baseTeams.has(t.id)).map(t => t.name),
