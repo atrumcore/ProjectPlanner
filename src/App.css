@@ -21,10 +21,23 @@
   --fs-title: 15px;   /* Montserrat 700 — app title / launcher heading */
   --fs-detail: 14px;  /* Montserrat 600 — panel detail name */
   --fs-row: 13px;     /* Open Sans 600  — row titles, buttons, plan names */
-  --fs-body: 12px;    /* Open Sans 400  — panels, menus, inputs */
+  --fs-body: 12px;    /* Open Sans 400  — panels, menus, inputs. Also the
+                         canvas month heading at Montserrat 700. */
   --fs-meta: 11px;    /* Open Sans 400  — meta, hints, attribution */
   --fs-label: 10px;   /* Montserrat 700 — eyebrows (caps +0.12em), on-bar */
-  --fs-badge: 9px;    /* 700 — badges, pills, chip initials */
+  --fs-badge: 9px;    /* Montserrat 700 — badges, pills, chip initials */
+
+  /* Brand tracking. Eyebrows and kickers only — everything else stays dense.
+     Always em, never px: at px the tracking stops scaling with the size and
+     the same device reads differently at 9px and 11px (which is exactly how
+     .swimlane-features-more and .env-pill-pick drifted off the device). */
+  --tracking-eyebrow: 0.12em;
+  --tracking-badge: 0.04em;
+
+  /* Glyph buttons (×, ◀, ▾, +, ⠿) size their icon rather than any text, but
+     they still draw from these same steps so the glyph matches the rhythm of
+     the text beside it. Read the content before "correcting" one: a 14px ×
+     is an icon at the detail step, not a mis-set detail name. */
 
   --row-height: 48px;
   /* "+ Add project/section" row height — mirrored by the timeline SVG's
@@ -168,18 +181,87 @@ h3 {
   font-family: var(--font-display);
 }
 
-/* Eyebrow — the v2 label style for every small uppercase heading (type card:
-   10px Montserrat 700, +0.12em). The kicker is an eyebrow plus the BBD 28×3px
-   red rule — the brand signature for panel headers, launcher sections and
-   empty-state headings. */
+/* Form controls do NOT inherit the document font — a bare <button> falls back
+   to the browser's own UI font, which is how the "+", "◀", "×" and rail-tab
+   glyph buttons ended up rendering in Arial alongside Open Sans. Default every
+   control to the body face here, once, so a new control can never fall out of
+   the brand again; the rules below opt individual controls up to the display
+   face where they carry a label rather than body copy. `kbd` is here for the
+   same reason — its UA default is monospace. */
+button,
+input,
+select,
+textarea,
+optgroup,
+option,
+kbd {
+  font-family: var(--font-body);
+}
+
+/* ── Eyebrow ────────────────────────────────────────────────────────────────
+   The v2 label style for every small uppercase heading (type card: 10px
+   Montserrat 700, +0.12em). The kicker is an eyebrow plus the BBD 28×3px red
+   rule — the brand signature for panel headers, launcher sections and
+   empty-state headings.
+
+   Every user of the device is listed here rather than restating the five
+   declarations locally, because restating them is precisely how the device
+   drifted to three sizes and four tracking values. A new eyebrow joins this
+   list; it does not re-declare the type. Colour is deliberately NOT set here —
+   several users tint themselves (headers take --text-header, pills
+   --text-muted) and only the generic .eyebrow/.kicker want the default.
+
+   NOTE: .section-header sat at 11px, one step above the rest. It reads as the
+   senior label through its 40px band, section tint, 3px accent edge and rules
+   top and bottom — it does not also need a larger type size, and having one
+   made the device look accidental beside the 10px column headers. */
+.eyebrow,
+.kicker,
+.left-panel-header-cell,
+.right-panel-header,
+.section-header,
+.view-menu-group-label,
+.bar-env-popover-title,
+.people-picker-group-label,
+.modal label,
+.people-panel-person-meta label,
+.people-roster-unteamed,
+.people-detail-section h4,
+.account-menu-mock,
+.notes-panel-divider,
+.env-panel-identity label,
+.env-panel-section-header h4,
+.phase-types-row-header,
+.phase-types-label,
+.key-features-popover-eyebrow,
+.launcher-sidebar-label {
+  font-family: var(--font-display);
+  font-size: var(--fs-label);
+  font-weight: 700;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+}
+
 .eyebrow,
 .kicker {
-  font-family: var(--font-display);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
   color: var(--text-secondary);
+}
+
+/* ── Badge ──────────────────────────────────────────────────────────────────
+   The 9px floor: micro-pills and chip initials. Same face and weight as the
+   eyebrow but a size down and much tighter — the design system gives the wide
+   tracking to eyebrows and kickers only, and 0.12em at 9px visibly loosens a
+   6-character pill. These carried 0.3px, 0.4px and 1px before, which is the
+   same mistake in three sizes: px tracking stops scaling with the type, so the
+   device drifts every time it is reused at a new size. */
+.swimlane-features-more,
+.env-pill-pick,
+.people-detail-kind {
+  font-family: var(--font-display);
+  font-size: var(--fs-badge);
+  font-weight: 700;
+  letter-spacing: var(--tracking-badge);
+  text-transform: uppercase;
 }
 
 .kicker::before {
@@ -208,7 +290,7 @@ h3 {
 }
 
 .teach-state p {
-  font-size: 12px;
+  font-size: var(--fs-body);
   color: var(--text-secondary);
   line-height: 1.55;
   margin: 8px 0 14px;
@@ -216,7 +298,7 @@ h3 {
 }
 
 .teach-state .teach-state-note {
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--text-muted);
   margin: 2px 0 0;
 }
@@ -225,7 +307,7 @@ h3 {
   background: none;
   border: none;
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: var(--fs-meta);
   font-family: var(--font-body);
   cursor: pointer;
   margin-top: 10px;
@@ -242,7 +324,7 @@ h3 {
 .btn-primary,
 .btn-secondary,
 .btn-danger {
-  font-size: 12px;
+  font-size: var(--fs-body);
   font-weight: 600;
   font-family: var(--font-body);
   padding: 7px 16px;
@@ -287,7 +369,7 @@ h3 {
   background: var(--error-bright);
   border-color: var(--error-bright);
   color: #ffffff;
-  font-size: 11px;
+  font-size: var(--fs-meta);
 }
 
 .btn-primary:disabled,
@@ -356,7 +438,7 @@ select option {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px; /* the type card's plan-name step */
+  font-size: var(--fs-row); /* the type card's plan-name step */
   font-weight: 600;
   padding: 5px 12px !important;
   background: transparent !important;
@@ -376,7 +458,7 @@ select option {
 }
 
 .toolbar-doc-caret {
-  font-size: 9px;
+  font-size: var(--fs-badge);
   color: var(--text-muted);
 }
 
@@ -398,7 +480,7 @@ select option {
   border: none;
   background: transparent;
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: var(--fs-meta);
   font-family: var(--font-body);
   padding: 5px 9px;
   cursor: pointer;
@@ -434,7 +516,7 @@ select option {
   background: none;
   border: none;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--fs-meta);
   font-family: var(--font-body);
   cursor: pointer;
 }
@@ -487,7 +569,7 @@ select option {
   background: none;
   border: none;
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--fs-body);
   font-family: var(--font-body);
   cursor: pointer;
 }
@@ -509,7 +591,7 @@ select option {
   border: none;
   background: transparent;
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: var(--fs-meta);
   font-weight: 600;
   font-family: var(--font-body);
   padding: 5px 14px;
@@ -527,7 +609,7 @@ select option {
   border-radius: 999px; /* v2: toolbar controls are pills */
   background: var(--hover);
   color: var(--text-header);
-  font-size: 11px;
+  font-size: var(--fs-meta);
   font-weight: 600;
   font-family: var(--font-body);
   cursor: pointer;
@@ -663,11 +745,6 @@ select option {
   align-items: center;
   justify-content: center;
   color: var(--text-header);
-  font-family: var(--font-display);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
 }
 
 .left-panel-week-row {
@@ -702,7 +779,7 @@ select option {
 .swimlane-project {
   width: var(--project-col);
   padding: 4px 8px;
-  font-size: 10px;
+  font-size: var(--fs-label);
   font-weight: 700;
   display: flex;
   align-items: stretch;
@@ -717,7 +794,7 @@ select option {
   height: 100%;
   border: none;
   background: transparent;
-  font-size: 10px;
+  font-size: var(--fs-label);
   font-weight: 700;
   font-family: var(--font-body);
   color: var(--text-primary);
@@ -734,7 +811,7 @@ select option {
 .swimlane-features {
   width: var(--features-col);
   padding: 4px 6px;
-  font-size: 9px;
+  font-size: var(--fs-badge);
   color: var(--text-primary);
   display: flex;
   align-items: stretch;
@@ -755,7 +832,7 @@ select option {
    produces, and gets click-to-open behaviour from the parent cell. */
 .swimlane-features-display {
   width: 100%;
-  font-size: 9px;
+  font-size: var(--fs-badge);
   color: var(--text-primary);
   line-height: 1.4;
   pointer-events: none;
@@ -803,10 +880,6 @@ select option {
   position: absolute;
   right: 6px;
   bottom: 3px;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
   color: var(--text-secondary);
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid var(--border);
@@ -827,7 +900,7 @@ select option {
   height: 100%;
   border: none;
   background: transparent;
-  font-size: 9px;
+  font-size: var(--fs-badge);
   font-family: var(--font-body);
   color: var(--text-primary);
   outline: none;
@@ -861,11 +934,6 @@ select option {
   align-items: center;
   justify-content: center;
   color: var(--text-header);
-  font-family: var(--font-display);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -899,7 +967,7 @@ select option {
   height: 100%;
   border: none;
   background: transparent;
-  font-size: 9px;
+  font-size: var(--fs-badge);
   font-family: var(--font-body);
   color: var(--text-primary);
   outline: none;
@@ -966,11 +1034,6 @@ select option {
   align-items: center;
   justify-content: flex-start;
   padding: 0 10px;
-  font-family: var(--font-display);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
   /* Optional section tint composited over the surface, mirroring swimlane rows.
      --section-tint defaults to transparent (no-op) when no colour is set. */
   background:
@@ -1016,7 +1079,7 @@ select option {
 }
 
 .modal h2 {
-  font-size: 14px;
+  font-size: var(--fs-detail);
   font-weight: 600; /* the type card's panel-detail step */
   margin-bottom: 16px;
   color: var(--text-primary);
@@ -1024,8 +1087,6 @@ select option {
 
 .modal label {
   display: block;
-  font-size: 10px;
-  font-weight: 700;
   margin-bottom: 4px;
   color: var(--text-secondary);
 }
@@ -1037,7 +1098,7 @@ select option {
   padding: 6px 8px;
   border: 1px solid var(--border);
   border-radius: 4px;
-  font-size: 12px;
+  font-size: var(--fs-body);
   font-family: var(--font-body);
   margin-bottom: 12px;
   background: var(--bg-surface);
@@ -1070,7 +1131,7 @@ select option {
   background: none;
   border: none;
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: var(--fs-meta);
   font-family: var(--font-body);
   cursor: pointer;
   padding: 4px 6px;
@@ -1095,7 +1156,7 @@ select option {
 
 .context-menu-item {
   padding: 6px 12px;
-  font-size: 11px;
+  font-size: var(--fs-meta);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1173,7 +1234,7 @@ select option {
   align-items: center;
   gap: 8px;
   padding: 6px 12px;
-  font-size: 12px;
+  font-size: var(--fs-body);
   cursor: pointer;
   user-select: none;
   color: var(--text-primary);
@@ -1209,7 +1270,7 @@ select option {
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--bg-row-even);
-  font-size: 11px;
+  font-size: var(--fs-meta);
   cursor: pointer;
   font-family: var(--font-body);
   color: var(--text-primary);
@@ -1235,11 +1296,6 @@ select option {
 
 .view-menu-group-label {
   padding: 4px 12px 2px;
-  font-family: var(--font-display);
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
   color: var(--text-muted);
 }
 
@@ -1248,7 +1304,7 @@ select option {
   align-items: center;
   gap: 8px;
   padding: 6px 12px;
-  font-size: 12px;
+  font-size: var(--fs-body);
   cursor: pointer;
   user-select: none;
   color: var(--text-primary);
@@ -1375,7 +1431,7 @@ select option {
   border: 1px solid var(--border);
   background: var(--bg-row-even);
   color: var(--text-secondary);
-  font-size: 9px;
+  font-size: var(--fs-badge);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1413,7 +1469,7 @@ select option {
   justify-content: center;
   cursor: grab;
   color: var(--grid-monthly);
-  font-size: 10px;
+  font-size: var(--fs-label);
   user-select: none;
   border-right: 1px solid var(--border);
 }
@@ -1480,13 +1536,7 @@ select option {
   border-radius: 999px;
   border: 1px solid rgba(0, 0, 0, 0.2);
   cursor: pointer;
-  font-family: var(--font-display);
-  font-size: 9px;
-  font-weight: 700;
   color: #ffffff;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-  font-family: var(--font-body);
   transition: transform 0.1s, box-shadow 0.1s;
 }
 .env-pill-pick:hover {
@@ -1509,7 +1559,7 @@ select option {
   width: auto;
   min-width: 100%;
   padding: 0 12px;
-  font-size: 10px;
+  font-size: var(--fs-label);
   font-weight: 600;
 }
 
@@ -1526,13 +1576,8 @@ select option {
   font-family: var(--font-body);
 }
 .bar-env-popover-title {
-  font-family: var(--font-display);
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
   color: var(--text-secondary);
   padding: 4px 8px 6px;
-  letter-spacing: 0.12em;
 }
 .bar-env-popover-item {
   display: flex;
@@ -1543,7 +1588,7 @@ select option {
   border: none;
   text-align: left;
   padding: 6px 8px;
-  font-size: 12px;
+  font-size: var(--fs-body);
   color: var(--text-primary);
   cursor: pointer;
   border-radius: 4px;
@@ -1577,7 +1622,7 @@ select option {
 .bar-env-popover-link {
   background: transparent;
   border: none;
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--text-secondary);
   cursor: pointer;
   padding: 4px 8px;
@@ -1596,11 +1641,6 @@ select option {
   min-width: 210px;
 }
 .people-picker-group-label {
-  font-family: var(--font-display);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
   color: var(--text-muted);
   padding: 6px 8px 2px;
 }
@@ -1610,7 +1650,7 @@ select option {
   font-weight: 400;
 }
 .people-picker-empty {
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--text-secondary);
   padding: 8px;
 }
@@ -1625,19 +1665,14 @@ select option {
   align-items: center;
   gap: 8px;
   padding: 0 14px 10px;
-  font-size: 11px;
+  font-size: var(--fs-meta);
 }
 .people-panel-person-meta label {
-  font-family: var(--font-display);
-  font-size: 10px;
-  font-weight: 700;
   color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
 }
 .people-panel-person-meta input,
 .people-panel-person-meta select {
-  font-size: 11px;
+  font-size: var(--fs-meta);
   padding: 3px 6px;
   background: var(--bg-surface);
   color: var(--text-primary);
@@ -1667,14 +1702,13 @@ select option {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--text-primary);
   background: var(--hover);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 2px 9px;
   cursor: pointer;
-  font-family: inherit;
 }
 .people-panel-member-chip:hover {
   border-color: var(--accent-secondary);
@@ -1723,13 +1757,12 @@ select option {
 .people-roster-search {
   flex: 1;
   min-width: 0;
-  font-size: 12px;
+  font-size: var(--fs-body);
   padding: 5px 12px;
   background: var(--bg-app);
   color: var(--text-primary);
   border: 1px solid var(--border);
   border-radius: 999px;
-  font-family: inherit;
 }
 .people-roster-search:focus {
   outline: none;
@@ -1737,14 +1770,13 @@ select option {
 }
 .people-roster-filter,
 .people-roster-add {
-  font-size: 11px;
+  font-size: var(--fs-meta);
   padding: 5px 10px;
   background: transparent;
   color: var(--text-secondary);
   border: 1px solid var(--border);
   border-radius: 999px;
   cursor: pointer;
-  font-family: inherit;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -1767,7 +1799,7 @@ select option {
 }
 .people-roster-no-results {
   padding: 18px 14px;
-  font-size: 12px;
+  font-size: var(--fs-body);
   color: var(--text-secondary);
   text-align: center;
 }
@@ -1781,7 +1813,7 @@ select option {
   gap: 7px;
   padding: 5px 12px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--fs-body);
   color: var(--text-primary);
   border-left: 2px solid transparent;
 }
@@ -1814,11 +1846,10 @@ select option {
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: 10px;
+  font-size: var(--fs-label);
   width: 16px;
   padding: 0;
   flex-shrink: 0;
-  font-family: inherit;
 }
 .people-roster-chevron:disabled {
   opacity: 0.35;
@@ -1842,11 +1873,6 @@ select option {
 }
 .people-roster-unteamed {
   color: var(--text-muted);
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
 }
 .people-roster-meta {
   font-size: var(--fs-meta);
@@ -1872,7 +1898,7 @@ select option {
   background: var(--bg-surface);
 }
 .people-detail-empty {
-  font-size: 12px;
+  font-size: var(--fs-body);
   color: var(--text-secondary);
   text-align: center;
   padding: 16px 14px;
@@ -1884,8 +1910,9 @@ select option {
   margin-bottom: 8px;
 }
 .people-detail-name {
-  font-size: 14px;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: var(--fs-detail);
+  font-weight: 600;
   color: var(--text-primary);
   cursor: text;
   overflow: hidden;
@@ -1904,16 +1931,10 @@ select option {
   color: var(--text-primary);
   border: 1px solid var(--accent-secondary);
   border-radius: 4px;
-  font-family: inherit;
   flex: 1;
   min-width: 0;
 }
 .people-detail-kind {
-  font-family: var(--font-display);
-  font-size: 9px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
   color: var(--text-muted);
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -1922,14 +1943,13 @@ select option {
 }
 .people-detail-focus {
   margin-left: auto;
-  font-size: 11px;
+  font-size: var(--fs-meta);
   padding: 4px 12px;
   background: transparent;
   color: var(--text-secondary);
   border: 1px solid var(--border);
   border-radius: 999px;
   cursor: pointer;
-  font-family: inherit;
   flex-shrink: 0;
 }
 .people-detail-focus:hover {
@@ -1946,11 +1966,6 @@ select option {
 }
 .people-detail-section h4 {
   margin: 0 0 6px;
-  font-family: var(--font-display);
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
   color: var(--text-secondary);
 }
 .people-detail-footer {
@@ -1969,7 +1984,7 @@ select option {
   padding: 6px 14px;
   background: color-mix(in srgb, var(--accent-secondary) 18%, var(--bg-surface));
   border-bottom: 1px solid var(--accent-secondary);
-  font-size: 12px;
+  font-size: var(--fs-body);
   color: var(--text-primary);
   flex-shrink: 0;
 }
@@ -1981,11 +1996,10 @@ select option {
   white-space: nowrap;
 }
 .file-update-banner button {
-  font-size: 11px;
+  font-size: var(--fs-meta);
   padding: 4px 12px;
   border-radius: 999px;
   cursor: pointer;
-  font-family: inherit;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -2007,7 +2021,7 @@ select option {
 /* Save-conflict dialog: stacked full-width choice buttons. */
 /* Shared explanatory copy inside modals (one class for all dialogs). */
 .modal-copy {
-  font-size: 12px;
+  font-size: var(--fs-body);
   color: var(--text-secondary);
   margin: 0 0 12px;
   line-height: 1.5;
@@ -2026,7 +2040,7 @@ select option {
 .toolbar-saved-by {
   color: var(--text-muted);
   font-weight: 400;
-  font-size: 11px;
+  font-size: var(--fs-meta);
 }
 
 /* ── Microsoft 365 account control (toolbar right) ───────────────────────── */
@@ -2049,7 +2063,7 @@ select option {
   border-radius: 999px;
   background: var(--hover);
   color: var(--text-header);
-  font-size: 11px;
+  font-size: var(--fs-meta);
   font-weight: 600;
   font-family: var(--font-body);
   cursor: pointer;
@@ -2059,18 +2073,21 @@ select option {
   background: var(--hover-strong);
   border-color: var(--border-strong);
 }
+/* Chip initials — the same badge slot as .launcher-team-square, so it takes
+   the display face too rather than sitting a typeface apart from it. */
 .account-chip-avatar {
   width: 22px;
   height: 22px;
   border-radius: 50%;
   background: var(--accent-secondary);
   color: #fff;
-  font-size: 9px;
+  font-family: var(--font-display);
+  font-size: var(--fs-badge);
   font-weight: 700;
+  letter-spacing: var(--tracking-badge);
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  letter-spacing: 0.3px;
 }
 .account-chip-name {
   overflow: hidden;
@@ -2095,23 +2112,18 @@ select option {
   padding: 8px 10px 6px;
 }
 .account-menu-name {
-  font-size: 12px;
+  font-size: var(--fs-body);
   font-weight: 700;
   color: var(--text-primary);
 }
 .account-menu-email {
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .account-menu-mock {
   margin-top: 4px;
-  font-family: var(--font-display);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
   color: var(--text-muted);
 }
 .account-menu-divider {
@@ -2127,10 +2139,9 @@ select option {
   border: none;
   border-radius: 4px;
   padding: 7px 10px;
-  font-size: 12px;
+  font-size: var(--fs-body);
   color: var(--text-primary);
   cursor: pointer;
-  font-family: inherit;
 }
 .account-menu-item:hover {
   background: var(--hover);
@@ -2166,12 +2177,12 @@ select option {
 /* Per-field sizing — matches the textarea rules that used to live on
    .swimlane-project textarea / .swimlane-features textarea / .deps-cell textarea. */
 .swimlane-project-editor {
-  font-size: 10px;
+  font-size: var(--fs-label);
   font-weight: 700;
 }
 
 .swimlane-features-editor {
-  font-size: 9px;
+  font-size: var(--fs-badge);
   color: var(--text-primary);
 }
 
@@ -2206,7 +2217,7 @@ select option {
   background: transparent;
   cursor: pointer;
   font-family: var(--font-body);
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--text-primary);
   display: flex;
   align-items: center;
@@ -2298,7 +2309,7 @@ select option {
   border-radius: 7px;
   background: transparent;
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: var(--fs-detail);
   line-height: 1;
   cursor: pointer;
   position: relative;
@@ -2327,7 +2338,7 @@ select option {
   border-radius: 8px;
   background: var(--contention);
   color: #ffffff;
-  font-size: 9px;
+  font-size: var(--fs-badge);
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -2404,7 +2415,7 @@ select option {
   background: none;
   border: none;
   color: var(--text-secondary);
-  font-size: 15px;
+  font-size: var(--fs-title);
   cursor: pointer;
   padding: 2px 6px;
   border-radius: 4px;
@@ -2430,7 +2441,7 @@ select option {
   padding: 6px 14px;
   background: var(--today-strip);
   border-bottom: 1px solid var(--today-line);
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--text-primary);
   flex-shrink: 0;
 }
@@ -2441,7 +2452,7 @@ select option {
 
 .notes-panel-filter-bar select {
   flex: 1;
-  font-size: 11px;
+  font-size: var(--fs-meta);
   padding: 2px 4px;
   border: 1px solid var(--border);
   border-radius: 3px;
@@ -2453,7 +2464,7 @@ select option {
 .notes-panel-filter-bar button {
   background: none;
   border: none;
-  font-size: 14px;
+  font-size: var(--fs-detail);
   cursor: pointer;
   color: var(--text-secondary);
   padding: 0 2px;
@@ -2477,8 +2488,7 @@ select option {
   padding: 6px 8px;
   border: 1px solid var(--border);
   border-radius: 4px;
-  font-size: 12px;
-  font-family: inherit;
+  font-size: var(--fs-body);
   background: var(--bg-surface);
   color: var(--text-primary);
   outline: none;
@@ -2492,8 +2502,7 @@ select option {
   padding: 4px 6px;
   border: 1px solid var(--border);
   border-radius: 4px;
-  font-size: 11px;
-  font-family: inherit;
+  font-size: var(--fs-meta);
   background: var(--bg-surface);
   color: var(--text-primary);
   max-width: 120px;
@@ -2551,7 +2560,7 @@ select option {
 
 .item-row-text {
   flex: 1;
-  font-size: 12px;
+  font-size: var(--fs-body);
   line-height: 1.45;
   color: var(--text-primary);
   cursor: text;
@@ -2560,7 +2569,7 @@ select option {
 
 .item-row-text-input {
   flex: 1;
-  font-size: 12px;
+  font-size: var(--fs-body);
   font-family: var(--font-body);
   padding: 2px 6px;
   border: 1px solid var(--accent-secondary);
@@ -2573,7 +2582,7 @@ select option {
   background: none;
   border: none;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--fs-detail);
   line-height: 1;
   padding: 1px 5px;
   border-radius: 4px;
@@ -2717,13 +2726,8 @@ select option {
 
 .notes-panel-divider {
   text-align: center;
-  font-family: var(--font-display);
-  font-size: 10px;
-  font-weight: 700;
   color: var(--text-secondary);
   padding: 8px 0 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
 }
 
 .notes-panel-footer {
@@ -2734,14 +2738,13 @@ select option {
 }
 
 .notes-panel-footer button {
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--text-secondary);
   background: none;
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 4px 10px;
   cursor: pointer;
-  font-family: inherit;
 }
 
 .notes-panel-footer button:hover {
@@ -2771,7 +2774,7 @@ select option {
   border-radius: 3px;
   background: var(--hover);
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--fs-body);
   line-height: 1;
   cursor: pointer;
   padding: 0;
@@ -2810,7 +2813,7 @@ select option {
   border-radius: 8px;
   background: var(--today-line);
   color: #fff;
-  font-size: 9px;
+  font-size: var(--fs-badge);
   font-weight: 700;
   line-height: 16px;
   text-align: center;
@@ -2847,7 +2850,7 @@ select option {
   display: inline-block;
   font-size: var(--fs-badge);
   font-weight: 700;
-  letter-spacing: 0.4px;
+  letter-spacing: var(--tracking-badge);
   color: #ffffff;
   padding: 3px 7px;
   border-radius: 3px;
@@ -2884,7 +2887,7 @@ select option {
   border: none;
   border-bottom: 2px solid transparent;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--fs-body);
   color: var(--text-primary);
   white-space: nowrap;
   border-radius: 3px 3px 0 0;
@@ -2917,7 +2920,7 @@ select option {
   border-radius: 8px;
   background: var(--contention);
   color: #fff;
-  font-size: 9px;
+  font-size: var(--fs-badge);
   font-weight: 700;
 }
 .env-panel-tab-add {
@@ -2927,7 +2930,7 @@ select option {
   padding: 5px 12px;
   border-radius: 999px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--fs-body);
   white-space: nowrap;
 }
 .env-panel-tab-add:hover {
@@ -2947,17 +2950,15 @@ select option {
   margin-bottom: 6px;
 }
 .env-panel-identity label {
-  font-family: var(--font-display);
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
   color: var(--text-secondary);
 }
+/* The editing state of .env-panel-name — must match it exactly, or the name
+   changes typeface the moment you click it. */
 .env-panel-identity input {
   flex: 1;
-  font-size: 14px;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: var(--fs-detail);
+  font-weight: 600;
   border: 1px solid var(--border);
   border-radius: 3px;
   padding: 4px 8px;
@@ -2969,8 +2970,9 @@ select option {
 }
 .env-panel-name {
   flex: 1;
-  font-size: 14px;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: var(--fs-detail);
+  font-weight: 600;
   cursor: text;
   padding: 4px 0;
   color: var(--text-primary);
@@ -3017,7 +3019,7 @@ select option {
 }
 
 .env-panel-status {
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--text-secondary);
   padding: 2px 0 16px;
 }
@@ -3035,16 +3037,11 @@ select option {
   margin-bottom: 8px;
 }
 .env-panel-section-header h4 {
-  font-family: var(--font-display);
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
   color: var(--text-secondary);
   margin: 0;
-  letter-spacing: 0.12em;
 }
 .env-panel-section-empty {
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--text-muted);
   font-style: italic;
   padding: 4px 0;
@@ -3055,7 +3052,7 @@ select option {
 .env-panel-copy-wrap > button {
   background: transparent;
   border: 1px solid var(--border);
-  font-size: 10px;
+  font-size: var(--fs-label);
   padding: 2px 8px;
   border-radius: 999px;
   cursor: pointer;
@@ -3083,7 +3080,7 @@ select option {
   border: none;
   text-align: left;
   padding: 5px 8px;
-  font-size: 11px;
+  font-size: var(--fs-meta);
   cursor: pointer;
   border-radius: 3px;
   color: var(--text-primary);
@@ -3092,7 +3089,7 @@ select option {
   background: var(--hover);
 }
 .env-panel-assign-from {
-  font-size: 9px;
+  font-size: var(--fs-badge);
   color: var(--text-muted);
   margin-left: 4px;
 }
@@ -3118,7 +3115,7 @@ select option {
 }
 .env-panel-rule-label {
   flex: 1;
-  font-size: 12px;
+  font-size: var(--fs-body);
   color: var(--text-primary);
 }
 .env-panel-toggle {
@@ -3131,7 +3128,7 @@ select option {
   background: transparent;
   border: none;
   padding: 3px 9px;
-  font-size: 10px;
+  font-size: var(--fs-label);
   cursor: pointer;
   color: var(--text-secondary);
 }
@@ -3160,14 +3157,14 @@ select option {
   padding: 5px 8px;
   background: var(--bg-surface-2);
   border-radius: 3px;
-  font-size: 12px;
+  font-size: var(--fs-body);
   color: var(--text-primary);
 }
 .env-panel-list button {
   background: transparent;
   border: none;
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--fs-detail);
   color: var(--text-muted);
   padding: 0 4px;
   line-height: 1;
@@ -3185,7 +3182,7 @@ select option {
   gap: 2px;
 }
 .env-panel-contention-list li {
-  font-size: 11px;
+  font-size: var(--fs-meta);
   padding: 5px 8px;
   background: rgba(122, 31, 61, 0.06);
   border-left: 2px solid var(--contention);
@@ -3221,7 +3218,7 @@ select option {
   color: var(--error-bright);
   padding: 5px 12px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: var(--fs-meta);
   cursor: pointer;
 }
 .env-panel-delete:hover {
@@ -3239,7 +3236,7 @@ select option {
 }
 .env-panel-behaviour-desc {
   margin: 0;
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--text-secondary);
   line-height: 1.5;
 }
@@ -3253,7 +3250,7 @@ select option {
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--fs-body);
   font-weight: 700;
   line-height: 1;
   padding: 0;
@@ -3286,20 +3283,15 @@ select option {
   padding: 6px 8px;
   border-radius: 4px;
   background: var(--bg-surface-2);
-  font-size: 12px;
+  font-size: var(--fs-body);
   color: var(--text-primary);
 }
 
 .phase-types-row.dragging { opacity: 0.4; }
 .phase-types-row-header {
   background: transparent;
-  font-family: var(--font-display);
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
   color: var(--text-secondary);
   padding: 4px 8px;
-  letter-spacing: 0.12em;
 }
 .phase-types-drag-handle {
   display: inline-block;
@@ -3326,18 +3318,22 @@ select option {
 .phase-types-color::-webkit-color-swatch { border: none; border-radius: 2px; }
 .phase-types-color::-moz-color-swatch { border: none; border-radius: 2px; }
 
+/* Shared box for the two phase-type inputs. Type lives on each input, not
+   here — .phase-types-label is an eyebrow and takes the device below. */
 .phase-types-name,
 .phase-types-label {
   width: 100%;
   min-width: 0;
   border: 1px solid var(--border);
   background: var(--bg-surface);
-  font-size: 12px;
   padding: 5px 8px;
   border-radius: 3px;
-  font-family: inherit;
   color: var(--text-primary);
   box-sizing: border-box;
+}
+
+.phase-types-name {
+  font-size: var(--fs-body);
 }
 .phase-types-name:hover,
 .phase-types-label:hover {
@@ -3348,17 +3344,9 @@ select option {
   outline: none;
   border-color: var(--accent-secondary);
 }
-.phase-types-label {
-  font-family: var(--font-display);
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: 10px;
-  letter-spacing: 0.12em;
-}
-
 .phase-types-usage {
   text-align: right;
-  font-size: 11px;
+  font-size: var(--fs-meta);
   font-weight: 600;
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
@@ -3370,7 +3358,7 @@ select option {
   border: 1px solid transparent;
   background: transparent;
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--fs-detail);
   line-height: 1;
   color: var(--text-secondary);
   padding: 0;
@@ -3491,10 +3479,12 @@ select option {
   outline-offset: 1px;
 }
 
+/* Grip dots, not text — the 1px spacing sets the dot pattern and is a glyph
+   dimension rather than type tracking, so it stays in px. */
 .floating-note-handle-grip {
   flex: 1;
   text-align: center;
-  font-size: 9px;
+  font-size: var(--fs-badge);
   letter-spacing: 1px;
   color: rgba(0, 0, 0, 0.35);
   pointer-events: none;
@@ -3506,7 +3496,7 @@ select option {
   border: none;
   background: transparent;
   color: rgba(0, 0, 0, 0.45);
-  font-size: 14px;
+  font-size: var(--fs-detail);
   line-height: 1;
   padding: 0;
   cursor: pointer;
@@ -3532,7 +3522,7 @@ select option {
   flex: 1;
   min-height: 0;
   padding: 8px 10px;
-  font-size: 12px;
+  font-size: var(--fs-body);
   line-height: 1.4;
   overflow: auto;
   cursor: text;
@@ -3553,12 +3543,12 @@ select option {
 .floating-note-placeholder {
   color: rgba(0, 0, 0, 0.4);
   font-style: italic;
-  font-size: 11px;
+  font-size: var(--fs-meta);
   user-select: none;
 }
 
 .floating-note-editor {
-  font-size: 12px;
+  font-size: var(--fs-body);
   min-height: 100%;
 }
 
@@ -3660,11 +3650,6 @@ select option {
 }
 
 .key-features-popover-eyebrow {
-  font-family: var(--font-display);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
   color: inherit; /* sits on the cyan header, not a muted surface */
   opacity: 0.80;
 }
@@ -3681,7 +3666,7 @@ select option {
   background: none;
   border: none;
   color: #ffffff;
-  font-size: 14px;
+  font-size: var(--fs-detail);
   width: 24px;
   height: 24px;
   border-radius: 4px;
@@ -3690,7 +3675,6 @@ select option {
   place-items: center;
   flex-shrink: 0;
   line-height: 1;
-  font-family: inherit;
   transition: background 120ms ease;
 }
 .key-features-popover-close:hover {
@@ -3699,7 +3683,7 @@ select option {
 
 .key-features-popover-body {
   padding: 14px 16px;
-  font-size: 13px;
+  font-size: var(--fs-row);
   color: var(--text-primary);
   line-height: 1.55;
   flex: 1;
@@ -3717,7 +3701,7 @@ select option {
 }
 
 .key-features-popover-editor {
-  font-size: 13px;
+  font-size: var(--fs-row);
   line-height: 1.55;
   color: var(--text-primary);
   scrollbar-width: thin;
@@ -3741,7 +3725,7 @@ select option {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--text-muted);
   flex-shrink: 0;
 }
@@ -3774,7 +3758,6 @@ select option {
 }
 
 .key-features-popover-footer kbd {
-  font-family: inherit;
   background: var(--hover);
   padding: 1px 6px;
   border-radius: 4px;
@@ -3806,10 +3789,12 @@ select option {
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
+/* Title slot. No tracking — the design system gives that to eyebrows and
+   kickers only, and .launcher-main h2 (the same step) never had any, so the
+   two headings were a third of a pixel apart for no reason. */
 .launcher-header h1 {
-  font-size: 15px;
+  font-size: var(--fs-title);
   font-weight: 700;
-  letter-spacing: 0.3px;
   margin: 0;
   color: var(--text-header);
 }
@@ -3833,11 +3818,6 @@ select option {
   gap: 2px;
 }
 .launcher-sidebar-label {
-  font-family: var(--font-display);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
   color: var(--text-muted);
   padding: 4px 10px;
 }
@@ -3846,13 +3826,12 @@ select option {
 }
 .launcher-team-filter {
   margin: 4px 6px 6px;
-  font-size: 12px;
+  font-size: var(--fs-body);
   padding: 5px 12px;
   background: var(--bg-surface);
   color: var(--text-primary);
   border: 1px solid var(--border);
   border-radius: 999px;
-  font-family: inherit;
 }
 
 .launcher-team-filter:focus {
@@ -3869,10 +3848,9 @@ select option {
   border: none;
   border-radius: 6px;
   padding: 6px 10px;
-  font-size: 13px;
+  font-size: var(--fs-row);
   color: var(--text-secondary);
   cursor: pointer;
-  font-family: inherit;
 }
 .launcher-nav-item:hover { background: var(--hover); color: var(--text-primary); }
 /* Active = surface + cyan inset edge — the app's one selection language
@@ -3894,7 +3872,7 @@ select option {
   border-radius: 5px;
   color: #fff;
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: var(--fs-badge);
   font-weight: 700;
   display: inline-flex;
   align-items: center;
@@ -3904,7 +3882,7 @@ select option {
 .launcher-nav-glyph {
   width: 20px;
   text-align: center;
-  font-size: 13px;
+  font-size: var(--fs-row);
   color: var(--text-muted);
   flex-shrink: 0;
 }
@@ -3921,13 +3899,13 @@ select option {
   margin-bottom: 16px;
 }
 .launcher-main h2 {
-  font-size: 15px;
+  font-size: var(--fs-title);
   font-weight: 700;
   margin: 0 0 2px;
 }
-.launcher-muted { font-size: 12px; color: var(--text-secondary); }
+.launcher-muted { font-size: var(--fs-body); color: var(--text-secondary); }
 .launcher-error {
-  font-size: 12px;
+  font-size: var(--fs-body);
   color: var(--error-bright);
   padding: 8px 10px;
   border: 1px solid var(--error-bright);
@@ -3937,7 +3915,7 @@ select option {
 .launcher-welcome { max-width: 560px; }
 .launcher-welcome h2 { margin-bottom: 8px; }
 .launcher-welcome p {
-  font-size: 13px;
+  font-size: var(--fs-row);
   line-height: 1.6;
   color: var(--text-secondary);
   margin: 0 0 20px;
@@ -3947,17 +3925,16 @@ select option {
   display: inline-flex;
   align-items: baseline;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--fs-row);
   color: var(--text-primary);
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 7px 12px;
   cursor: pointer;
-  font-family: inherit;
 }
 .launcher-recent-chip:hover { border-color: var(--accent-primary); }
-.launcher-recent-where { font-size: 11px; color: var(--text-muted); }
+.launcher-recent-where { font-size: var(--fs-meta); color: var(--text-muted); }
 
 /* Plan rows are surface cards (v2 launcher mock): border, radius 8, glyph +
    name with nested meta. */
@@ -3985,12 +3962,11 @@ select option {
   border: none;
   padding: 10px 12px;
   cursor: pointer;
-  font-family: inherit;
   text-align: left;
   border-radius: 8px;
 }
 .launcher-plan-glyph {
-  font-size: 14px;
+  font-size: var(--fs-detail);
   color: var(--text-muted);
   flex-shrink: 0;
 }
@@ -4001,7 +3977,7 @@ select option {
   gap: 2px;
 }
 .launcher-plan-name {
-  font-size: 13px;
+  font-size: var(--fs-row);
   font-weight: 600;
   color: var(--text-primary);
   overflow: hidden;
@@ -4010,7 +3986,7 @@ select option {
   max-width: 100%;
 }
 .launcher-plan-meta {
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4021,10 +3997,9 @@ select option {
   border: 1px solid transparent;
   border-radius: 6px;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--fs-detail);
   padding: 4px 9px;
   cursor: pointer;
-  font-family: inherit;
   flex-shrink: 0;
 }
 .launcher-plan-delete:hover { color: var(--error-bright); border-color: var(--error-bright); }
@@ -4032,7 +4007,7 @@ select option {
   color: #fff;
   background: var(--error-bright);
   border-color: var(--error-bright);
-  font-size: 11px;
+  font-size: var(--fs-meta);
 }
 
 /* ─── Claude assistant (rail tab) ───────────────────────────────────────────
@@ -4040,7 +4015,7 @@ select option {
    below are panel-only; buttons/empty states reuse the shared .btn-* and
    .teach-state patterns. */
 .claude-clear-btn {
-  font-size: 11px !important;
+  font-size: var(--fs-meta) !important;
   font-family: var(--font-body);
 }
 
@@ -4064,7 +4039,7 @@ select option {
   max-width: 94%;
   padding: 8px 11px;
   border-radius: 10px;
-  font-size: 12px;
+  font-size: var(--fs-body);
   line-height: 1.5;
   color: var(--text-primary);
   white-space: pre-wrap;
@@ -4101,7 +4076,7 @@ select option {
 }
 
 .claude-thinking {
-  font-size: 11px;
+  font-size: var(--fs-meta);
   font-style: italic;
   color: var(--text-secondary);
   line-height: 1.5;
@@ -4113,7 +4088,7 @@ select option {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--text-secondary);
 }
 
@@ -4133,7 +4108,7 @@ select option {
 
 .claude-stop-btn {
   margin-left: auto;
-  font-size: 11px;
+  font-size: var(--fs-meta);
   padding: 3px 12px;
 }
 
@@ -4170,13 +4145,13 @@ select option {
 }
 
 .claude-diff-removals {
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--error-bright);
   line-height: 1.5;
 }
 
 .claude-warning {
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--warning);
   line-height: 1.5;
 }
@@ -4211,7 +4186,7 @@ select option {
   border-radius: 8px;
   padding: 8px 10px;
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: var(--fs-body);
   line-height: 1.5;
 }
 
@@ -4235,7 +4210,7 @@ select option {
 
 .claude-model-select {
   max-width: 46%;
-  font-size: 11px;
+  font-size: var(--fs-meta);
   font-family: var(--font-body);
   padding: 3px 6px;
   border: 1px solid var(--border);
@@ -4269,7 +4244,7 @@ select option {
   border-radius: 8px;
   padding: 8px 10px;
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: var(--fs-body);
   margin-bottom: 10px;
 }
 

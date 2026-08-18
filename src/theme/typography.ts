@@ -11,9 +11,15 @@
  *   14 Montserrat 600  panel detail name
  *   13 Open Sans  600  row titles, buttons, plan names
  *   12 Open Sans  400  body — panels, menus, inputs
+ *      Montserrat 700  canvas month heading (sentence case, no tracking)
  *   11 Open Sans  400  secondary — meta, hints, attribution
  *   10 Montserrat 700  section labels / eyebrows (caps +0.12em), on-bar labels
- *    9            700  badges, pills, chip initials — FLOOR, never smaller
+ *    9 Montserrat 700  badges, pills, chip initials — FLOOR, never smaller
+ *
+ * A size alone does not settle the face or the weight — the pairings above do.
+ * 11 is body-face secondary text and nothing else: reaching for FS.meta to
+ * draw a 700-weight heading is what put the timeline month labels a single
+ * pixel above the week labels below them, a hierarchy too weak to read.
  */
 
 export const FONT_DISPLAY = "'Montserrat', 'Open Sans', Helvetica, Arial, sans-serif";

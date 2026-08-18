@@ -77,8 +77,8 @@ export default function TimelineHeader({ totalWeeks, startMonth, startYear, scro
                 dominantBaseline="central"
                 textAnchor="middle"
                 fill={c.TEXT_HEADER}
-                fontSize={FS.meta}
-                fontWeight={700}
+                fontSize={FS.body}
+                fontWeight={FW.display}
                 fontFamily={FONT_DISPLAY}
               >
                 {month.name}
