@@ -4,6 +4,7 @@ import { ADD_ROW_HEIGHT, BAR_HEIGHT, BAR_RADIUS, SECTION_HEADER_HEIGHT, SWIMLANE
 import { useExportLayout } from './ExportLayoutContext';
 import { getTodayWeekOffset, getMonthsFromWeeks, getHolidayWeekOffsets, getWeekendDayRanges, getCalendarWeekBoundaries } from '../utils/dateUtils';
 import { getPhaseDef } from '../data/phasePresets';
+import { DAY_IN_WEEKS } from '../utils/dragSnap';
 import { useSectionedLanes } from '../hooks/useSectionedLanes';
 import { getContentions, getPeopleContentions } from '../utils/contention';
 import { useTheme } from '../theme/ThemeContext';
@@ -130,25 +131,29 @@ export default function TimelineContent() {
     return null;
   }, [swimlaneYMap, ROW_HEIGHT]);
 
-  // Convert clientX/clientY to swimlaneId + week
-  const hitTest = useCallback((clientX: number, clientY: number) => {
-    if (!svgRef.current) return null;
-    const rect = svgRef.current.getBoundingClientRect();
-    const svgX = clientX - rect.left;
-    const svgY = clientY - rect.top;
-    const week = Math.floor(svgX / weekWidth);
+  /**
+   * The day under a pointer, as a week offset.
+   *
+   * This used to be `Math.floor(svgX / weekWidth)` — a whole week. Placing a
+   * bar therefore jumped to the start of whichever week you clicked in, up to
+   * seven days from the pointer, and drawing one grew it a week at a time
+   * rather than following the cursor. Flooring to the day instead puts the
+   * edge where you actually pointed.
+   */
+  const weekAtX = useCallback((clientX: number): number => {
+    if (!svgRef.current) return 0;
+    const svgX = clientX - svgRef.current.getBoundingClientRect().left;
+    const dayPx = weekWidth / 7;
+    return Math.floor(svgX / dayPx) * DAY_IN_WEEKS;
+  }, [weekWidth]);
 
-    // Reverse lookup: find which swimlane this Y falls in
-    let foundLane: string | null = null;
-    for (const [id, y] of swimlaneYMap.entries()) {
-      if (svgY >= y && svgY < y + ROW_HEIGHT) {
-        foundLane = id;
-        break;
-      }
-    }
-    if (!foundLane || week < 0) return null;
-    return { swimlaneId: foundLane, week };
-  }, [swimlaneYMap, weekWidth, ROW_HEIGHT]);
+  // Convert clientX/clientY to swimlaneId + week (day-resolution)
+  const hitTest = useCallback((clientX: number, clientY: number) => {
+    const swimlaneId = laneAtY(clientY);
+    const week = weekAtX(clientX);
+    if (!swimlaneId || week < 0) return null;
+    return { swimlaneId, week };
+  }, [laneAtY, weekAtX]);
 
   // Double-click: instant bar creation
   const handleDoubleClick = useCallback((e: React.MouseEvent) => {
@@ -178,21 +183,22 @@ export default function TimelineContent() {
       (e.target as Element).setPointerCapture(e.pointerId);
       setDrawingBar({ swimlaneId: pd.swimlaneId, startWeek: pd.week, currentWeek: pd.week });
     } else {
-      // Update current week
-      if (!svgRef.current) return;
-      const rect = svgRef.current.getBoundingClientRect();
-      const svgX = e.clientX - rect.left;
-      const week = Math.floor(svgX / weekWidth);
-      setDrawingBar(prev => prev ? { ...prev, currentWeek: Math.max(0, week) } : null);
+      // Follow the pointer at day resolution. This was flooring to the week,
+      // so the bar being drawn grew in seven-day jumps and its edge sat
+      // wherever the week happened to start rather than under the cursor.
+      setDrawingBar(prev => prev ? { ...prev, currentWeek: Math.max(0, weekAtX(e.clientX)) } : null);
     }
-  }, [drawingBar, weekWidth]);
+  }, [drawingBar, weekAtX]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
     if (drawingBar) {
       // Finalize drag-to-create
       const minW = Math.min(drawingBar.startWeek, drawingBar.currentWeek);
       const maxW = Math.max(drawingBar.startWeek, drawingBar.currentWeek);
-      const duration = maxW - minW + 1;
+      // Inclusive of the day under the pointer, so dragging across three days
+      // gives a three-day bar. The `+ 1` here was a whole week, which is why
+      // the shortest bar you could draw was seven days long.
+      const duration = maxW - minW + DAY_IN_WEEKS;
       quickAddPhaseBar(drawingBar.swimlaneId, minW, duration);
       setDrawingBar(null);
       pointerDownRef.current = null;
@@ -229,7 +235,7 @@ export default function TimelineContent() {
     return {
       x: minW * weekWidth,
       y: rowY + (ROW_HEIGHT - BAR_HEIGHT) / 2,
-      width: (maxW - minW + 1) * weekWidth,
+      width: (maxW - minW + DAY_IN_WEEKS) * weekWidth,
       fill: def.fill,
       stroke: def.stroke,
     };
