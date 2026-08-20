@@ -246,6 +246,24 @@ export function formatDayMonth(date: Date): string {
  * "Sep" was the stand-in, but "Aug" measures wider and overran the slot. */
 export const DAY_MONTH_TOKENS: string[] = MONTH_NAMES.map(m => m.substring(0, 3));
 
+/**
+ * Compact age of an ISO timestamp: "2d", "3w", "5mo".
+ *
+ * How long an item has been sitting is the signal a register lives on — an
+ * issue open since March is a different object from one raised this morning,
+ * and the panel stored `createdAt` from the start without ever showing it.
+ * Single unit only: precision past the leading figure is noise at a glance.
+ */
+export function formatAge(iso: string, now: Date = new Date()): string {
+  const then = new Date(iso).getTime();
+  if (!Number.isFinite(then)) return '';
+  const days = Math.floor((now.getTime() - then) / 86_400_000);
+  if (days < 1) return 'today';
+  if (days < 7) return `${days}d`;
+  if (days < 56) return `${Math.floor(days / 7)}w`;
+  return `${Math.floor(days / 30)}mo`;
+}
+
 export function getCumulativeWeeks(
   startMonth: number,
   startYear: number,

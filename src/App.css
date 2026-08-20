@@ -2676,19 +2676,30 @@ select option {
   gap: 5px;
 }
 
-/* ── Meta-row hierarchy ─────────────────────────────────────────────────────
-   Kind, project and owner were three near-identical pills in a row, so nothing
-   said which one mattered — and all three sat at the 9px floor in weights
-   lighter than the scale's 700, the worst pairing available: smallest size,
-   thinnest stroke. They are now one badge, one chip and one plain attribute,
-   all at the spec weight.
+/* ── Meta line ──────────────────────────────────────────────────────────────
+   Kind, project and owner were three pill shapes in a row — same size, same
+   radius, same borders — so nothing told you which mattered, and the row read
+   as three equal controls stacked under the item. They are one run of text
+   now, separated by middots: a coloured dot for kind, then plain words. The
+   only shape left on the row is the dot, which is the one thing colour can
+   carry on its own.
 
-   They also stood 19px tall against a 17.4px text line, so the metadata was
-   physically larger than the item it described. Tightened to sit under it. */
+   They also sat at the type scale's 9px floor in weights lighter than its
+   specified 700 — smallest size and thinnest stroke together — and stood 19px
+   tall against a 17.4px text line, making the metadata physically larger than
+   the item it described. */
 
-/* The badge — the only one of the three that classifies. Tinted fill rather
-   than an outline so it reads as a status at a glance, not another control. */
-.item-kind-chip {
+.item-row-meta > * + *::before {
+  content: '·';
+  color: var(--border-strong);
+  margin-right: 5px;
+}
+
+.item-kind-chip,
+.item-chip,
+.item-owner,
+.item-link-btn,
+.item-chip-none {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -2697,96 +2708,80 @@ select option {
   font-family: var(--font-body);
   letter-spacing: var(--tracking-badge);
   text-transform: uppercase;
-  padding: 1px 7px;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  background: color-mix(in srgb, var(--kind-color, var(--text-secondary)) 16%, transparent);
-  color: var(--kind-color, var(--text-secondary));
-  cursor: pointer;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 
-.item-kind-chip:hover {
-  border-color: var(--kind-color, var(--border));
+.item-kind-chip,
+.item-chip,
+.item-owner,
+.item-link-btn {
+  cursor: pointer;
 }
 
-/* The tinted fill now carries the kind colour, so a coloured dot inside it
-   states the same thing twice in a 48px pill. */
-.item-kind-dot { display: none; }
+/* The dot carries the kind colour; the word stays at readable ink. Colouring
+   the text itself put it at 3.81:1 — below the 4.5:1 AA floor for 9px — and
+   made colour the only carrier of the classification. A coloured dot beside a
+   legible word says the same thing twice, on purpose. */
+.item-kind-chip { color: var(--text-secondary); }
+.item-kind-chip:hover { text-decoration: underline; }
 
-.item-kind-dot-unused {
+.item-kind-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--kind-color, var(--text-muted));
+  background: var(--kind-color, var(--text-secondary));
   flex-shrink: 0;
 }
 
-/* The chip — a link to another project, quieter than the badge but still an
-   affordance you can click to unlink. Outline rather than fill, so the badge
-   keeps the only solid shape on the row. */
 .item-chip {
-  font-size: var(--fs-badge);
-  font-weight: 700;
-  font-family: var(--font-body);
-  padding: 1px 7px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  white-space: nowrap;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.item-chip:hover {
-  border-color: var(--error-bright);
-  color: var(--error-bright);
-}
+.item-chip:hover,
+.item-owner:hover,
+.item-link-btn:hover { color: var(--accent-secondary); text-decoration: underline; }
 
-.item-chip-x { opacity: 0.5; }
-.item-chip:hover .item-chip-x { opacity: 1; }
+/* The unlink × is an action on the chip, not part of its label. */
+.item-chip-x { opacity: 0; margin-left: 2px; }
+.item-row:hover .item-chip-x { opacity: 0.6; }
 
 .item-chip-none {
-  font-size: var(--fs-badge);
-  font-style: italic;
   color: var(--text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+  font-style: italic;
 }
 
-/* "+ project" is an affordance, not information. Shown on every row it was
-   ten dashed pills competing with the item text; it now appears on hover or
-   focus, the same rule the delete control already follows. */
-.item-link-btn {
-  font-weight: 700;
-  font-size: var(--fs-badge);
-  font-family: var(--font-body);
-  padding: 2px 7px;
-  border-radius: 999px;
-  border: 1px dashed var(--border-strong);
-  background: none;
+/* Affordances, not information — they appear with the row. */
+.item-link-btn,
+.item-owner.empty {
   color: var(--text-muted);
-  cursor: pointer;
   opacity: 0;
   transition: opacity 0.12s;
 }
 
 .item-row:hover .item-link-btn,
-.item-link-btn:focus-visible {
-  opacity: 1;
+.item-row:hover .item-owner.empty,
+.item-link-btn:focus-visible { opacity: 1; }
+
+/* Age sits with the title, right-aligned — the one number worth scanning. */
+.item-row-age {
+  font-size: var(--fs-badge);
+  font-weight: 700;
+  letter-spacing: var(--tracking-badge);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  white-space: nowrap;
+  align-self: baseline;
 }
 
-.item-link-btn:hover {
-  color: var(--accent-secondary);
-  border-color: var(--accent-secondary);
-}
-
-/* Editors are controls, not badges. These inherited the 9px badge size from
-   the pills they replace, so clicking a chip produced a 9px dropdown 21px
-   tall — too small to read and too small to hit. A pill can sit at the type
-   scale's floor because it is only being scanned; the thing you have to aim
-   at and read from cannot. Body size, real padding, comfortable target. */
 .item-kind-select,
 .item-link-select,
 .item-owner-input {
@@ -2806,41 +2801,6 @@ select option {
 .item-owner-input:focus {
   outline: 2px solid var(--accent-secondary);
   outline-offset: 1px;
-}
-
-/* The attribute — who owns it. Not a control you go looking for, so it reads
-   as plain text and only takes a surface on hover, when it becomes editable.
-   A third filled pill here is what made the row look like three equal things. */
-.item-owner {
-  font-size: var(--fs-badge);
-  font-weight: 700;
-  font-family: var(--font-body);
-  padding: 1px 7px;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  background: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  margin-left: auto;
-  white-space: nowrap;
-}
-
-.item-row:hover .item-owner {
-  background: var(--hover);
-  color: var(--text-secondary);
-}
-
-.item-owner.empty {
-  background: none;
-  color: var(--text-muted);
-  opacity: 0;
-}
-
-.item-row:hover .item-owner.empty { opacity: 1; }
-
-.item-owner:hover {
-  color: var(--text-primary);
-  background: var(--hover-strong);
 }
 
 /* Closed work folds away. With eight done items against two open ones, a panel

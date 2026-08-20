@@ -3,6 +3,7 @@ import { useGanttStore } from '../store/useGanttStore';
 import type { TrackedItem, TrackedKind } from '../types/gantt';
 import { KIND_META, KIND_ORDER } from '../data/trackedKinds';
 import { htmlToPlainText } from '../utils/plainText';
+import { formatAge } from '../utils/dateUtils';
 
 /**
  * One row of the register, shared by every kind — the component whose absence
@@ -75,6 +76,13 @@ export default function TrackedItemRow({ item }: { item: TrackedItem }) {
               {item.text}
             </span>
           )}
+          {/* How long it has been sitting — the signal a register lives on,
+              stored since the panel was built and never shown until now. */}
+          {!item.done && (
+            <span className="item-row-age" title={`Raised ${new Date(item.createdAt).toLocaleDateString()}`}>
+              {formatAge(item.createdAt)}
+            </span>
+          )}
           <button
             className={`item-row-delete${confirmDelete ? ' confirm' : ''}`}
             title={confirmDelete ? 'Click again to delete' : 'Delete item'}
@@ -111,7 +119,7 @@ export default function TrackedItemRow({ item }: { item: TrackedItem }) {
               title="Click to change type"
               onClick={() => setEditingKind(true)}
             >
-              <span className="item-kind-dot" />
+              <span className="item-kind-dot" aria-hidden="true" />
               {meta.short}
             </button>
           )}
