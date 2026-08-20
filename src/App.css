@@ -233,6 +233,7 @@ kbd {
 .env-panel-section-header h4,
 .phase-types-row-header,
 .phase-types-label,
+.phase-type-picker-title,
 .key-features-popover-eyebrow,
 .launcher-sidebar-label {
   font-family: var(--font-display);
@@ -256,6 +257,7 @@ kbd {
    device drifts every time it is reused at a new size. */
 .swimlane-features-more,
 .env-pill-pick,
+.phase-type-chip,
 .people-detail-kind,
 .assistant-json-mode,
 .ai-provider-active-chip {
@@ -1486,63 +1488,101 @@ select option {
 }
 
 
-/* Phase type picker (floating below a just-created bar) */
+/* Phase type picker (floating below a just-created bar)
+ *
+ * The phase row used to be bare 18px colour discs whose only label was a
+ * native `title`, so choosing a phase meant either knowing the palette by
+ * heart or hovering each disc in turn and waiting out the tooltip delay. The
+ * environment row directly beneath it had labelled pills the whole time and
+ * read fine — the two halves of one popover were held to different standards.
+ * Both rows are now the same labelled-pill device, and each carries an eyebrow
+ * saying which property it sets. */
 .phase-type-picker {
   position: fixed;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 5px 8px;
+  gap: 9px;
+  padding: 9px 11px 10px;
+  /* Wide enough for two average chips per line, so the longest names
+   * ("Conceptualisation") do not each claim a row of their own. */
+  width: max-content;
+  max-width: 344px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.30);
   z-index: 2001;
   transform: translateX(-50%);
+}
+
+.phase-type-picker-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.phase-type-picker-env-group {
+  border-top: 1px solid var(--border);
+  padding-top: 9px;
+}
+.phase-type-picker-title {
+  color: var(--text-muted);
+  line-height: 1;
 }
 
 .phase-type-picker-row {
   display: flex;
   align-items: center;
   gap: 4px;
-}
-.phase-type-picker-env-row {
-  border-top: 1px solid var(--border);
-  padding-top: 5px;
-  margin-top: 1px;
   flex-wrap: wrap;
-  max-width: 320px;
 }
 
-.phase-type-circle {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 2px solid;
+.phase-type-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 21px;
+  padding: 0 9px;
+  border-radius: 999px;
+  border: 1px solid;
   cursor: pointer;
-  transition: transform 0.1s;
-  padding: 0;
+  white-space: nowrap;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.phase-type-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 7px rgba(0,0,0,0.32);
+}
+/* The "+ edit" escape hatch is deliberately not a tenth phase colour. */
+.phase-type-chip-ghost {
+  background: transparent;
+  border-style: dashed;
+  border-color: var(--border-strong);
+  color: var(--text-secondary);
+}
+.phase-type-chip-ghost:hover {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+  background: var(--hover);
+  box-shadow: none;
 }
 
-.phase-type-circle:hover {
-  transform: scale(1.3);
-}
-
-/* Small env pill used inside the PhaseTypePicker env row */
+/* Small env pill used inside the PhaseTypePicker env row. Sized and animated
+ * to match .phase-type-chip — the two rows are one control. Ink is set inline
+ * per environment colour, since environments are user-coloured too. */
 .env-pill-pick {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 18px;
-  padding: 0 8px;
+  height: 21px;
+  padding: 0 9px;
   border-radius: 999px;
   border: 1px solid rgba(0, 0, 0, 0.2);
   cursor: pointer;
-  color: #ffffff;
+  white-space: nowrap;
   transition: transform 0.1s, box-shadow 0.1s;
 }
 .env-pill-pick:hover {
-  transform: scale(1.06);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 7px rgba(0,0,0,0.32);
 }
 .env-pill-pick.active {
   box-shadow: 0 0 0 2px var(--accent-primary);
@@ -1557,14 +1597,6 @@ select option {
 .env-pill-pick-none.active {
   background: var(--bg-surface-2);
 }
-.phase-type-edit-btn-wide {
-  width: auto;
-  min-width: 100%;
-  padding: 0 12px;
-  font-size: var(--fs-label);
-  font-weight: 600;
-}
-
 /* Bar env picker popover (chip click) */
 .bar-env-popover {
   position: fixed;
@@ -3344,27 +3376,6 @@ select option {
   font-size: var(--fs-meta);
   color: var(--text-secondary);
   line-height: 1.5;
-}
-
-/* PhaseTypePicker — small "+" button to open the manage modal */
-.phase-type-edit-btn {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 1px dashed var(--border-strong);
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: var(--fs-body);
-  font-weight: 700;
-  line-height: 1;
-  padding: 0;
-  margin-left: 2px;
-}
-.phase-type-edit-btn:hover {
-  border-color: var(--text-primary);
-  color: var(--text-primary);
-  background: var(--hover);
 }
 
 /* ManagePhaseTypesModal */

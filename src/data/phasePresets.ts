@@ -154,6 +154,60 @@ export function getPhaseDef(id: PhaseType, types: PhaseTypeDef[]): PhaseTypeDef 
   return FALLBACK_PHASE_DEF;
 }
 
+/** WCAG relative luminance, or null if the hex is unparseable. */
+function relativeLuminance(hex: string): number | null {
+  const h = (hex || '').replace('#', '');
+  if (!/^[0-9a-f]{6}$/i.test(h)) return null;
+  const linear = (v: number) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  };
+  return (
+    0.2126 * linear(parseInt(h.slice(0, 2), 16)) +
+    0.7152 * linear(parseInt(h.slice(2, 4), 16)) +
+    0.0722 * linear(parseInt(h.slice(4, 6), 16))
+  );
+}
+
+const INK_LIGHT = '#ffffff';
+/**
+ * Deliberately pure black, not a softened near-black.
+ *
+ * The two inks have to straddle every possible fill: the worst fill is the one
+ * where they tie, and that tie is the best contrast anything can get. Pure
+ * black ties white at L ≈ 0.179 for 4.58:1, which clears AA. Softening the ink
+ * to #141719 pushes the tie to L ≈ 0.198 and drops the guarantee to 4.24:1 —
+ * so a mid-green like UAT's #3f854c becomes unreadable in *both* inks and no
+ * amount of choosing between them helps. The softer ink is not worth an
+ * unreachable floor.
+ */
+const INK_DARK = '#000000';
+
+/**
+ * Ink that stays legible on an arbitrary fill.
+ *
+ * Phase and environment colours are user-editable, and the built-in palette
+ * has been through three generations, pastels included (see
+ * KNOWN_BUILTIN_FILLS). A chip that hardcodes white text vanishes on the
+ * pastels; one that hardcodes dark text vanishes on the current mid-tones. The
+ * stored `text` field is no help either — it was derived under whichever
+ * scheme was current when the type was made.
+ *
+ * Comparing the two candidates outright, rather than testing luminance against
+ * a precomputed threshold, keeps this correct if either ink is ever changed. A
+ * threshold silently encodes which inks it was derived for, which is exactly
+ * how the first version of this shipped a 4.0:1 chip.
+ */
+export function readableInkOn(fill: string): string {
+  const l = relativeLuminance(fill);
+  if (l === null) return INK_LIGHT;
+  const against = (ink: string) => {
+    const li = relativeLuminance(ink) ?? 0;
+    return (Math.max(l, li) + 0.05) / (Math.min(l, li) + 0.05);
+  };
+  return against(INK_DARK) >= against(INK_LIGHT) ? INK_DARK : INK_LIGHT;
+}
+
 /** Derive stroke and text colors from a base fill — used when the user
  * picks a single color and we want sensible defaults for the others. */
 export function deriveColorScheme(baseFill: string): { fill: string; stroke: string; text: string } {

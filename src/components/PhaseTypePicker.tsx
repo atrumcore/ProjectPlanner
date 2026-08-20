@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import type { PhaseType } from '../types/gantt';
 import { useGanttStore } from '../store/useGanttStore';
+import { readableInkOn } from '../data/phasePresets';
 
 interface Props {
   barId: string;
@@ -79,63 +80,69 @@ export default function PhaseTypePicker({ barId, svgRef, barX, barY, barWidth }:
       className="phase-type-picker"
       style={{ left: screenX, top: screenY }}
     >
-      <div className="phase-type-picker-row">
-        {phaseTypes.map(t => (
+      <div className="phase-type-picker-group">
+        <div className="phase-type-picker-title">Phase</div>
+        <div className="phase-type-picker-row">
+          {phaseTypes.map(t => (
+            <button
+              key={t.id}
+              className="phase-type-chip"
+              style={{ background: t.fill, borderColor: t.stroke, color: readableInkOn(t.fill) }}
+              onClick={() => handleSelectPhase(t.id)}
+            >
+              {t.name}
+            </button>
+          ))}
           <button
-            key={t.id}
-            className="phase-type-circle"
-            title={t.name}
-            style={{ background: t.fill, borderColor: t.stroke }}
-            onClick={() => handleSelectPhase(t.id)}
-          />
-        ))}
-        <button
-          className="phase-type-edit-btn"
-          title="Edit phase types…"
-          onClick={() => {
-            clearCreatingBar();
-            togglePhaseTypesModal();
-          }}
-        >
-          +
-        </button>
+            className="phase-type-chip phase-type-chip-ghost"
+            onClick={() => {
+              clearCreatingBar();
+              togglePhaseTypesModal();
+            }}
+          >
+            + edit
+          </button>
+        </div>
       </div>
 
       {environments.length > 0 && (
-        <div className="phase-type-picker-row phase-type-picker-env-row">
-          <button
-            className={`env-pill-pick env-pill-pick-none${currentEnvId === null ? ' active' : ''}`}
-            title="No environment"
-            onClick={() => handleSelectEnv(null)}
-          >
-            none
-          </button>
-          {environments.map(env => (
+        <div className="phase-type-picker-group phase-type-picker-env-group">
+          <div className="phase-type-picker-title">Environment</div>
+          <div className="phase-type-picker-row">
             <button
-              key={env.id}
-              className={`env-pill-pick${currentEnvId === env.id ? ' active' : ''}`}
-              title={env.name}
-              style={{ background: env.color }}
-              onClick={() => handleSelectEnv(env.id)}
+              className={`env-pill-pick env-pill-pick-none${currentEnvId === null ? ' active' : ''}`}
+              onClick={() => handleSelectEnv(null)}
             >
-              <span>{env.name}</span>
+              none
             </button>
-          ))}
+            {environments.map(env => (
+              <button
+                key={env.id}
+                className={`env-pill-pick${currentEnvId === env.id ? ' active' : ''}`}
+                style={{ background: env.color, color: readableInkOn(env.color) }}
+                onClick={() => handleSelectEnv(env.id)}
+              >
+                <span>{env.name}</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
       {environments.length === 0 && (
-        <div className="phase-type-picker-row">
-          <button
-            className="phase-type-edit-btn phase-type-edit-btn-wide"
-            title="Create environments…"
-            onClick={() => {
-              clearCreatingBar();
-              setRailTab('environments');
-            }}
-          >
-            + add environments
-          </button>
+        <div className="phase-type-picker-group phase-type-picker-env-group">
+          <div className="phase-type-picker-title">Environment</div>
+          <div className="phase-type-picker-row">
+            <button
+              className="phase-type-chip phase-type-chip-ghost"
+              onClick={() => {
+                clearCreatingBar();
+                setRailTab('environments');
+              }}
+            >
+              + add environments
+            </button>
+          </div>
         </div>
       )}
     </div>,
