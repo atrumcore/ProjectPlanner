@@ -122,21 +122,45 @@ export default function PhaseBar({ bar, rowY }: Props) {
 
     let proposed: { startWeek: number; durationWeeks: number } | null = null;
 
+    /**
+     * Re-anchor the drag origin whenever a limit is hit.
+     *
+     * Every branch below clamps its result, but the clamp used to be the end
+     * of it: drag a bar left past week 0 and it stopped while the pointer kept
+     * going, so the overshoot was silently banked. Coming back, the bar stayed
+     * put until the pointer had returned all the way past the boundary — the
+     * grab point had drifted from the cursor by however far you overshot, and
+     * the bar looked stuck, then jumped. Moving the origin to the cursor at the
+     * moment of clamping means the bar re-attaches immediately on the way back.
+     */
+    const reanchor = (startWeek: number, duration: number) => {
+      drag.startX = e.clientX;
+      drag.origStartWeek = startWeek;
+      drag.origDuration = duration;
+    };
+
     if (drag.mode === 'move') {
-      const newStart = Math.max(0, drag.origStartWeek + weekDelta);
+      const wanted = drag.origStartWeek + weekDelta;
+      const newStart = Math.max(0, wanted);
+      if (wanted < 0) reanchor(newStart, drag.origDuration);
       moveBar(bar.id, newStart);
       setDragIndicator(newStart);
       proposed = { startWeek: newStart, durationWeeks: drag.origDuration };
     } else if (drag.mode === 'resize-left') {
-      const newStart = Math.max(0, drag.origStartWeek + weekDelta);
+      // The left edge cannot cross week 0, nor pass the right edge and leave
+      // less than a day of bar behind it.
+      const maxStart = drag.origStartWeek + drag.origDuration - minDuration;
+      const wanted = drag.origStartWeek + weekDelta;
+      const newStart = Math.min(maxStart, Math.max(0, wanted));
       const newDuration = drag.origDuration - (newStart - drag.origStartWeek);
-      if (newDuration >= minDuration) {
-        resizeBar(bar.id, newStart, newDuration);
-        setDragIndicator(newStart);
-        proposed = { startWeek: newStart, durationWeeks: newDuration };
-      }
+      if (wanted !== newStart) reanchor(newStart, newDuration);
+      resizeBar(bar.id, newStart, newDuration);
+      setDragIndicator(newStart);
+      proposed = { startWeek: newStart, durationWeeks: newDuration };
     } else if (drag.mode === 'resize-right') {
-      const newDuration = Math.max(minDuration, drag.origDuration + weekDelta);
+      const wanted = drag.origDuration + weekDelta;
+      const newDuration = Math.max(minDuration, wanted);
+      if (wanted < minDuration) reanchor(drag.origStartWeek, newDuration);
       resizeBar(bar.id, drag.origStartWeek, newDuration);
       setDragIndicator(drag.origStartWeek + newDuration);
       proposed = { startWeek: drag.origStartWeek, durationWeeks: newDuration };

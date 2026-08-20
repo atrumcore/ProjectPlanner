@@ -2676,25 +2676,45 @@ select option {
   gap: 5px;
 }
 
+/* ── Meta-row hierarchy ─────────────────────────────────────────────────────
+   Kind, project and owner were three near-identical pills in a row, so nothing
+   said which one mattered — and all three sat at the 9px floor in weights
+   lighter than the scale's 700, the worst pairing available: smallest size,
+   thinnest stroke. They are now one badge, one chip and one plain attribute,
+   all at the spec weight.
+
+   They also stood 19px tall against a 17.4px text line, so the metadata was
+   physically larger than the item it described. Tightened to sit under it. */
+
+/* The badge — the only one of the three that classifies. Tinted fill rather
+   than an outline so it reads as a status at a glance, not another control. */
 .item-kind-chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   font-size: var(--fs-badge);
-  font-weight: 600;
+  font-weight: 700;
   font-family: var(--font-body);
-  padding: 2px 7px;
+  letter-spacing: var(--tracking-badge);
+  text-transform: uppercase;
+  padding: 1px 7px;
   border-radius: 999px;
-  border: 1px solid var(--kind-color, var(--border));
-  background: none;
+  border: 1px solid transparent;
+  background: color-mix(in srgb, var(--kind-color, var(--text-secondary)) 16%, transparent);
   color: var(--kind-color, var(--text-secondary));
   cursor: pointer;
   white-space: nowrap;
 }
 
-.item-kind-chip:hover { background: var(--hover); }
+.item-kind-chip:hover {
+  border-color: var(--kind-color, var(--border));
+}
 
-.item-kind-dot {
+/* The tinted fill now carries the kind colour, so a coloured dot inside it
+   states the same thing twice in a 48px pill. */
+.item-kind-dot { display: none; }
+
+.item-kind-dot-unused {
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -2702,13 +2722,17 @@ select option {
   flex-shrink: 0;
 }
 
+/* The chip — a link to another project, quieter than the badge but still an
+   affordance you can click to unlink. Outline rather than fill, so the badge
+   keeps the only solid shape on the row. */
 .item-chip {
   font-size: var(--fs-badge);
+  font-weight: 700;
   font-family: var(--font-body);
-  padding: 2px 7px;
+  padding: 1px 7px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: var(--bg-surface-2);
+  background: none;
   color: var(--text-secondary);
   cursor: pointer;
   white-space: nowrap;
@@ -2735,6 +2759,7 @@ select option {
    ten dashed pills competing with the item text; it now appears on hover or
    focus, the same rule the delete control already follows. */
 .item-link-btn {
+  font-weight: 700;
   font-size: var(--fs-badge);
   font-family: var(--font-body);
   padding: 2px 7px;
@@ -2757,30 +2782,52 @@ select option {
   border-color: var(--accent-secondary);
 }
 
+/* Editors are controls, not badges. These inherited the 9px badge size from
+   the pills they replace, so clicking a chip produced a 9px dropdown 21px
+   tall — too small to read and too small to hit. A pill can sit at the type
+   scale's floor because it is only being scanned; the thing you have to aim
+   at and read from cannot. Body size, real padding, comfortable target. */
 .item-kind-select,
 .item-link-select,
 .item-owner-input {
-  font-size: var(--fs-badge);
+  font-size: var(--fs-body);
   font-family: var(--font-body);
-  padding: 2px 4px;
+  padding: 4px 8px;
+  min-height: 26px;
   border: 1px solid var(--accent-secondary);
-  border-radius: 4px;
+  border-radius: 6px;
   background: var(--bg-app);
   color: var(--text-primary);
-  max-width: 140px;
+  max-width: 180px;
 }
 
+.item-kind-select:focus,
+.item-link-select:focus,
+.item-owner-input:focus {
+  outline: 2px solid var(--accent-secondary);
+  outline-offset: 1px;
+}
+
+/* The attribute — who owns it. Not a control you go looking for, so it reads
+   as plain text and only takes a surface on hover, when it becomes editable.
+   A third filled pill here is what made the row look like three equal things. */
 .item-owner {
   font-size: var(--fs-badge);
+  font-weight: 700;
   font-family: var(--font-body);
-  padding: 2px 7px;
+  padding: 1px 7px;
   border-radius: 999px;
   border: 1px solid transparent;
-  background: var(--hover);
+  background: none;
   color: var(--text-secondary);
   cursor: pointer;
   margin-left: auto;
   white-space: nowrap;
+}
+
+.item-row:hover .item-owner {
+  background: var(--hover);
+  color: var(--text-secondary);
 }
 
 .item-owner.empty {
