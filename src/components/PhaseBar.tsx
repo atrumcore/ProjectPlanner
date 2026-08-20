@@ -7,6 +7,7 @@ import { useExportLayout } from './ExportLayoutContext';
 import { useGanttStore } from '../store/useGanttStore';
 import { getDateAtWeekOffset, formatDayMonth } from '../utils/dateUtils';
 import { fitText, measureText } from '../utils/textMeasure';
+import { DAY_IN_WEEKS, snapWeekToDay, weekDeltaFromPixels } from '../utils/dragSnap';
 import { getContentionsForBar, getPeopleContentionsForBar } from '../utils/contention';
 import { useTheme } from '../theme/ThemeContext';
 import ContextMenu from './ContextMenu';
@@ -114,11 +115,11 @@ export default function PhaseBar({ bar, rowY }: Props) {
     if (!drag) return;
     e.stopPropagation();
 
-    // Snap to calendar days: 1 day = weekWidth / 7.
-    const dayPx = weekWidth / 7;
-    const dayDelta = Math.round((e.clientX - drag.startX) / dayPx);
-    const weekDelta = dayDelta / 7;
-    const minDuration = 1 / 7;
+    // Snap to calendar days. The step is one day at every zoom — 5.1px at the
+    // default 36px week — so the grabbed point never sits more than half a day
+    // from the pointer.
+    const weekDelta = weekDeltaFromPixels(e.clientX - drag.startX, weekWidth);
+    const minDuration = DAY_IN_WEEKS;
 
     let proposed: { startWeek: number; durationWeeks: number } | null = null;
 
@@ -140,7 +141,12 @@ export default function PhaseBar({ bar, rowY }: Props) {
     };
 
     if (drag.mode === 'move') {
-      const wanted = drag.origStartWeek + weekDelta;
+      // Snapped, not just stepped. A drag adds whole days to wherever the bar
+      // already sat, so a bar created off-grid — imported, AI-generated, or
+      // quick-added on a half-week — kept that fraction for ever and never
+      // lined up with a day boundary however far you dragged it. Rounding the
+      // committed position puts it on a real calendar day.
+      const wanted = snapWeekToDay(drag.origStartWeek + weekDelta);
       const newStart = Math.max(0, wanted);
       if (wanted < 0) reanchor(newStart, drag.origDuration);
       moveBar(bar.id, newStart);
@@ -150,7 +156,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
       // The left edge cannot cross week 0, nor pass the right edge and leave
       // less than a day of bar behind it.
       const maxStart = drag.origStartWeek + drag.origDuration - minDuration;
-      const wanted = drag.origStartWeek + weekDelta;
+      const wanted = snapWeekToDay(drag.origStartWeek + weekDelta);
       const newStart = Math.min(maxStart, Math.max(0, wanted));
       const newDuration = drag.origDuration - (newStart - drag.origStartWeek);
       if (wanted !== newStart) reanchor(newStart, newDuration);
@@ -158,7 +164,7 @@ export default function PhaseBar({ bar, rowY }: Props) {
       setDragIndicator(newStart);
       proposed = { startWeek: newStart, durationWeeks: newDuration };
     } else if (drag.mode === 'resize-right') {
-      const wanted = drag.origDuration + weekDelta;
+      const wanted = snapWeekToDay(drag.origDuration + weekDelta);
       const newDuration = Math.max(minDuration, wanted);
       if (wanted < minDuration) reanchor(drag.origStartWeek, newDuration);
       resizeBar(bar.id, drag.origStartWeek, newDuration);
