@@ -30,6 +30,9 @@ export default function OpenItemsPanel() {
   const [newKind, setNewKind] = useState<TrackedKind>('action');
   const [newSwimlane, setNewSwimlane] = useState<string | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
+  // Closed work starts folded: a register whose list is mostly finished items
+  // buries the handful that still need doing.
+  const [showDone, setShowDone] = useState(false);
 
   // Adding from a project's badge should land on that project, and picking a
   // kind lens should pre-select that kind — no re-choosing what you just said.
@@ -102,6 +105,9 @@ export default function OpenItemsPanel() {
       </div>
 
       <div className="notes-panel-add-row">
+        {/* Marks this row as the one that adds. Without it, it and the filter
+            bar above are two near-identical select pairs stacked together. */}
+        <span className="notes-panel-add-glyph" aria-hidden="true">+</span>
         <input
           placeholder={KIND_META[newKind].hint}
           value={newText}
@@ -131,8 +137,19 @@ export default function OpenItemsPanel() {
 
       <div className="notes-panel-list">
         {open.map(item => <TrackedItemRow key={item.id} item={item} />)}
-        {done.length > 0 && <div className="notes-panel-divider">{doneWord}</div>}
-        {done.map(item => <TrackedItemRow key={item.id} item={item} />)}
+        {done.length > 0 && (
+          <button
+            className="notes-panel-divider"
+            aria-expanded={showDone}
+            onClick={() => setShowDone(v => !v)}
+            title={showDone ? `Hide ${doneWord.toLowerCase()}` : `Show ${doneWord.toLowerCase()}`}
+          >
+            <span className="notes-panel-divider-caret" aria-hidden="true">{showDone ? '▾' : '▸'}</span>
+            {doneWord}
+            <span className="notes-panel-divider-count">{done.length}</span>
+          </button>
+        )}
+        {showDone && done.map(item => <TrackedItemRow key={item.id} item={item} />)}
         {sorted.length === 0 && (
           <div className="teach-state">
             <div className="kicker">Open Items</div>

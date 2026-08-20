@@ -2436,20 +2436,27 @@ select option {
   min-height: 0;
 }
 
+/* Filter bar — quiet chrome. It previously wore --today-strip/--today-line,
+   the timeline's today-marker amber, so a filter row was painted in the one
+   colour that means "now" everywhere else in the app and read as a warning
+   band. It sits recessed against the panel instead, so the row beneath it
+   (which adds an item) is the one that looks interactive. */
 .notes-panel-filter-bar {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 14px;
-  background: var(--today-strip);
-  border-bottom: 1px solid var(--today-line);
+  padding: 7px 14px;
+  background: var(--bg-app);
+  border-bottom: 1px solid var(--border);
   font-size: var(--fs-meta);
-  color: var(--text-primary);
+  color: var(--text-secondary);
   flex-shrink: 0;
 }
 
 .notes-panel-filter-bar label {
   font-weight: 600;
+  color: var(--text-muted);
+  flex-shrink: 0;
 }
 
 .notes-panel-filter-bar select {
@@ -2477,12 +2484,25 @@ select option {
   color: var(--text-primary);
 }
 
+/* Add row — the active affordance. It and the filter bar were two near-
+   identical select pairs stacked on top of each other, so nothing said which
+   one filtered the list and which one described the item you were about to
+   create. The leading + marks this as the one that adds. */
 .notes-panel-add-row {
   display: flex;
+  align-items: center;
   gap: 6px;
   padding: 10px 14px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+}
+
+.notes-panel-add-glyph {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  user-select: none;
 }
 
 .notes-panel-add-row input {
@@ -2540,10 +2560,50 @@ select option {
 .item-row.done { opacity: 0.55; }
 .item-row.done .item-row-text { text-decoration: line-through; }
 
+/* Styled rather than native. A bare checkbox renders at the browser's default
+   13.333px — the one off-scale size in this panel, and invisible to a font
+   audit because a checkbox carries no text node. Sizing it explicitly puts it
+   on the scale and swaps the OS-blue control for the theme's own accent. */
 .item-row-checkbox {
-  margin-top: 2px;
+  appearance: none;
+  -webkit-appearance: none;
+  /* Inert once appearance is none — set anyway so the control cannot sit at
+     the browser's 13.333px default and read as off-scale to the next audit. */
+  font-size: var(--fs-badge);
+  width: 14px;
+  height: 14px;
+  margin: 1px 0 0;
   flex-shrink: 0;
   cursor: pointer;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--bg-app);
+  display: grid;
+  place-items: center;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.item-row-checkbox:hover {
+  border-color: var(--accent-secondary);
+}
+
+.item-row-checkbox:checked {
+  background: var(--accent-secondary);
+  border-color: var(--accent-secondary);
+}
+
+.item-row-checkbox:checked::after {
+  content: '';
+  width: 3px;
+  height: 7px;
+  border: solid var(--on-accent);
+  border-width: 0 1.5px 1.5px 0;
+  transform: translateY(-1px) rotate(45deg);
+}
+
+.item-row-checkbox:focus-visible {
+  outline: 2px solid var(--accent-secondary);
+  outline-offset: 1px;
 }
 
 .item-row-content {
@@ -2671,6 +2731,9 @@ select option {
   color: var(--text-muted);
 }
 
+/* "+ project" is an affordance, not information. Shown on every row it was
+   ten dashed pills competing with the item text; it now appears on hover or
+   focus, the same rule the delete control already follows. */
 .item-link-btn {
   font-size: var(--fs-badge);
   font-family: var(--font-body);
@@ -2680,6 +2743,13 @@ select option {
   background: none;
   color: var(--text-muted);
   cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.item-row:hover .item-link-btn,
+.item-link-btn:focus-visible {
+  opacity: 1;
 }
 
 .item-link-btn:hover {
@@ -2726,10 +2796,36 @@ select option {
   background: var(--hover-strong);
 }
 
+/* Closed work folds away. With eight done items against two open ones, a panel
+   called Open Items was mostly a list of things already finished; the count
+   stays on the divider so nothing is hidden, only folded. Left-aligned like
+   every other eyebrow — this one alone was centred. */
 .notes-panel-divider {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--border);
+  text-align: left;
   color: var(--text-secondary);
-  padding: 8px 0 4px;
+  padding: 10px 14px 8px;
+  margin-top: 4px;
+  cursor: pointer;
+}
+
+.notes-panel-divider:hover {
+  color: var(--text-primary);
+}
+
+.notes-panel-divider-caret {
+  letter-spacing: 0;
+}
+
+.notes-panel-divider-count {
+  color: var(--text-muted);
+  letter-spacing: 0;
 }
 
 .notes-panel-footer {

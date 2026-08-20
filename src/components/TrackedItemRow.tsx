@@ -20,6 +20,7 @@ export default function TrackedItemRow({ item }: { item: TrackedItem }) {
   const updateTrackedItem = useGanttStore(s => s.updateTrackedItem);
   const removeTrackedItem = useGanttStore(s => s.removeTrackedItem);
   const toggleTrackedItemProject = useGanttStore(s => s.toggleTrackedItemProject);
+  const activeFilterId = useGanttStore(s => s.trackedFilterSwimlaneId);
 
   const [editingText, setEditingText] = useState(false);
   const [editingOwner, setEditingOwner] = useState(false);
@@ -33,6 +34,8 @@ export default function TrackedItemRow({ item }: { item: TrackedItem }) {
     return lane ? htmlToPlainText(lane.projectName) || 'Untitled project' : 'Deleted project';
   };
   const unlinked = swimlanes.filter(s => !item.swimlaneIds.includes(s.id));
+  // Suppress only the chip for the project the panel is already filtered to.
+  const shownLinks = item.swimlaneIds.filter(id => id !== activeFilterId);
 
   return (
     <div
@@ -113,7 +116,11 @@ export default function TrackedItemRow({ item }: { item: TrackedItem }) {
             </button>
           )}
 
-          {item.swimlaneIds.map(id => (
+          {/* A chip naming the project you have already filtered to tells you
+              nothing — ten rows repeating "HANIS Switch" is noise competing
+              with the item text. It reappears the moment the filter widens, so
+              nothing is lost, and links to OTHER projects always show. */}
+          {shownLinks.map(id => (
             <button
               key={id}
               className="item-chip"
