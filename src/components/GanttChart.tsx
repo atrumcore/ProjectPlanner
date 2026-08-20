@@ -22,7 +22,7 @@ import { useAuthStore } from '../auth/useAuthStore';
 import ManagePhaseTypesModal from './ManagePhaseTypesModal';
 import { useGanttStore } from '../store/useGanttStore';
 import { getTodayWeekOffset } from '../utils/dateUtils';
-import { buildOpenItemsEmail } from '../utils/notesEmail';
+import { buildRaidEmailHtml, buildEmlFile } from '../utils/raidEmailHtml';
 import { buildSwimlaneCsv } from '../utils/swimlaneExport';
 import { useThemeColors } from '../theme/ThemeContext';
 import {
@@ -507,18 +507,20 @@ export default function GanttChart() {
     }
   }, [captureCanvas, exportBaseName]);
 
-  const emailNotes = useCallback(async () => {
-    const { subject, body, full, truncated } = buildOpenItemsEmail(
-      swimlanes, sections, trackedItems, currentFileName,
-    );
-    // Always put the complete log on the clipboard: a long one cannot fit in a
-    // mailto: URL, and the handler truncates rather than erroring — so without
-    // this the message silently arrives cut off mid-item.
-    if (truncated) {
-      try { await navigator.clipboard.writeText(full); } catch { /* falls back to the note in the body */ }
-    }
-    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  }, [swimlanes, sections, trackedItems, currentFileName]);
+  const emailNotes = useCallback(() => {
+    // A .eml rather than a mailto: link. mailto has no way to declare a
+    // content type, so every client renders the body as plain text, and its
+    // URL length cap silently truncated long logs. The file IS the message —
+    // HTML intact, no size limit — and X-Unsent makes Outlook open it as a
+    // draft you address and send.
+    const mail = buildRaidEmailHtml(swimlanes, trackedItems, currentFileName);
+    const url = URL.createObjectURL(buildEmlFile(mail));
+    const link = document.createElement('a');
+    link.download = `${mail.subject}.eml`;
+    link.href = url;
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [swimlanes, trackedItems, currentFileName]);
 
   const exportSwimlanes = useCallback(() => {
     const csv = buildSwimlaneCsv(swimlanes, sections, phaseBars, phaseTypes, timeline, people, teams);

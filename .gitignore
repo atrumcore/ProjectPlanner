@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local preview of the RAID email, regenerated on demand
+raid-email-preview.html
