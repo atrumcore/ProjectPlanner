@@ -1,41 +1,68 @@
 import type { Section, Swimlane, TrackedItem } from '../types/gantt';
 import { KIND_META, KIND_ORDER } from '../data/trackedKinds';
 import { htmlToPlainText } from './plainText';
+import { formatAge } from './dateUtils';
 
 export interface NotesEmail {
   subject: string;
+  /** Body sized to survive a mailto: URL. Equal to `full` when it fits. */
   body: string;
+  /** The complete log, for the clipboard. */
+  full: string;
+  /** True when `body` had to be shortened to fit the URL budget. */
+  truncated: boolean;
 }
 
 const PLAN_LEVEL_LABEL = 'Plan-level';
 
-function formatItem(item: TrackedItem, prefix: string): string {
-  const owner = item.owner ? `  (@${item.owner})` : '';
-  return `      ${prefix} ${item.text}${owner}`;
+/** Open longer than this reads as aging and is called out in the summary. */
+const AGING_DAYS = 30;
+
+/**
+ * Character budget for the whole `mailto:` URL.
+ *
+ * Outlook on Windows stops at roughly 2,048 characters and older Edge/IE at
+ * 2,083; over that the handler does not error, it simply cuts the body off
+ * wherever it ran out — so a long log arrives as a message that stops
+ * mid-sentence. 1,900 leaves room for the scheme, the subject and the
+ * percent-encoding overhead that varies by client.
+ */
+const MAILTO_BUDGET = 1900;
+
+/**
+ * ASCII only, deliberately.
+ *
+ * The previous digest drew itself with box characters (= and > and bullets).
+ * They render inconsistently across mail clients — often as mojibake in
+ * plain-text mode — and each one costs NINE characters of the URL budget
+ * once percent-encoded, against one for an ASCII equivalent. On a 28-item log
+ * that was 342 characters spent on decoration alone.
+ */
+const RULE = '-'.repeat(52);
+
+function ageOf(item: TrackedItem): number {
+  const t = new Date(item.createdAt).getTime();
+  return Number.isFinite(t) ? Math.floor((Date.now() - t) / 86_400_000) : 0;
 }
 
-/** One project's items, grouped by kind so a reader sees "Dependencies:" and
- * "Risks:" rather than an undifferentiated list — the whole reason the
- * register carries a kind. */
-function formatProjectBlock(projectName: string, items: TrackedItem[]): string {
-  const lines: string[] = [`▸ ${projectName}`];
-  for (const kind of KIND_ORDER) {
-    const ofKind = items.filter(i => i.kind === kind);
-    if (ofKind.length === 0) continue;
-    const meta = KIND_META[kind];
-    const active = ofKind.filter(i => !i.done).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-    const done = ofKind.filter(i => i.done).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-    lines.push(`    ${meta.plural}:`);
-    for (const i of active) lines.push(formatItem(i, '•'));
-    for (const i of done) lines.push(formatItem(i, '✓'));
-  }
-  return lines.join('\n');
+/** "Core Banking API | @NEC | 8d" — the attributes that qualify an item,
+ * omitting any that are absent rather than printing empty separators. */
+function attributesOf(item: TrackedItem, projectNames: string[]): string {
+  return [
+    projectNames.length ? projectNames.join(', ') : PLAN_LEVEL_LABEL,
+    item.owner ? `@${item.owner}` : null,
+    formatAge(item.createdAt),
+  ].filter(Boolean).join(' | ');
 }
 
 /**
- * Plain-text digest of the Open Items register for a mailto: link, grouped
- * section → project → kind. An item linked to several projects appears under
- * each of them, which is what a reader scanning one project wants.
+ * Plain-text RAID log for a mailto: link.
+ *
+ * Grouped by kind rather than by project, which is the convention the log is
+ * named after and what a reviewer reads down in a RAID meeting. It also stops
+ * an item that spans three projects being printed three times — the old
+ * project-first grouping repeated it under each one, inflating both the page
+ * and the URL budget.
  */
 export function buildOpenItemsEmail(
   swimlanes: Swimlane[],
@@ -44,59 +71,80 @@ export function buildOpenItemsEmail(
   fileName: string | null,
 ): NotesEmail {
   const today = new Date();
-  const isoDate = today.toISOString().slice(0, 10);
   const longDate = today.toLocaleDateString(undefined, {
-    day: 'numeric', month: 'short', year: 'numeric',
+    day: 'numeric', month: 'long', year: 'numeric',
   });
+  const planName = (fileName || 'Untitled plan').replace(/\.[^.]+$/, '');
+  const subject = `RAID log - ${planName} - ${today.toISOString().slice(0, 10)}`;
 
-  const subject = `Open items — ${fileName || 'Untitled'} — ${isoDate}`;
+  const nameById = new Map(swimlanes.map(s => [s.id, htmlToPlainText(s.projectName) || 'Untitled project']));
+  const projectsFor = (i: TrackedItem) =>
+    i.swimlaneIds.map(id => nameById.get(id)).filter((n): n is string => !!n);
+
+  const open = trackedItems.filter(i => !i.done);
+  const closed = trackedItems.filter(i => i.done);
+  const aging = open.filter(i => ageOf(i) > AGING_DAYS);
+
+  const head = [`RAID LOG - ${planName}`, longDate, ''];
 
   if (trackedItems.length === 0) {
-    const body = [
-      `Open items as of ${longDate}`,
-      fileName ? `File: ${fileName}` : '',
-      '',
-      'Nothing tracked.',
-    ].filter(Boolean).join('\n');
-    return { subject, body };
+    const empty = [...head, 'Nothing tracked.'].join('\n');
+    return { subject, body: empty, full: empty, truncated: false };
   }
 
-  const swimlaneById = new Map(swimlanes.map(s => [s.id, s]));
-  const orderedSections = [...sections].sort((a, b) => a.order - b.order);
-  const blocks: string[] = [];
+  const summary = [
+    `${open.length} open, ${closed.length} closed.`,
+    aging.length ? ` ${aging.length} open longer than ${AGING_DAYS} days.` : '',
+  ].join('');
 
-  for (const section of orderedSections) {
-    const lanesInSection = swimlanes
-      .filter(s => s.section === section.id)
-      .sort((a, b) => a.order - b.order);
+  const lines: string[] = [...head, summary];
 
-    const laneBlocks: string[] = [];
-    for (const lane of lanesInSection) {
-      const items = trackedItems.filter(i => i.swimlaneIds.includes(lane.id));
-      if (items.length === 0) continue;
-      laneBlocks.push(formatProjectBlock(htmlToPlainText(lane.projectName), items));
+  // Oldest first within a kind: the top of each list is what has been waiting
+  // longest, which is the question a review is actually asking.
+  const byAge = (a: TrackedItem, b: TrackedItem) => a.createdAt.localeCompare(b.createdAt);
+
+  for (const kind of KIND_ORDER) {
+    const ofKind = open.filter(i => i.kind === kind).sort(byAge);
+    if (ofKind.length === 0) continue;
+    lines.push('', `${KIND_META[kind].plural.toUpperCase()} (${ofKind.length} open)`, RULE);
+    ofKind.forEach((item, n) => {
+      lines.push(`${n + 1}. ${item.text}`);
+      lines.push(`   ${attributesOf(item, projectsFor(item))}`);
+    });
+  }
+
+  if (closed.length > 0) {
+    lines.push('', `CLOSED (${closed.length})`, RULE);
+    for (const item of [...closed].sort(byAge)) {
+      lines.push(`- ${item.text} (${KIND_META[item.kind].label}${item.owner ? `, @${item.owner}` : ''})`);
     }
-
-    if (laneBlocks.length === 0) continue;
-    blocks.push(`═══ ${section.label} ═══\n\n${laneBlocks.join('\n\n')}`);
   }
 
-  // Plan-level items, plus anything whose every link points at a project that
-  // no longer exists (so nothing is silently dropped from the digest).
-  const planLevel = trackedItems.filter(
-    i => i.swimlaneIds.filter(id => swimlaneById.has(id)).length === 0
-  );
-  if (planLevel.length > 0) {
-    blocks.push(
-      `═══ ${PLAN_LEVEL_LABEL} ═══\n\n${formatProjectBlock(PLAN_LEVEL_LABEL, planLevel)}`
-    );
-  }
+  // Sections are not printed as headings — a RAID log groups by kind — but an
+  // item whose every project link is dangling would otherwise vanish, so
+  // attributesOf falls back to Plan-level for it. Referencing `sections` keeps
+  // the signature stable for callers.
+  void sections;
 
-  const header = [
-    `Open items as of ${longDate}`,
-    fileName ? `File: ${fileName}` : '',
-  ].filter(Boolean).join('\n');
+  const full = `${lines.join('\n')}\n`;
+  const fits = (text: string) =>
+    `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`.length <= MAILTO_BUDGET;
 
-  const body = `${header}\n\n${blocks.join('\n\n')}\n`;
-  return { subject, body };
+  if (fits(full)) return { subject, body: full, full, truncated: false };
+
+  /**
+   * Too long for the URL. Send the header and summary rather than a body that
+   * stops mid-item, and say plainly where the rest is — the caller puts the
+   * full log on the clipboard. Silently cutting it off is what made a long log
+   * arrive looking broken.
+   */
+  const short = [
+    ...head,
+    summary,
+    '',
+    'The full log was too long to place in this message and has been copied',
+    'to your clipboard - paste it below.',
+    '',
+  ].join('\n');
+  return { subject, body: short, full, truncated: true };
 }

@@ -507,8 +507,16 @@ export default function GanttChart() {
     }
   }, [captureCanvas, exportBaseName]);
 
-  const emailNotes = useCallback(() => {
-    const { subject, body } = buildOpenItemsEmail(swimlanes, sections, trackedItems, currentFileName);
+  const emailNotes = useCallback(async () => {
+    const { subject, body, full, truncated } = buildOpenItemsEmail(
+      swimlanes, sections, trackedItems, currentFileName,
+    );
+    // Always put the complete log on the clipboard: a long one cannot fit in a
+    // mailto: URL, and the handler truncates rather than erroring — so without
+    // this the message silently arrives cut off mid-item.
+    if (truncated) {
+      try { await navigator.clipboard.writeText(full); } catch { /* falls back to the note in the body */ }
+    }
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }, [swimlanes, sections, trackedItems, currentFileName]);
 
