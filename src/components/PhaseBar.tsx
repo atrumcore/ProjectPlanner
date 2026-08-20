@@ -26,6 +26,9 @@ function initials(name: string): string {
 interface Props {
   bar: PhaseBarType;
   rowY: number;
+  /** Lane under a pointer position, so a drag can move a bar between
+   * projects. Only the timeline knows the row layout. */
+  laneAtY?: (clientY: number) => string | null;
 }
 
 interface DragState {
@@ -35,7 +38,7 @@ interface DragState {
   mode: 'move' | 'resize-left' | 'resize-right';
 }
 
-export default function PhaseBar({ bar, rowY }: Props) {
+export default function PhaseBar({ bar, rowY, laneAtY }: Props) {
   const { colors: c } = useTheme();
   const barStyle = useGanttStore(s => s.barStyle);
   const moveBar = useGanttStore(s => s.moveBar);
@@ -93,6 +96,8 @@ export default function PhaseBar({ bar, rowY }: Props) {
   const [peoplePicker, setPeoplePicker] = useState<{ x: number; y: number } | null>(null);
   const [dragPill, setDragPill] = useState<{ envNames: string[]; conflict: boolean } | null>(null);
   const dragRef = useRef<DragState | null>(null);
+  // Lane the current drag has moved the bar into, for the live contention check.
+  const dragLaneRef = useRef<string | null>(null);
   const isSelected = selectedBarId === bar.id;
   const isHovered = hoveredBarId === bar.id;
 
@@ -149,7 +154,14 @@ export default function PhaseBar({ bar, rowY }: Props) {
       const wanted = snapWeekToDay(drag.origStartWeek + weekDelta);
       const newStart = Math.max(0, wanted);
       if (wanted < 0) reanchor(newStart, drag.origDuration);
-      moveBar(bar.id, newStart);
+      // Vertical movement was ignored outright, so a bar could only ever slide
+      // along the row it was created in — pulling one onto another project did
+      // nothing at all. moveBar has always accepted a swimlane; nothing was
+      // ever passing one.
+      const targetLane = laneAtY?.(e.clientY) ?? null;
+      const laneChanged = !!targetLane && targetLane !== bar.swimlaneId;
+      if (laneChanged) dragLaneRef.current = targetLane;
+      moveBar(bar.id, newStart, laneChanged ? targetLane : undefined);
       setDragIndicator(newStart);
       proposed = { startWeek: newStart, durationWeeks: drag.origDuration };
     } else if (drag.mode === 'resize-left') {
@@ -176,7 +188,8 @@ export default function PhaseBar({ bar, rowY }: Props) {
     // env, plus people double-bookings when it has assignees/teams. A bar
     // with neither drags silently.
     if (proposed) {
-      const proposedBar = { ...bar, startWeek: proposed.startWeek, durationWeeks: proposed.durationWeeks };
+      const proposedBar = { ...bar, startWeek: proposed.startWeek, durationWeeks: proposed.durationWeeks,
+        swimlaneId: dragLaneRef.current ?? bar.swimlaneId };
       const env = bar.environmentId
         ? environments.find(e => e.id === bar.environmentId)
         : null;
@@ -202,12 +215,17 @@ export default function PhaseBar({ bar, rowY }: Props) {
         setDragPill(null);
       }
     }
-  }, [bar, moveBar, resizeBar, setDragIndicator, weekWidth, swimlanes, environments, phaseBars, showContention, showPeopleContention, people, teams]);
+    // laneAtY closes over the row layout, so a stale one would drop the bar
+    // into whichever lane sat at that Y before a project was added or removed.
+  }, [bar, moveBar, resizeBar, setDragIndicator, weekWidth, swimlanes, environments, phaseBars, showContention, showPeopleContention, people, teams, laneAtY]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
     e.stopPropagation();
     if (dragRef.current) {
       dragRef.current = null;
+      // Clear the drag's target lane, or the next drag's contention check
+      // would be judged against the previous drag's destination.
+      dragLaneRef.current = null;
       setDragIndicator(null);
       saveToStorage();
     }

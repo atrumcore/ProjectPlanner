@@ -112,6 +112,24 @@ export default function TimelineContent() {
     return getCalendarWeekBoundaries(timeline.startMonth, timeline.startYear, timeline.totalWeeks);
   }, [timeline.startMonth, timeline.startYear, timeline.totalWeeks]);
 
+  /**
+   * Which lane a pointer is over, ignoring X.
+   *
+   * Bars could only ever be dragged along their own row: the move handler
+   * passed no swimlane, so pulling one onto another project did nothing at
+   * all. The lane lookup already existed for quick-add — this is the same
+   * reverse lookup without the week, handed to each bar so a drag can carry
+   * it to a different project.
+   */
+  const laneAtY = useCallback((clientY: number): string | null => {
+    if (!svgRef.current) return null;
+    const svgY = clientY - svgRef.current.getBoundingClientRect().top;
+    for (const [id, y] of swimlaneYMap.entries()) {
+      if (svgY >= y && svgY < y + ROW_HEIGHT) return id;
+    }
+    return null;
+  }, [swimlaneYMap, ROW_HEIGHT]);
+
   // Convert clientX/clientY to swimlaneId + week
   const hitTest = useCallback((clientX: number, clientY: number) => {
     if (!svgRef.current) return null;
@@ -430,7 +448,7 @@ export default function TimelineContent() {
             key={bar.id}
             style={dim ? { opacity: 0.3, filter: 'saturate(0.6)' } : undefined}
           >
-            <PhaseBar bar={bar} rowY={rowY} />
+            <PhaseBar bar={bar} rowY={rowY} laneAtY={laneAtY} />
           </g>
         );
       })}
