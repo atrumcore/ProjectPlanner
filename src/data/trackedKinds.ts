@@ -64,6 +64,20 @@ export const KIND_ORDER: TrackedKind[] = [
   'action', 'dependency', 'risk', 'issue', 'decision', 'assumption',
 ];
 
+/**
+ * Reporting order — RAID's mnemonic: Risks, Actions, Issues, Decisions, then
+ * the two kinds the acronym leaves out.
+ *
+ * Deliberately not KIND_ORDER. The picker is ordered by how often each kind
+ * gets typed, which is the right call for a control you use dozens of times a
+ * day; a RAID log sent to a steering group is read against the convention it
+ * is named after, and arriving in frequency order reads as though it were
+ * ordered arbitrarily.
+ */
+export const RAID_REPORT_ORDER: TrackedKind[] = [
+  'risk', 'action', 'issue', 'decision', 'dependency', 'assumption',
+];
+
 /** Kinds that mean "this project is held up", used to tint the lane badge. */
 export const BLOCKING_KINDS: TrackedKind[] = ['dependency', 'risk', 'issue'];
 

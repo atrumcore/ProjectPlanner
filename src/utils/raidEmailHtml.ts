@@ -1,5 +1,5 @@
 import type { Swimlane, TrackedItem, TrackedKind } from '../types/gantt';
-import { KIND_META, KIND_ORDER } from '../data/trackedKinds';
+import { KIND_META, RAID_REPORT_ORDER } from '../data/trackedKinds';
 import { htmlToPlainText } from './plainText';
 import { formatAge } from './dateUtils';
 
@@ -119,7 +119,7 @@ export function buildRaidEmailHtml(
       </td></tr>`;
   };
 
-  const sections = KIND_ORDER
+  const sections = RAID_REPORT_ORDER
     .map(kind => ({ kind, items: open.filter(i => i.kind === kind).sort(byAge) }))
     .filter(g => g.items.length > 0)
     .map(g => kindTable(g.kind, g.items))
@@ -169,7 +169,7 @@ export function buildRaidEmailHtml(
   const textLines = [`RAID LOG - ${planName}`, longDate, '',
     `${open.length} open, ${closed.length} closed.`
     + (aging.length ? ` ${aging.length} open longer than ${AGING_DAYS} days.` : '')];
-  for (const kind of KIND_ORDER) {
+  for (const kind of RAID_REPORT_ORDER) {
     const items = open.filter(i => i.kind === kind).sort(byAge);
     if (!items.length) continue;
     textLines.push('', `${KIND_META[kind].plural.toUpperCase()} (${items.length} open)`, '-'.repeat(52));
